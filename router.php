@@ -13,8 +13,13 @@ if (preg_match('/^\/api\//', $uri)) {
     return true;
 }
 
-// Admin routes
-if (preg_match('/^\/admin\/?$/', $uri)) {
+// Admin routes - redirect /admin to /admin/
+if ($uri === '/admin') {
+    header('Location: /admin/', true, 301);
+    return true;
+}
+
+if ($uri === '/admin/') {
     $file = __DIR__ . '/public/admin/index.html';
     if (file_exists($file)) {
         header('Content-Type: text/html; charset=utf-8');
@@ -25,6 +30,12 @@ if (preg_match('/^\/admin\/?$/', $uri)) {
 
 if (preg_match('/^\/admin\/(.+)$/', $uri, $matches)) {
     $file = __DIR__ . '/public/admin/' . $matches[1];
+    
+    // If no extension, try .html
+    if (!file_exists($file) && !pathinfo($file, PATHINFO_EXTENSION)) {
+        $file .= '.html';
+    }
+    
     if (file_exists($file)) {
         // Serve the file with correct content type
         $ext = pathinfo($file, PATHINFO_EXTENSION);

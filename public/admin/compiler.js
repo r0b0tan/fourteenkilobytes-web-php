@@ -3,13 +3,15 @@ var SIZE_LIMIT = 14336;
 var MAX_PAGINATION_ITERATIONS = 10;
 
 // src/measure.ts
-import { createHash } from "node:crypto";
 var encoder = new TextEncoder();
 function measureBytes(str) {
   return encoder.encode(str).length;
 }
-function computeHash(str) {
-  return createHash("sha256").update(str, "utf8").digest("hex");
+async function computeHash(str) {
+  const msgBuffer = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 function normalizeLineEndings(str) {
   return str.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -646,7 +648,7 @@ function paginatedSlug(baseSlug, pageNumber) {
 }
 
 // src/compiler.ts
-function compile(input) {
+async function compile(input) {
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
   const validation = validateInput(input);
   if (!validation.valid) {
@@ -703,7 +705,7 @@ function compile(input) {
       paginatedPage.paginationHtml
     );
     const bytes = measureBytes(html);
-    const hash = computeHash(html);
+    const hash = await computeHash(html);
     if (bytes > SIZE_LIMIT) {
       return {
         success: false,
@@ -816,7 +818,6 @@ ${JSON.stringify(result.error, null, 2)}`;
 }
 
 // src/manifest.ts
-import { readFile, writeFile } from "node:fs/promises";
 function createEmptyManifest() {
   return {
     version: 1,
