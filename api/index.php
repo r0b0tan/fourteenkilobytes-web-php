@@ -16,6 +16,10 @@ ini_set('log_errors', '1');
 // CORS and content type
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
 
 // Configuration
 define('DATA_DIR', dirname(__DIR__) . '/data');
@@ -26,8 +30,7 @@ define('PAGE_TYPES_FILE', DATA_DIR . '/page-types.json');
 define('POSTS_DIR', DATA_DIR . '/posts');
 
 // Token derivation settings
-define('SALT', 'fourteenkilobytes');
-define('ITERATIONS', 100000);
+define('ITERATIONS', 600000);
 define('KEY_LENGTH', 32);
 
 // Cookie settings
@@ -67,10 +70,22 @@ function readJsonBody(): array {
 }
 
 /**
+ * Get or generate instance salt
+ */
+function getInstanceSalt(): string {
+    $state = readInstanceState();
+    if ($state && isset($state['salt'])) {
+        return $state['salt'];
+    }
+    // Generate new random salt
+    return base64_encode(random_bytes(32));
+}
+
+/**
  * Derive token from password using PBKDF2
  */
-function deriveToken(string $password): string {
-    $key = hash_pbkdf2('sha256', $password, SALT, ITERATIONS, KEY_LENGTH, true);
+function deriveToken(string $password, string $salt): string {
+    $key = hash_pbkdf2('sha256', $password, $salt, ITERATIONS, KEY_LENGTH, true);
     return base64_encode($key);
 }
 
@@ -170,6 +185,11 @@ function loadManifest(): array {
  * Save manifest
  */
 function saveManifest(array $manifest): void {
+    // Create backup before saving
+    if (file_exists(MANIFEST_FILE)) {
+        $backup = MANIFEST_FILE . '.bak';
+        @copy(MANIFEST_FILE, $backup);
+    }
     file_put_contents(MANIFEST_FILE, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
@@ -193,6 +213,11 @@ function loadSettings(): array {
  * Save settings
  */
 function saveSettings(array $settings): void {
+    // Create backup before saving
+    if (file_exists(SETTINGS_FILE)) {
+        $backup = SETTINGS_FILE . '.bak';
+        @copy(SETTINGS_FILE, $backup);
+    }
     file_put_contents(SETTINGS_FILE, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
@@ -248,8 +273,10 @@ if ($method === 'POST' && $path === '/setup') {
         sendJson(400, ['error' => 'Password must be at least 8 characters']);
     }
 
-    $token = deriveToken($password);
+    $salt = base64_encode(random_bytes(32));
+    $token = deriveToken($password, $salt);
     $state = [
+        'salt' => $salt,
         'token' => $token,
         'createdAt' => date('c'),
     ];
@@ -281,7 +308,8 @@ if ($method === 'POST' && $path === '/login') {
         sendJson(400, ['error' => 'Password required']);
     }
 
-    $token = deriveToken($password);
+    $salt = getInstanceSalt();
+    $token = deriveToken($password, $salt);
     $storedToken = getApiToken();
 
     if (!hash_equals($storedToken, $token)) {
@@ -374,6 +402,11 @@ if ($method === 'POST' && $path === '/posts') {
     // Validate required fields
     if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
         sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
+    }
+
+    // Validate HTML size (max 1MB to prevent DoS)
+    if (strlen($body['html']) > 1048576) {
+        sendJson(400, ['error' => 'HTML content too large (max 1MB)']);
     }
 
     $slug = $body['slug'];

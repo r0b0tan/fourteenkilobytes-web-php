@@ -24,3 +24,10 @@ composer.phar
 # Temporary files
 *.tmp
 *.bak
+
+# Application data (contains sensitive tokens and user data)
+data/instance.json
+data/manifest.json
+data/settings.json
+data/page-types.json
+data/posts/

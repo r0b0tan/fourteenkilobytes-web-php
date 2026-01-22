@@ -29,14 +29,29 @@ if ($uri === '/admin/') {
 }
 
 if (preg_match('/^\/admin\/(.+)$/', $uri, $matches)) {
-    $file = __DIR__ . '/public/admin/' . $matches[1];
+    $requestedPath = $matches[1];
     
-    // If no extension, try .html
-    if (!file_exists($file) && !pathinfo($file, PATHINFO_EXTENSION)) {
-        $file .= '.html';
+    // Prevent path traversal
+    if (strpos($requestedPath, '..') !== false || strpos($requestedPath, '\0') !== false) {
+        http_response_code(400);
+        echo '400 Bad Request';
+        return true;
     }
     
-    if (file_exists($file)) {
+    $file = __DIR__ . '/public/admin/' . $requestedPath;
+    
+    // Ensure resolved path is within admin directory
+    $realBase = realpath(__DIR__ . '/public/admin');
+    $realFile = realpath($file);
+    
+    // If file doesn't exist yet, try with .html extension
+    if (!$realFile && !pathinfo($file, PATHINFO_EXTENSION)) {
+        $file .= '.html';
+        $realFile = realpath($file);
+    }
+    
+    // Verify path is within allowed directory
+    if ($realFile && strpos($realFile, $realBase) === 0 && file_exists($realFile)) {
         // Serve the file with correct content type
         $ext = pathinfo($file, PATHINFO_EXTENSION);
         $contentTypes = [
@@ -48,7 +63,7 @@ if (preg_match('/^\/admin\/(.+)$/', $uri, $matches)) {
         if (isset($contentTypes[$ext])) {
             header('Content-Type: ' . $contentTypes[$ext] . '; charset=utf-8');
         }
-        readfile($file);
+        readfile($realFile);
         return true;
     }
 }

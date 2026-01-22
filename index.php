@@ -32,7 +32,11 @@ if (empty($slug)) {
     echo '<h1>Blog</h1>';
 
     if (file_exists(MANIFEST_FILE)) {
-        $manifest = json_decode(file_get_contents(MANIFEST_FILE), true);
+        $content = @file_get_contents(MANIFEST_FILE);
+        $manifest = $content ? json_decode($content, true) : null;
+        if (!is_array($manifest)) {
+            $manifest = ['entries' => []];
+        }
         $entries = $manifest['entries'] ?? [];
 
         // Filter to published posts only
@@ -80,12 +84,15 @@ if (!file_exists($htmlFile)) {
 
 // Check manifest for tombstone status
 if (file_exists(MANIFEST_FILE)) {
-    $manifest = json_decode(file_get_contents(MANIFEST_FILE), true);
-    foreach ($manifest['entries'] ?? [] as $entry) {
-        if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
-            http_response_code(410);
-            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
-            exit;
+    $content = @file_get_contents(MANIFEST_FILE);
+    $manifest = $content ? json_decode($content, true) : null;
+    if (is_array($manifest)) {
+        foreach ($manifest['entries'] ?? [] as $entry) {
+            if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
+                http_response_code(410);
+                echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
+                exit;
+            }
         }
     }
 }
