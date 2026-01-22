@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor - fourteenkilobytes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Neuer Post</h1>
+    <nav>
+      <a href="index.html">← Zurück</a>
+      <a href="/" target="_blank">Blog</a>
+    </nav>
+  </div>
+
+  <div id="message" class="message hidden"></div>
+
+  <!-- Page Type -->
+  <div class="page-type-row">
+    <label for="page-type">Typ:</label>
+    <select id="page-type" class="page-type-select">
+      <option value="post">Blog-Post</option>
+      <option value="page">Statische Seite</option>
+    </select>
+    <span id="page-type-hint" class="text-small text-muted"></span>
+  </div>
+
+  <!-- Title & Slug -->
+  <div class="title-row">
+    <div class="form-group">
+      <label for="title">Titel</label>
+      <input type="text" id="title" placeholder="Mein erster Post">
+    </div>
+    <div class="form-group">
+      <label for="slug">Slug</label>
+      <input type="text" id="slug" placeholder="mein-erster-post">
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="editor-row">
+    <label class="row-toggle">
+      <input type="checkbox" id="nav-enabled">
+      <span>Navigation</span>
+    </label>
+    <div id="nav-editor" class="nav-editor hidden">
+      <div id="nav-links" class="nav-links"></div>
+      <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
+    </div>
+  </div>
+
+  <!-- Link Edit Popup for Navigation -->
+  <div id="nav-link-popup" class="nav-link-popup hidden">
+    <div class="popup-content">
+      <div class="form-group">
+        <label>Text</label>
+        <input type="text" id="nav-link-text" placeholder="Home">
+      </div>
+      <div class="form-group">
+        <label>Ziel</label>
+        <input type="text" id="nav-link-href" placeholder="/">
+      </div>
+      <div class="popup-actions">
+        <button type="button" id="nav-link-save">OK</button>
+        <button type="button" id="nav-link-delete" class="btn-danger btn-small">Löschen</button>
+        <button type="button" id="nav-link-cancel" class="btn-secondary">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content / Block Editor -->
+  <div class="editor-row content-area">
+    <div id="block-editor" class="block-editor"></div>
+    <div class="block-actions-row">
+      <button type="button" id="add-block-btn" class="btn-small btn-secondary">+ Block</button>
+      <div id="add-block-dropdown" class="add-block-dropdown hidden">
+        <button type="button" data-type="paragraph">Absatz</button>
+        <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
+        <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
+        <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
+      </div>
+    </div>
+    <p id="content-error" class="text-small text-danger hidden"></p>
+  </div>
+
+  <!-- Floating Format Toolbar (hidden by default) -->
+  <div id="format-toolbar" class="format-toolbar hidden">
+    <button type="button" data-cmd="bold" title="Fett"><b>B</b></button>
+    <button type="button" data-cmd="italic" title="Kursiv"><i>I</i></button>
+    <button type="button" data-cmd="link" title="Link">🔗</button>
+  </div>
+
+  <!-- Link Popup for content -->
+  <div id="link-popup" class="link-popup hidden">
+    <input type="text" id="link-href" placeholder="/pfad oder #anker">
+    <button type="button" id="link-apply">OK</button>
+    <button type="button" id="link-cancel" class="btn-secondary btn-small">×</button>
+  </div>
+
+  <!-- Footer -->
+  <div class="editor-row">
+    <label class="row-toggle">
+      <input type="checkbox" id="footer-enabled">
+      <span>Footer</span>
+    </label>
+    <div id="footer-editor" class="footer-editor hidden">
+      <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
+    </div>
+  </div>
+
+  <!-- Custom CSS (collapsible) -->
+  <details class="css-section">
+    <summary>Custom CSS</summary>
+    <textarea id="css-rules" rows="4" placeholder="body { font-family: Georgia, serif; }"></textarea>
+  </details>
+
+  <!-- Publish Row -->
+  <div class="publish-row">
+    <div class="byte-counter">
+      <div class="byte-details">
+        <span id="byte-text" class="byte-main">0 / 14.336 Bytes</span>
+        <span id="overhead-text" class="text-muted">Overhead: 0 Bytes</span>
+      </div>
+      <div class="byte-bar">
+        <div id="byte-fill-overhead" class="byte-fill-overhead" style="width: 0%"></div>
+        <div id="byte-fill-content" class="byte-fill-content" style="width: 0%"></div>
+      </div>
+    </div>
+    <button id="publish-btn">Veröffentlichen</button>
+  </div>
+
+  <!-- Live CSS Container -->
+  <style id="live-css"></style>
+
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    (async function() {
+      // Check if setup is complete
+      const status = await App.getSetupStatus();
+      if (!status.setupComplete) {
+        window.location.href = '/admin/setup';
+        return;
+      }
+
+      // Check auth
+      const config = await App.getConfig();
+      if (config.authEnabled && !(await App.isLoggedIn())) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Elements
+      const pageTypeSelect = document.getElementById('page-type');
+      const pageTypeHint = document.getElementById('page-type-hint');
+      const titleInput = document.getElementById('title');
+      const slugInput = document.getElementById('slug');
+      const blockEditor = document.getElementById('block-editor');
+      const addBlockBtn = document.getElementById('add-block-btn');
+      const addBlockDropdown = document.getElementById('add-block-dropdown');
+      const formatToolbar = document.getElementById('format-toolbar');
+      const linkPopup = document.getElementById('link-popup');
+      const linkHrefInput = document.getElementById('link-href');
+      const linkApplyBtn = document.getElementById('link-apply');
+      const linkCancelBtn = document.getElementById('link-cancel');
+      const navEnabled = document.getElementById('nav-enabled');
+      const navEditor = document.getElementById('nav-editor');
+      const navLinks = document.getElementById('nav-links');
+      const addNavLinkBtn = document.getElementById('add-nav-link');
+      const navLinkPopup = document.getElementById('nav-link-popup');
+      const navLinkText = document.getElementById('nav-link-text');
+      const navLinkHref = document.getElementById('nav-link-href');
+      const navLinkSave = document.getElementById('nav-link-save');
+      const navLinkDelete = document.getElementById('nav-link-delete');
+      const navLinkCancel = document.getElementById('nav-link-cancel');
+      const footerEnabled = document.getElementById('footer-enabled');
+      const footerEditor = document.getElementById('footer-editor');
+      const footerText = document.getElementById('footer-text');
+      const cssRules = document.getElementById('css-rules');
+      const liveCSS = document.getElementById('live-css');
+      const publishBtn = document.getElementById('publish-btn');
+      const byteText = document.getElementById('byte-text');
+      const overheadText = document.getElementById('overhead-text');
+      const byteFillOverhead = document.getElementById('byte-fill-overhead');
+      const byteFillContent = document.getElementById('byte-fill-content');
+      const messageEl = document.getElementById('message');
+
+      // State
+      let savedSelection = null;
+      let editingNavLink = null; // The chip element being edited
+      let currentOverheadBytes = 0;
+
+      // ============ PAGE TYPE ============
+
+      pageTypeSelect.addEventListener('change', () => {
+        const type = pageTypeSelect.value;
+        if (type === 'page') {
+          pageTypeHint.textContent = '(erscheint nicht im Blog-Feed)';
+        } else {
+          pageTypeHint.textContent = '';
+        }
+      });
+
+      // ============ NAVIGATION EDITOR ============
+
+      navEnabled.addEventListener('change', () => {
+        navEditor.classList.toggle('hidden', !navEnabled.checked);
+      });
+
+      function createNavChip(text, href) {
+        const chip = document.createElement('span');
+        chip.className = 'nav-chip';
+        chip.dataset.href = href;
+        chip.textContent = text;
+        chip.addEventListener('click', () => editNavLink(chip));
+        return chip;
+      }
+
+      function editNavLink(chip) {
+        editingNavLink = chip;
+        navLinkText.value = chip.textContent;
+        navLinkHref.value = chip.dataset.href;
+        navLinkDelete.classList.remove('hidden');
+        navLinkPopup.classList.remove('hidden');
+        navLinkText.focus();
+      }
+
+      addNavLinkBtn.addEventListener('click', () => {
+        editingNavLink = null;
+        navLinkText.value = '';
+        navLinkHref.value = '';
+        navLinkDelete.classList.add('hidden');
+        navLinkPopup.classList.remove('hidden');
+        navLinkText.focus();
+      });
+
+      navLinkSave.addEventListener('click', () => {
+        const text = navLinkText.value.trim();
+        const href = navLinkHref.value.trim();
+        if (!text || !href) return;
+
+        if (editingNavLink) {
+          editingNavLink.textContent = text;
+          editingNavLink.dataset.href = href;
+        } else {
+          navLinks.appendChild(createNavChip(text, href));
+        }
+        navLinkPopup.classList.add('hidden');
+        editingNavLink = null;
+      });
+
+      navLinkDelete.addEventListener('click', () => {
+        if (editingNavLink) {
+          editingNavLink.remove();
+        }
+        navLinkPopup.classList.add('hidden');
+        editingNavLink = null;
+      });
+
+      navLinkCancel.addEventListener('click', () => {
+        navLinkPopup.classList.add('hidden');
+        editingNavLink = null;
+      });
+
+      // ============ FOOTER EDITOR ============
+
+      footerEnabled.addEventListener('change', () => {
+        footerEditor.classList.toggle('hidden', !footerEnabled.checked);
+      });
+
+      // ============ LIVE CSS ============
+
+      cssRules.addEventListener('input', () => {
+        applyLiveCSS();
+      });
+
+      function applyLiveCSS() {
+        const css = cssRules.value.trim();
+        // Scope CSS to block-editor to avoid breaking admin UI
+        // Simple approach: prefix all rules with .block-editor
+        if (!css) {
+          liveCSS.textContent = '';
+          return;
+        }
+
+        // Basic scoping - wrap in .block-editor context
+        // This won't handle all edge cases but works for simple rules
+        try {
+          const scopedCSS = css.replace(/([^{}]+)\{/g, (match, selector) => {
+            const selectors = selector.split(',').map(s => {
+              s = s.trim();
+              if (s.startsWith('@') || s.startsWith('from') || s.startsWith('to') || /^\d+%$/.test(s)) {
+                return s;
+              }
+              if (s === 'body' || s === 'html') {
+                return '.block-editor';
+              }
+              return `.block-editor ${s}`;
+            }).join(', ');
+            return selectors + ' {';
+          });
+          liveCSS.textContent = scopedCSS;
+        } catch (e) {
+          // Invalid CSS, ignore
+        }
+      }
+
+      // ============ AUTO-SLUG ============
+
+      titleInput.addEventListener('input', () => {
+        if (!slugInput.dataset.manual) {
+          slugInput.value = App.slugify(titleInput.value);
+        }
+      });
+
+      slugInput.addEventListener('input', () => {
+        slugInput.dataset.manual = 'true';
+      });
+
+      // ============ BLOCK EDITOR ============
+
+      function createBlockElement(type, level, initialHtml = '') {
+        const block = document.createElement('div');
+        block.className = 'block-item';
+        block.dataset.type = type;
+        if (level) block.dataset.level = level;
+
+        // Block header with type selector and actions
+        const header = document.createElement('div');
+        header.className = 'block-header';
+
+        const typeSelect = document.createElement('select');
+        typeSelect.className = 'block-type-select';
+        typeSelect.innerHTML = `
+          <option value="paragraph">Absatz</option>
+          <option value="heading-1">H1</option>
+          <option value="heading-2">H2</option>
+          <option value="heading-3">H3</option>
+          <option value="heading-4">H4</option>
+          <option value="heading-5">H5</option>
+          <option value="heading-6">H6</option>
+        `;
+        typeSelect.value = type === 'heading' ? `heading-${level}` : 'paragraph';
+        typeSelect.addEventListener('change', () => {
+          const val = typeSelect.value;
+          if (val === 'paragraph') {
+            block.dataset.type = 'paragraph';
+            delete block.dataset.level;
+          } else {
+            block.dataset.type = 'heading';
+            block.dataset.level = val.split('-')[1];
+          }
+          updateBlockStyling(block);
+        });
+        header.appendChild(typeSelect);
+
+        const actions = document.createElement('div');
+        actions.className = 'block-item-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.textContent = '↑';
+        upBtn.title = 'Nach oben';
+        upBtn.addEventListener('click', () => moveBlock(block, -1));
+        actions.appendChild(upBtn);
+
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.textContent = '↓';
+        downBtn.title = 'Nach unten';
+        downBtn.addEventListener('click', () => moveBlock(block, 1));
+        actions.appendChild(downBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '×';
+        deleteBtn.title = 'Löschen';
+        deleteBtn.addEventListener('click', () => block.remove());
+        actions.appendChild(deleteBtn);
+
+        header.appendChild(actions);
+        block.appendChild(header);
+
+        // Content area
+        const content = document.createElement('div');
+        content.className = 'block-content';
+        content.contentEditable = 'true';
+        content.dataset.placeholder = type === 'heading' ? 'Überschrift...' : 'Text eingeben...';
+        content.innerHTML = initialHtml;
+        block.appendChild(content);
+
+        updateBlockStyling(block);
+        return block;
+      }
+
+      function updateBlockStyling(block) {
+        const content = block.querySelector('.block-content');
+        const type = block.dataset.type;
+        const level = block.dataset.level;
+
+        // Reset styles
+        content.style.fontSize = '';
+        content.style.fontWeight = '';
+
+        if (type === 'heading') {
+          content.style.fontWeight = 'bold';
+          const sizes = { 1: '2rem', 2: '1.5rem', 3: '1.25rem', 4: '1.1rem', 5: '1rem', 6: '0.875rem' };
+          content.style.fontSize = sizes[level] || '1rem';
+          content.dataset.placeholder = 'Überschrift...';
+        } else {
+          content.dataset.placeholder = 'Text eingeben...';
+        }
+      }
+
+      function moveBlock(block, direction) {
+        const blocks = Array.from(blockEditor.children);
+        const index = blocks.indexOf(block);
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= blocks.length) return;
+
+        if (direction < 0) {
+          blockEditor.insertBefore(block, blocks[newIndex]);
+        } else {
+          blockEditor.insertBefore(block, blocks[newIndex].nextSibling);
+        }
+      }
+
+      // ============ FLOATING FORMAT TOOLBAR ============
+
+      document.addEventListener('selectionchange', () => {
+        const sel = window.getSelection();
+        if (!sel.rangeCount || sel.isCollapsed) {
+          formatToolbar.classList.add('hidden');
+          return;
+        }
+
+        // Check if selection is within block editor
+        const range = sel.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const blockContent = container.nodeType === Node.TEXT_NODE
+          ? container.parentElement.closest('.block-content')
+          : container.closest('.block-content');
+
+        if (!blockContent || !blockEditor.contains(blockContent)) {
+          formatToolbar.classList.add('hidden');
+          return;
+        }
+
+        // Position toolbar above selection
+        const rect = range.getBoundingClientRect();
+        formatToolbar.style.top = (rect.top + window.scrollY - 40) + 'px';
+        formatToolbar.style.left = (rect.left + window.scrollX + rect.width / 2 - 50) + 'px';
+        formatToolbar.classList.remove('hidden');
+      });
+
+      formatToolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const cmd = btn.dataset.cmd;
+        if (cmd === 'bold') {
+          document.execCommand('bold', false, null);
+        } else if (cmd === 'italic') {
+          document.execCommand('italic', false, null);
+        } else if (cmd === 'link') {
+          showLinkPopup();
+        }
+      });
+
+      // ============ LINK POPUP ============
+
+      function showLinkPopup() {
+        const sel = window.getSelection();
+        if (!sel.rangeCount || sel.isCollapsed) return;
+
+        savedSelection = sel.getRangeAt(0).cloneRange();
+
+        const parentLink = sel.anchorNode.parentElement.closest('a');
+        linkHrefInput.value = parentLink ? parentLink.getAttribute('href') : '';
+
+        const rect = savedSelection.getBoundingClientRect();
+        linkPopup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+        linkPopup.style.left = (rect.left + window.scrollX) + 'px';
+        linkPopup.classList.remove('hidden');
+        linkHrefInput.focus();
+      }
+
+      linkApplyBtn.addEventListener('click', () => {
+        const href = linkHrefInput.value.trim();
+        if (!href) {
+          linkPopup.classList.add('hidden');
+          return;
+        }
+
+        if (savedSelection) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedSelection);
+          document.execCommand('createLink', false, href);
+        }
+        linkPopup.classList.add('hidden');
+        savedSelection = null;
+      });
+
+      linkCancelBtn.addEventListener('click', () => {
+        linkPopup.classList.add('hidden');
+        savedSelection = null;
+      });
+
+      // ============ ADD BLOCK ============
+
+      addBlockBtn.addEventListener('click', () => {
+        addBlockDropdown.classList.toggle('hidden');
+      });
+
+      addBlockDropdown.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const type = btn.dataset.type;
+        const level = btn.dataset.level;
+        const block = createBlockElement(type, level);
+        blockEditor.appendChild(block);
+        block.querySelector('.block-content').focus();
+        addBlockDropdown.classList.add('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.block-actions-row')) {
+          addBlockDropdown.classList.add('hidden');
+        }
+        if (!e.target.closest('.nav-link-popup') && !e.target.closest('#add-nav-link') && !e.target.closest('.nav-chip')) {
+          navLinkPopup.classList.add('hidden');
+        }
+      });
+
+      // ============ BUILD INPUT ============
+
+      function parseInlineNodes(element) {
+        const nodes = [];
+
+        function processNodeInto(node, targetArray) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent;
+            if (text) {
+              targetArray.push({ type: 'text', text });
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const tag = node.tagName.toLowerCase();
+            const children = [];
+            for (const child of node.childNodes) {
+              processNodeInto(child, children);
+            }
+
+            if (tag === 'b' || tag === 'strong') {
+              targetArray.push({ type: 'bold', children });
+            } else if (tag === 'i' || tag === 'em') {
+              targetArray.push({ type: 'italic', children });
+            } else if (tag === 'a') {
+              const href = node.getAttribute('href') || '';
+              targetArray.push({ type: 'link', href, children });
+            } else {
+              targetArray.push(...children);
+            }
+          }
+        }
+
+        for (const child of element.childNodes) {
+          processNodeInto(child, nodes);
+        }
+
+        if (nodes.length === 0) {
+          nodes.push({ type: 'text', text: '' });
+        }
+
+        return nodes;
+      }
+
+      function getContentFromBlocks() {
+        const blocks = blockEditor.querySelectorAll('.block-item');
+        const content = [];
+
+        for (const block of blocks) {
+          const type = block.dataset.type;
+          const contentEl = block.querySelector('.block-content');
+          const children = parseInlineNodes(contentEl);
+
+          if (type === 'heading') {
+            content.push({
+              type: 'heading',
+              level: parseInt(block.dataset.level, 10),
+              children
+            });
+          } else {
+            content.push({
+              type: 'paragraph',
+              children
+            });
+          }
+        }
+
+        return content;
+      }
+
+      function getNavigationItems() {
+        const chips = navLinks.querySelectorAll('.nav-chip');
+        return Array.from(chips).map(chip => ({
+          text: chip.textContent,
+          href: chip.dataset.href
+        }));
+      }
+
+      const contentError = document.getElementById('content-error');
+
+      function buildInput() {
+        const content = getContentFromBlocks();
+        if (content.length === 0) {
+          contentError.textContent = 'Mindestens ein Block erforderlich';
+          contentError.classList.remove('hidden');
+          throw new Error('Mindestens ein Content-Block erforderlich');
+        }
+        contentError.classList.add('hidden');
+
+        let navigation = null;
+        if (navEnabled.checked) {
+          const items = getNavigationItems();
+          if (items.length > 0) {
+            navigation = { items };
+          }
+        }
+
+        let footer = null;
+        if (footerEnabled.checked && footerText.value.trim()) {
+          footer = { content: footerText.value.trim() };
+        }
+
+        let css = null;
+        if (cssRules.value.trim()) {
+          css = { rules: cssRules.value.trim() };
+        }
+
+        return {
+          slug: slugInput.value.trim() || 'untitled',
+          title: titleInput.value.trim() || 'Untitled',
+          content,
+          navigation,
+          footer,
+          css,
+          icons: [],
+          allowPagination: false,
+          buildId: crypto.randomUUID(),
+          pageType: pageTypeSelect.value,
+        };
+      }
+
+      // ============ BYTE COUNTER ============
+
+      function updateByteCounter(totalBytes, overheadBytes = 0) {
+        const limit = 14336;
+        const contentBytes = totalBytes - overheadBytes;
+        const overheadPercent = Math.min((overheadBytes / limit) * 100, 100);
+        const totalPercent = Math.min((totalBytes / limit) * 100, 100);
+
+        currentOverheadBytes = overheadBytes;
+
+        byteText.textContent = `${totalBytes.toLocaleString('de-DE')} / ${limit.toLocaleString('de-DE')} Bytes`;
+
+        if (overheadBytes > 0 && totalBytes > 0) {
+          const overheadRatio = Math.round((overheadBytes / totalBytes) * 100);
+          const contentRatio = 100 - overheadRatio;
+          overheadText.textContent = `Overhead: ${overheadRatio} % · Inhalt: ${contentRatio} %`;
+          overheadText.classList.remove('hidden');
+        } else {
+          overheadText.classList.add('hidden');
+        }
+
+        // Overhead bar (gray)
+        byteFillOverhead.style.width = `${overheadPercent}%`;
+
+        // Content bar (colored, starts after overhead)
+        byteFillContent.style.left = `${overheadPercent}%`;
+        byteFillContent.style.width = `${totalPercent - overheadPercent}%`;
+
+        byteFillContent.classList.remove('warning', 'danger');
+        if (totalPercent >= 100) {
+          byteFillContent.classList.add('danger');
+        } else if (totalPercent >= 80) {
+          byteFillContent.classList.add('warning');
+        }
+      }
+
+      // ============ MESSAGES ============
+
+      function showMessage(text, type = 'error') {
+        messageEl.textContent = text;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+      }
+
+      function hideMessage() {
+        messageEl.classList.add('hidden');
+      }
+
+      // ============ PUBLISH ============
+
+      publishBtn.addEventListener('click', async () => {
+        if (!confirm('Post wirklich veröffentlichen?')) return;
+
+        publishBtn.disabled = true;
+        hideMessage();
+
+        try {
+          const input = buildInput();
+          const result = await App.publish(input);
+
+          showMessage(`Post veröffentlicht: /${result.slug}`, 'success');
+          updateByteCounter(result.bytes);
+
+          // Disable editing after publish
+          titleInput.disabled = true;
+          slugInput.disabled = true;
+          blockEditor.querySelectorAll('.block-content').forEach(el => {
+            el.contentEditable = 'false';
+          });
+          blockEditor.querySelectorAll('button, select').forEach(el => {
+            el.disabled = true;
+          });
+          addBlockBtn.disabled = true;
+          navEnabled.disabled = true;
+          footerEnabled.disabled = true;
+          cssRules.disabled = true;
+          publishBtn.disabled = true;
+          publishBtn.textContent = 'Veröffentlicht';
+        } catch (err) {
+          showMessage(err.message, 'error');
+          console.error(err);
+          publishBtn.disabled = false;
+        }
+      });
+
+      // ============ INIT ============
+
+      updateByteCounter(0, 0);
+
+      // Auto-update byte counter on content changes
+      const debouncedPreview = debounce(async () => {
+        try {
+          const input = buildInput();
+          const result = await App.preview(input);
+          updateByteCounter(result.bytes, result.overheadBytes || 0);
+        } catch (e) {
+          // Ignore preview errors during editing
+        }
+      }, 500);
+
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn(...args), delay);
+        };
+      }
+
+      // Listen for content changes
+      blockEditor.addEventListener('input', debouncedPreview);
+      titleInput.addEventListener('input', debouncedPreview);
+      footerText.addEventListener('input', debouncedPreview);
+      cssRules.addEventListener('input', debouncedPreview);
+      navEnabled.addEventListener('change', debouncedPreview);
+      footerEnabled.addEventListener('change', debouncedPreview);
+
+      // Initial preview to get overhead
+      debouncedPreview();
+
+    })();
+  </script>
+</body>
+</html>

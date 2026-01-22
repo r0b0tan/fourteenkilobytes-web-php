@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog</title>
+  <style>
+    :root {
+      --bg: #fafafa;
+      --fg: #222;
+      --muted: #666;
+      --link: #0066cc;
+      --border: #ddd;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --fg: #e8e8e8;
+        --muted: #999;
+        --link: #6bb3ff;
+        --border: #333;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+    }
+    .posts { list-style: none; }
+    .post {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .post:last-child { border-bottom: none; }
+    .post a {
+      color: var(--link);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .post a:hover { text-decoration: underline; }
+    .post time {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+    .loading { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Blog</h1>
+  <ul class="posts" id="posts">
+    <li class="loading">Lade...</li>
+  </ul>
+
+  <script>
+    (async function() {
+      const container = document.getElementById('posts');
+
+      try {
+        const res = await fetch('/api/posts');
+        const { posts } = await res.json();
+
+        const published = posts.filter(p => p.status === 'published');
+
+        if (published.length === 0) {
+          container.innerHTML = '<li class="empty">Noch keine Posts.</li>';
+          return;
+        }
+
+        // Sort by date, newest first
+        published.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+        container.innerHTML = published.map(post => `
+          <li class="post">
+            <a href="/${post.slug}">${escapeHtml(post.title)}</a>
+            <time datetime="${post.publishedAt}">${formatDate(post.publishedAt)}</time>
+          </li>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<li class="empty">Fehler beim Laden.</li>';
+        console.error(err);
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function formatDate(iso) {
+        return new Date(iso).toLocaleDateString('de-DE', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Einstellungen - fourteenkilobytes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Einstellungen</h1>
+    <nav>
+      <a href="index.html">← Zurück</a>
+      <a href="/" target="_blank">Blog</a>
+    </nav>
+  </div>
+
+  <div id="message" class="message hidden"></div>
+
+  <!-- Overhead Display -->
+  <div class="overhead-display">
+    <div class="overhead-info">
+      <span class="overhead-label">Globaler Overhead:</span>
+      <span id="overhead-bytes">0 Bytes</span>
+      <span class="overhead-hint">(wird in jede Seite eingebettet)</span>
+    </div>
+    <div class="byte-bar">
+      <div id="overhead-fill" class="byte-fill overhead" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="settings-tabs">
+    <button type="button" class="tab-btn active" data-tab="header">Header</button>
+    <button type="button" class="tab-btn" data-tab="footer">Footer</button>
+    <button type="button" class="tab-btn" data-tab="css">CSS</button>
+  </div>
+
+  <!-- Header Tab -->
+  <div id="tab-header" class="tab-content active">
+    <div class="editor-row">
+      <label class="row-toggle">
+        <input type="checkbox" id="header-enabled">
+        <span>Header aktivieren</span>
+      </label>
+      <div id="header-editor" class="nav-editor hidden">
+        <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
+        <div id="header-links" class="nav-links"></div>
+        <button type="button" id="add-header-link" class="btn-small btn-secondary">+ Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Tab -->
+  <div id="tab-footer" class="tab-content hidden">
+    <div class="editor-row">
+      <label class="row-toggle">
+        <input type="checkbox" id="footer-enabled">
+        <span>Footer aktivieren</span>
+      </label>
+      <div id="footer-editor" class="footer-editor hidden">
+        <p class="text-small text-muted mb-1">Footer-Text (HTML erlaubt, <code>{{bytes}}</code> für Byte-Anzeige)</p>
+        <input type="text" id="footer-content" placeholder="© 2026 | {{bytes}}/14336 bytes">
+      </div>
+    </div>
+  </div>
+
+  <!-- CSS Tab -->
+  <div id="tab-css" class="tab-content hidden">
+    <div class="editor-row">
+      <p class="text-small text-muted mb-1">Globale CSS-Regeln (werden in jede Seite eingebettet)</p>
+      <textarea id="global-css" rows="12" placeholder="body {
+  font-family: Georgia, serif;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+:root {
+  --primary: #1a1a1a;
+  --accent: #0066cc;
+}"></textarea>
+    </div>
+  </div>
+
+  <!-- Link Edit Popup -->
+  <div id="link-popup" class="nav-link-popup hidden">
+    <div class="popup-content">
+      <div class="form-group">
+        <label>Text</label>
+        <input type="text" id="link-text" placeholder="Home">
+      </div>
+      <div class="form-group">
+        <label>Ziel</label>
+        <input type="text" id="link-href" placeholder="/">
+      </div>
+      <div class="popup-actions">
+        <button type="button" id="link-save">OK</button>
+        <button type="button" id="link-delete" class="btn-danger btn-small hidden">Löschen</button>
+        <button type="button" id="link-cancel" class="btn-secondary">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Row -->
+  <div class="publish-row">
+    <div class="byte-counter">
+      <span id="byte-text">Overhead: 0 / 14.336 Bytes</span>
+    </div>
+    <button id="save-btn">Speichern</button>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    (async function() {
+      // Check if setup is complete
+      const status = await App.getSetupStatus();
+      if (!status.setupComplete) {
+        window.location.href = '/admin/setup';
+        return;
+      }
+
+      // Check auth
+      const config = await App.getConfig();
+      if (config.authEnabled && !(await App.isLoggedIn())) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Elements
+      const headerEnabled = document.getElementById('header-enabled');
+      const headerEditor = document.getElementById('header-editor');
+      const headerLinks = document.getElementById('header-links');
+      const addHeaderLinkBtn = document.getElementById('add-header-link');
+      const footerEnabled = document.getElementById('footer-enabled');
+      const footerEditor = document.getElementById('footer-editor');
+      const footerContent = document.getElementById('footer-content');
+      const globalCss = document.getElementById('global-css');
+      const linkPopup = document.getElementById('link-popup');
+      const linkText = document.getElementById('link-text');
+      const linkHref = document.getElementById('link-href');
+      const linkSave = document.getElementById('link-save');
+      const linkDelete = document.getElementById('link-delete');
+      const linkCancel = document.getElementById('link-cancel');
+      const saveBtn = document.getElementById('save-btn');
+      const messageEl = document.getElementById('message');
+      const overheadBytes = document.getElementById('overhead-bytes');
+      const overheadFill = document.getElementById('overhead-fill');
+      const byteText = document.getElementById('byte-text');
+
+      // Tab elements
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      // State
+      let editingLink = null;
+
+      // ============ TABS ============
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+          tabContents.forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
+          tabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`));
+        });
+      });
+
+      // ============ HEADER EDITOR ============
+
+      headerEnabled.addEventListener('change', () => {
+        headerEditor.classList.toggle('hidden', !headerEnabled.checked);
+        updateOverhead();
+      });
+
+      function createLinkChip(text, href) {
+        const chip = document.createElement('span');
+        chip.className = 'nav-chip';
+        chip.dataset.href = href;
+        chip.textContent = text;
+        chip.addEventListener('click', () => editLink(chip));
+        return chip;
+      }
+
+      function editLink(chip) {
+        editingLink = chip;
+        linkText.value = chip.textContent;
+        linkHref.value = chip.dataset.href;
+        linkDelete.classList.remove('hidden');
+        linkPopup.classList.remove('hidden');
+        linkText.focus();
+      }
+
+      addHeaderLinkBtn.addEventListener('click', () => {
+        editingLink = null;
+        linkText.value = '';
+        linkHref.value = '';
+        linkDelete.classList.add('hidden');
+        linkPopup.classList.remove('hidden');
+        linkText.focus();
+      });
+
+      linkSave.addEventListener('click', () => {
+        const text = linkText.value.trim();
+        const href = linkHref.value.trim();
+        if (!text || !href) return;
+
+        if (editingLink) {
+          editingLink.textContent = text;
+          editingLink.dataset.href = href;
+        } else {
+          headerLinks.appendChild(createLinkChip(text, href));
+        }
+        linkPopup.classList.add('hidden');
+        editingLink = null;
+        updateOverhead();
+      });
+
+      linkDelete.addEventListener('click', () => {
+        if (editingLink) {
+          editingLink.remove();
+        }
+        linkPopup.classList.add('hidden');
+        editingLink = null;
+        updateOverhead();
+      });
+
+      linkCancel.addEventListener('click', () => {
+        linkPopup.classList.add('hidden');
+        editingLink = null;
+      });
+
+      // ============ FOOTER EDITOR ============
+
+      footerEnabled.addEventListener('change', () => {
+        footerEditor.classList.toggle('hidden', !footerEnabled.checked);
+        updateOverhead();
+      });
+
+      footerContent.addEventListener('input', debounce(updateOverhead, 300));
+
+      // ============ CSS EDITOR ============
+
+      globalCss.addEventListener('input', debounce(updateOverhead, 300));
+
+      // ============ BUILD SETTINGS ============
+
+      function getHeaderLinks() {
+        const chips = headerLinks.querySelectorAll('.nav-chip');
+        return Array.from(chips).map(chip => ({
+          text: chip.textContent,
+          href: chip.dataset.href
+        }));
+      }
+
+      function buildSettings() {
+        return {
+          version: 1,
+          globalCss: globalCss.value.trim(),
+          header: {
+            enabled: headerEnabled.checked,
+            links: getHeaderLinks(),
+          },
+          footer: {
+            enabled: footerEnabled.checked,
+            content: footerContent.value.trim(),
+          },
+        };
+      }
+
+      // ============ OVERHEAD CALCULATION ============
+
+      async function updateOverhead() {
+        try {
+          const settings = buildSettings();
+          const res = await App.previewOverhead(settings);
+          const bytes = res.overheadBytes;
+          const limit = 14336;
+          const percent = Math.min((bytes / limit) * 100, 100);
+
+          overheadBytes.textContent = `${bytes.toLocaleString('de-DE')} Bytes`;
+          byteText.textContent = `Overhead: ${bytes.toLocaleString('de-DE')} / ${limit.toLocaleString('de-DE')} Bytes`;
+
+          overheadFill.style.width = `${percent}%`;
+          overheadFill.classList.remove('warning', 'danger');
+          if (percent >= 50) {
+            overheadFill.classList.add('warning');
+          }
+          if (percent >= 75) {
+            overheadFill.classList.add('danger');
+          }
+        } catch (e) {
+          console.error('Overhead calculation failed:', e);
+        }
+      }
+
+      // ============ LOAD SETTINGS ============
+
+      async function loadSettings() {
+        try {
+          const settings = await App.getSettings();
+
+          // Header
+          headerEnabled.checked = settings.header.enabled;
+          headerEditor.classList.toggle('hidden', !settings.header.enabled);
+          headerLinks.innerHTML = '';
+          for (const link of settings.header.links) {
+            headerLinks.appendChild(createLinkChip(link.text, link.href));
+          }
+
+          // Footer
+          footerEnabled.checked = settings.footer.enabled;
+          footerEditor.classList.toggle('hidden', !settings.footer.enabled);
+          footerContent.value = settings.footer.content;
+
+          // CSS
+          globalCss.value = settings.globalCss;
+
+          await updateOverhead();
+        } catch (e) {
+          console.error('Failed to load settings:', e);
+        }
+      }
+
+      // ============ SAVE SETTINGS ============
+
+      saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        hideMessage();
+
+        try {
+          const settings = buildSettings();
+          await App.saveSettings(settings);
+          showMessage('Einstellungen gespeichert', 'success');
+        } catch (err) {
+          showMessage(err.message, 'error');
+        } finally {
+          saveBtn.disabled = false;
+        }
+      });
+
+      // ============ MESSAGES ============
+
+      function showMessage(text, type = 'error') {
+        messageEl.textContent = text;
+        messageEl.className = `message ${type}`;
+        messageEl.classList.remove('hidden');
+      }
+
+      function hideMessage() {
+        messageEl.classList.add('hidden');
+      }
+
+      // ============ UTILS ============
+
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn(...args), delay);
+        };
+      }
+
+      // ============ INIT ============
+
+      await loadSettings();
+    })();
+  </script>
+</body>
+</html>

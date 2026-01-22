@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - fourteenkilobytes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login -->
+  <div id="login-view" class="login-form">
+    <h2>Login</h2>
+    <div class="form-group">
+      <label for="password">Passwort</label>
+      <input type="password" id="password" placeholder="Passwort eingeben">
+    </div>
+    <button id="login-btn" style="width: 100%">Anmelden</button>
+    <p id="login-error" class="message error hidden mt-1"></p>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard-view" class="hidden">
+    <div class="header">
+      <h1>Übersicht</h1>
+      <nav>
+        <a href="editor.html">+ Neu</a>
+        <a href="settings.html">Einstellungen</a>
+        <a href="/" target="_blank">Blog</a>
+        <a href="#" id="logout-btn">Logout</a>
+      </nav>
+    </div>
+
+    <!-- Tabs -->
+    <div class="dashboard-tabs">
+      <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
+      <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
+    </div>
+
+    <!-- Posts Tab -->
+    <div id="tab-posts" class="tab-content active">
+      <ul id="posts-list" class="posts-list">
+        <li class="empty">Lade...</li>
+      </ul>
+    </div>
+
+    <!-- Pages Tab -->
+    <div id="tab-pages" class="tab-content hidden">
+      <ul id="pages-list" class="posts-list">
+        <li class="empty">Lade...</li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    (async function() {
+      const loginView = document.getElementById('login-view');
+      const dashboardView = document.getElementById('dashboard-view');
+      const passwordInput = document.getElementById('password');
+      const loginBtn = document.getElementById('login-btn');
+      const loginError = document.getElementById('login-error');
+      const logoutBtn = document.getElementById('logout-btn');
+      const postsList = document.getElementById('posts-list');
+      const pagesList = document.getElementById('pages-list');
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      // Check if setup is complete
+      const status = await App.getSetupStatus();
+      if (!status.setupComplete) {
+        window.location.href = '/admin/setup';
+        return;
+      }
+
+      // Check if auth is required
+      const config = await App.getConfig();
+
+      if (!config.authEnabled) {
+        // No auth required, show dashboard directly
+        showDashboard();
+      } else {
+        // Check if already logged in (cookie)
+        const loggedIn = await App.isLoggedIn();
+        if (loggedIn) {
+          showDashboard();
+        } else {
+          showLogin();
+        }
+      }
+
+      // Login handler
+      loginBtn.addEventListener('click', async () => {
+        const password = passwordInput.value.trim();
+        if (!password) {
+          showError('Bitte Passwort eingeben');
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginError.classList.add('hidden');
+
+        try {
+          await App.login(password);
+          showDashboard();
+        } catch (err) {
+          showError(err.message === 'Invalid password' ? 'Falsches Passwort' : 'Fehler bei Anmeldung');
+          console.error(err);
+        } finally {
+          loginBtn.disabled = false;
+        }
+      });
+
+      passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+
+      // Logout handler
+      logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await App.logout();
+        passwordInput.value = '';
+        showLogin();
+      });
+
+      function showLogin() {
+        loginView.classList.remove('hidden');
+        dashboardView.classList.add('hidden');
+        passwordInput.focus();
+      }
+
+      function showDashboard() {
+        loginView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        loadAllContent();
+      }
+
+      // ============ TABS ============
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.dataset.tab;
+          tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+          tabContents.forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
+          tabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`));
+        });
+      });
+
+      function showError(msg) {
+        loginError.textContent = msg;
+        loginError.classList.remove('hidden');
+      }
+
+      async function loadAllContent() {
+        try {
+          const allContent = await App.getPosts();
+
+          // Split into posts and pages
+          const posts = allContent.filter(item => item.pageType !== 'page');
+          const pages = allContent.filter(item => item.pageType === 'page');
+
+          // Render posts
+          renderList(postsList, posts, 'Post', 'Noch keine Posts.');
+
+          // Render pages
+          renderList(pagesList, pages, 'Seite', 'Noch keine Seiten.');
+        } catch (err) {
+          postsList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
+          pagesList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
+          console.error(err);
+        }
+      }
+
+      function renderList(listEl, items, typeName, emptyText) {
+        if (items.length === 0) {
+          listEl.innerHTML = `<li class="empty">${emptyText} <a href="editor.html">Erstelle deine erste ${typeName}</a></li>`;
+          return;
+        }
+
+        // Sort by date, newest first
+        items.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+        listEl.innerHTML = items.map(item => `
+          <li>
+            <div class="post-info">
+              <div class="post-title ${item.status === 'tombstone' ? 'status-tombstone' : ''}">
+                <a href="/${item.slug}" target="_blank">${App.escapeHtml(item.title)}</a>
+              </div>
+              <div class="post-meta">
+                /${item.slug} · ${App.formatDate(item.publishedAt)}
+                ${item.status === 'tombstone' ? ' · <span class="text-muted">gelöscht</span>' : ''}
+              </div>
+            </div>
+            <div class="post-actions">
+              <a href="/${item.slug}" target="_blank" class="btn btn-secondary btn-small">Ansehen</a>
+              ${item.status === 'published' ? `
+                <button class="btn btn-danger btn-small" onclick="deletePost('${item.slug}')">Löschen</button>
+              ` : ''}
+            </div>
+          </li>
+        `).join('');
+      }
+
+      // Global delete handler
+      window.deletePost = async function(slug) {
+        if (!confirm(`"${slug}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+          return;
+        }
+
+        try {
+          await App.deletePost(slug);
+          loadAllContent();
+        } catch (err) {
+          alert('Fehler beim Löschen: ' + err.message);
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
