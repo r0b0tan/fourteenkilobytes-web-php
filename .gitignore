@@ -1,9 +1,6 @@
 # Claude AI
 .claude/
 
-# Apache config (local only)
-.htaccess
-
 # IDE
 .vscode/
 .idea/

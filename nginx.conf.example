@@ -1,0 +1,52 @@
+# nginx configuration for fourteenkilobytes
+# Place this in /etc/nginx/sites-available/ and symlink to sites-enabled/
+
+server {
+    listen 80;
+    server_name yourdomain.com;
+    root /var/www/fourteenkilobytes-web-php;
+    index index.php index.html;
+
+    # API routes
+    location /api/ {
+        try_files $uri /api/index.php$is_args$args;
+    }
+
+    # Admin panel
+    location /admin {
+        try_files $uri $uri/ /public/admin/index.html;
+    }
+
+    location /admin/ {
+        try_files $uri /public/admin/$uri /public/admin/index.html;
+    }
+
+    # Static files in public/admin
+    location ~ ^/admin/.*\.(css|js|html)$ {
+        root /var/www/fourteenkilobytes-web-php/public;
+        rewrite ^/admin/(.*)$ /admin/$1 break;
+    }
+
+    # Blog root
+    location = / {
+        try_files /public/index.html /index.php;
+    }
+
+    # Blog posts (slug format)
+    location ~ ^/([a-z0-9-]+)/?$ {
+        try_files $uri /index.php?slug=$1;
+    }
+
+    # PHP handler
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+}
