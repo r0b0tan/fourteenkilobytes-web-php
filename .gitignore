@@ -1,0 +1,29 @@
+# Claude AI
+.claude/
+
+# Apache config (local only)
+.htaccess
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.phar
+*.log
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.bak
