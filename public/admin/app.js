@@ -157,7 +157,8 @@ const App = (function() {
     // Handle size limit exceeded - still return measurements for the byte counter
     if (!result.wouldSucceed) {
       if (result.error?.code === 'SIZE_LIMIT_EXCEEDED' && result.partialMeasurements) {
-        const { total, overhead } = result.partialMeasurements.measurements;
+        const { total, overhead, content } = result.partialMeasurements.measurements;
+        const breakdown = result.partialMeasurements.breakdown;
 
         // Check if a single block is too large (from compiler)
         let blockTooLarge = null;
@@ -173,6 +174,8 @@ const App = (function() {
           html: '',
           bytes: total,
           overheadBytes: overhead,
+          contentBytes: content,
+          breakdown,
           measurements: null,
           exceeded: true,
           blockTooLarge,
@@ -183,7 +186,8 @@ const App = (function() {
     }
 
     const page = result.pages[0];
-    const { overhead } = result.measurements[0].measurements;
+    const { total, overhead, content } = result.measurements[0].measurements;
+    const breakdown = result.measurements[0].breakdown;
 
     // Replace {{bytes}} placeholder
     const finalHtml = page.html.replace(/\{\{bytes\}\}/g, String(page.bytes));
@@ -192,6 +196,8 @@ const App = (function() {
       html: finalHtml,
       bytes: page.bytes,
       overheadBytes: overhead,
+      contentBytes: content,
+      breakdown,
       measurements: result.measurements,
     };
   }
@@ -230,6 +236,95 @@ const App = (function() {
   }
 
   /**
+   * Get global settings info with byte breakdown for each component
+   */
+  async function getGlobalSettingsInfo() {
+    const settings = await getSettings();
+
+    // Calculate base overhead (minimal page with no extras)
+    const baseInput = {
+      slug: 'base-test',
+      title: 'T',
+      content: [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }],
+      navigation: null,
+      footer: null,
+      css: null,
+      icons: [],
+      allowPagination: false,
+      buildId: 'base-test',
+    };
+    const baseResult = await Compiler.dryRun(baseInput);
+    const baseBytes = baseResult.wouldSucceed ? baseResult.measurements[0].breakdown.base : 0;
+
+    // Calculate header bytes
+    let headerBytes = 0;
+    let headerActive = false;
+    if (settings.header?.enabled && settings.header.links?.length > 0) {
+      headerActive = true;
+      const headerInput = {
+        ...baseInput,
+        navigation: { items: settings.header.links },
+        buildId: 'header-test',
+      };
+      const headerResult = await Compiler.dryRun(headerInput);
+      if (headerResult.wouldSucceed) {
+        headerBytes = headerResult.measurements[0].breakdown.navigation;
+      }
+    }
+
+    // Calculate footer bytes
+    let footerBytes = 0;
+    let footerActive = false;
+    if (settings.footer?.enabled && settings.footer.content) {
+      footerActive = true;
+      const footerInput = {
+        ...baseInput,
+        footer: { content: settings.footer.content },
+        buildId: 'footer-test',
+      };
+      const footerResult = await Compiler.dryRun(footerInput);
+      if (footerResult.wouldSucceed) {
+        footerBytes = footerResult.measurements[0].breakdown.footer;
+      }
+    }
+
+    // Calculate CSS bytes
+    let cssBytes = 0;
+    let cssActive = false;
+    if (settings.globalCss) {
+      cssActive = true;
+      const cssInput = {
+        ...baseInput,
+        css: { rules: settings.globalCss },
+        buildId: 'css-test',
+      };
+      const cssResult = await Compiler.dryRun(cssInput);
+      if (cssResult.wouldSucceed) {
+        cssBytes = cssResult.measurements[0].breakdown.css;
+      }
+    }
+
+    return {
+      header: {
+        active: headerActive,
+        bytes: headerBytes,
+        links: settings.header?.links || [],
+      },
+      footer: {
+        active: footerActive,
+        bytes: footerBytes,
+        content: settings.footer?.content || '',
+      },
+      css: {
+        active: cssActive,
+        bytes: cssBytes,
+      },
+      baseBytes,
+      totalOverhead: baseBytes + headerBytes + footerBytes + cssBytes,
+    };
+  }
+
+  /**
    * Publish post - CLIENT-SIDE COMPILE, then send HTML to server
    */
   async function publish(input) {
@@ -258,6 +353,17 @@ const App = (function() {
           pages,
           title: input.title,
           pageType: input.pageType || 'post',
+          sourceData: {
+            slug: input.slug,
+            title: input.title,
+            content: input.content,
+            navigation: input.navigation,
+            footer: input.footer,
+            css: input.css,
+            icons: input.icons,
+            allowPagination: input.allowPagination,
+            pageType: input.pageType,
+          },
         }),
       });
     }
@@ -275,6 +381,17 @@ const App = (function() {
         bytes: page.bytes,
         hash: page.hash,
         pageType: input.pageType || 'post',
+        sourceData: {
+          slug: input.slug,
+          title: input.title,
+          content: input.content,
+          navigation: input.navigation,
+          footer: input.footer,
+          css: input.css,
+          icons: input.icons,
+          allowPagination: input.allowPagination,
+          pageType: input.pageType,
+        },
       }),
     });
   }
@@ -286,6 +403,29 @@ const App = (function() {
     return apiFetch(`/api/posts/${slug}`, {
       method: 'DELETE',
     });
+  }
+
+  /**
+   * Republish post with current posts (regenerate bloglist)
+   */
+  async function republishPost(slug) {
+    // Get sourceData from API
+    const { sourceData } = await apiFetch(`/api/posts/${slug}/republish`, {
+      method: 'POST',
+    });
+
+    // Load current posts
+    const posts = await getPosts();
+
+    // Rebuild input with fresh posts
+    const input = {
+      ...sourceData,
+      posts,
+      buildId: crypto.randomUUID(),
+    };
+
+    // Compile and publish
+    return publish(input);
   }
 
   /**
@@ -347,9 +487,11 @@ const App = (function() {
     preview,
     publish,
     deletePost,
+    republishPost,
     getSettings,
     saveSettings,
     previewOverhead,
+    getGlobalSettingsInfo,
     escapeHtml,
     formatDate,
     slugify,

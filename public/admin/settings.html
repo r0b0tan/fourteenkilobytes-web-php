@@ -42,9 +42,13 @@
     <div class="editor-row">
       <label for="homepage-select">Startseite</label>
       <p class="text-small text-muted mb-1">Wähle eine Seite, die als Startseite (/) angezeigt werden soll</p>
-      <select id="homepage-select" class="homepage-select">
-        <option value="">Standard (automatische Postliste)</option>
-      </select>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <select id="homepage-select" class="homepage-select" style="flex: 1;">
+          <option value="">Standard (automatische Postliste)</option>
+        </select>
+        <button type="button" id="regenerate-homepage-btn" class="btn-small btn-secondary" style="display: none;">🔄 Aktualisieren</button>
+      </div>
+      <p class="text-small text-muted" style="margin-top: 0.5rem;">💡 Nach neuen Posts auf "Aktualisieren" klicken</p>
     </div>
   </div>
 
@@ -140,6 +144,7 @@
 
       // Elements
       const homepageSelect = document.getElementById('homepage-select');
+      const regenerateHomepageBtn = document.getElementById('regenerate-homepage-btn');
       const headerEnabled = document.getElementById('header-enabled');
       const headerEditor = document.getElementById('header-editor');
       const headerLinks = document.getElementById('header-links');
@@ -166,6 +171,44 @@
 
       // State
       let editingLink = null;
+
+      // ============ HOMEPAGE ============
+
+      function updateRegenerateButton() {
+        const selectedSlug = homepageSelect.value;
+        if (selectedSlug) {
+          regenerateHomepageBtn.style.display = 'block';
+        } else {
+          regenerateHomepageBtn.style.display = 'none';
+        }
+      }
+
+      homepageSelect.addEventListener('change', updateRegenerateButton);
+
+      regenerateHomepageBtn.addEventListener('click', async () => {
+        const slug = homepageSelect.value;
+        if (!slug) return;
+
+        if (!confirm(`Startseite "${slug}" mit aktuellen Posts neu generieren?`)) return;
+
+        regenerateHomepageBtn.disabled = true;
+        regenerateHomepageBtn.textContent = '⏳ Generiere...';
+        hideMessage();
+
+        try {
+          await App.republishPost(slug);
+          showMessage('Startseite erfolgreich aktualisiert!', 'success');
+          regenerateHomepageBtn.textContent = '✓ Aktualisiert';
+          setTimeout(() => {
+            regenerateHomepageBtn.textContent = '🔄 Aktualisieren';
+            regenerateHomepageBtn.disabled = false;
+          }, 2000);
+        } catch (err) {
+          showMessage(`Fehler: ${err.message}`, 'error');
+          regenerateHomepageBtn.textContent = '🔄 Aktualisieren';
+          regenerateHomepageBtn.disabled = false;
+        }
+      });
 
       // ============ TABS ============
 
@@ -312,11 +355,15 @@
       async function loadSettings() {
         try {
           const settings = await App.getSettings();
-          const postsData = await App.getPosts();
+          const allPosts = await App.getPosts();
 
+          console.log('Posts Data:', allPosts);
+          
           // Homepage
           homepageSelect.innerHTML = '<option value="">— Standard (automatische Postliste) —</option>';
-          const pages = postsData.posts.filter(p => p.pageType === 'page' && p.status === 'published');
+          const pages = allPosts.filter(p => p.pageType === 'page' && p.status === 'published');
+          console.log('Filtered pages:', pages);
+          
           for (const page of pages) {
             const option = document.createElement('option');
             option.value = page.slug;
@@ -324,6 +371,9 @@
             homepageSelect.appendChild(option);
           }
           homepageSelect.value = settings.homepageSlug || '';
+
+          // Update regenerate button visibility
+          updateRegenerateButton();
 
           // Header
           headerEnabled.checked = settings.header.enabled;

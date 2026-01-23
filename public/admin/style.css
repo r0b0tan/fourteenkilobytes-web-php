@@ -789,6 +789,131 @@ button:disabled {
   color: var(--fg);
 }
 
+/* ============ GLOBAL SETTINGS INFO (Editor) ============ */
+
+.global-settings-info {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.global-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.global-settings-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.global-settings-link {
+  font-size: 0.75rem;
+  color: var(--link);
+  text-decoration: none;
+}
+
+.global-settings-link:hover {
+  text-decoration: underline;
+}
+
+.global-settings-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  font-size: 0.8rem;
+}
+
+.breakdown-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.breakdown-label {
+  color: var(--muted);
+}
+
+.breakdown-bytes {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.breakdown-total {
+  border-left: 1px solid var(--border);
+  padding-left: 1rem;
+  font-weight: 500;
+}
+
+.breakdown-total .breakdown-label {
+  color: var(--fg);
+}
+
+/* Global hint text */
+.global-hint {
+  font-size: 0.75rem;
+  color: var(--success);
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.global-hint::before {
+  content: "✓";
+}
+
+.override-hint {
+  margin-bottom: 0.5rem;
+}
+
+/* Byte Breakdown Details */
+.byte-breakdown {
+  margin-top: 0.25rem;
+}
+
+.byte-breakdown summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.byte-breakdown summary:hover {
+  color: var(--fg);
+}
+
+.byte-breakdown-list {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+  color: var(--muted);
+}
+
+.breakdown-row span:last-child {
+  font-family: ui-monospace, monospace;
+}
+
+.breakdown-row-total {
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   body {
