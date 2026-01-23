@@ -2,25 +2,32 @@
 var SIZE_LIMIT = 14336;
 var MAX_PAGINATION_ITERATIONS = 10;
 
-// src/measure.ts
+// src/measure.browser.ts
 var encoder = new TextEncoder();
 function measureBytes(str) {
   return encoder.encode(str).length;
 }
 async function computeHash(str) {
-  const msgBuffer = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 function normalizeLineEndings(str) {
   return str.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 function createPageMeasurement(slug, breakdown) {
-  const total = breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
+  const overhead = breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons;
+  const content = breakdown.content;
+  const total = overhead + content;
   return {
     slug,
     breakdown,
+    measurements: {
+      total,
+      overhead,
+      content
+    },
     total,
     remaining: SIZE_LIMIT - total,
     utilizationRatio: total / SIZE_LIMIT
@@ -206,7 +213,7 @@ function validateContentBlock(block, path) {
   return { valid: true };
 }
 function validateInlineNode(node, path) {
-  const allowedTypes = ["text", "bold", "italic", "link"];
+  const allowedTypes = ["text", "linebreak", "bold", "italic", "link"];
   if (!allowedTypes.includes(node.type)) {
     return {
       valid: false,
@@ -218,7 +225,7 @@ function validateInlineNode(node, path) {
       }
     };
   }
-  if (node.type === "text") {
+  if (node.type === "text" || node.type === "linebreak") {
     return { valid: true };
   }
   if (node.type === "link") {
@@ -444,6 +451,8 @@ function flattenInlineNode(node, icons, placement, index) {
   switch (node.type) {
     case "text":
       return escapeHtml(node.text);
+    case "linebreak":
+      return "<br>";
     case "bold":
       return `<b>${flattenInlineNodes(node.children, icons, placement)}</b>`;
     case "italic":
@@ -648,7 +657,7 @@ function paginatedSlug(baseSlug, pageNumber) {
 }
 
 // src/compiler.ts
-async function compile(input) {
+function compile(input) {
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
   const validation = validateInput(input);
   if (!validation.valid) {
@@ -664,6 +673,19 @@ async function compile(input) {
   const totalBytes = totalFromBreakdown(breakdown);
   if (totalBytes > SIZE_LIMIT) {
     if (!input.allowPagination) {
+      const fixedOverhead = breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons + breakdown.pagination;
+      const availableBudget = SIZE_LIMIT - fixedOverhead;
+      let oversizedBlock;
+      for (const block of contentBlocks) {
+        if (block.bytes > availableBudget) {
+          oversizedBlock = {
+            index: block.sourceIndex,
+            size: block.bytes,
+            availableBudget
+          };
+          break;
+        }
+      }
       return {
         success: false,
         buildId: input.buildId,
@@ -672,7 +694,8 @@ async function compile(input) {
           code: "SIZE_LIMIT_EXCEEDED",
           measured: totalBytes,
           limit: SIZE_LIMIT,
-          breakdown
+          breakdown,
+          oversizedBlock
         },
         partialMeasurements: createPageMeasurement(input.slug, breakdown)
       };
@@ -705,8 +728,22 @@ async function compile(input) {
       paginatedPage.paginationHtml
     );
     const bytes = measureBytes(html);
-    const hash = await computeHash(html);
+    const hash = computeHash(html);
     if (bytes > SIZE_LIMIT) {
+      const pageBreakdown = paginatedPage.breakdown;
+      const pageFixedOverhead = pageBreakdown.base + pageBreakdown.title + pageBreakdown.css + pageBreakdown.navigation + pageBreakdown.footer + pageBreakdown.icons + pageBreakdown.pagination;
+      const pageAvailableBudget = SIZE_LIMIT - pageFixedOverhead;
+      let oversizedBlock;
+      for (const block of paginatedPage.contentBlocks) {
+        if (block.bytes > pageAvailableBudget) {
+          oversizedBlock = {
+            index: block.sourceIndex,
+            size: block.bytes,
+            availableBudget: pageAvailableBudget
+          };
+          break;
+        }
+      }
       return {
         success: false,
         buildId: input.buildId,
@@ -715,7 +752,8 @@ async function compile(input) {
           code: "SIZE_LIMIT_EXCEEDED",
           measured: bytes,
           limit: SIZE_LIMIT,
-          breakdown: paginatedPage.breakdown
+          breakdown: paginatedPage.breakdown,
+          oversizedBlock
         }
       };
     }
@@ -817,7 +855,7 @@ ${JSON.stringify(result.error, null, 2)}`;
   return lines.join("\n");
 }
 
-// src/manifest.ts
+// src/manifest.core.ts
 function createEmptyManifest() {
   return {
     version: 1,

@@ -127,6 +127,10 @@
         <div id="byte-fill-overhead" class="byte-fill-overhead" style="width: 0%"></div>
         <div id="byte-fill-content" class="byte-fill-content" style="width: 0%"></div>
       </div>
+      <label id="pagination-option" class="pagination-checkbox hidden">
+        <input type="checkbox" id="allow-pagination">
+        <span>Automatisch auf mehrere Seiten aufteilen</span>
+      </label>
     </div>
     <button id="publish-btn">Veröffentlichen</button>
   </div>
@@ -184,6 +188,8 @@
       const overheadText = document.getElementById('overhead-text');
       const byteFillOverhead = document.getElementById('byte-fill-overhead');
       const byteFillContent = document.getElementById('byte-fill-content');
+      const paginationOption = document.getElementById('pagination-option');
+      const allowPaginationCheckbox = document.getElementById('allow-pagination');
       const messageEl = document.getElementById('message');
 
       // State
@@ -553,7 +559,9 @@
               processNodeInto(child, children);
             }
 
-            if (tag === 'b' || tag === 'strong') {
+            if (tag === 'br') {
+              targetArray.push({ type: 'linebreak' });
+            } else if (tag === 'b' || tag === 'strong') {
               targetArray.push({ type: 'bold', children });
             } else if (tag === 'i' || tag === 'em') {
               targetArray.push({ type: 'italic', children });
@@ -648,7 +656,7 @@
           footer,
           css,
           icons: [],
-          allowPagination: false,
+          allowPagination: allowPaginationCheckbox.checked,
           buildId: crypto.randomUUID(),
           pageType: pageTypeSelect.value,
         };
@@ -685,8 +693,12 @@
         byteFillContent.classList.remove('warning', 'danger');
         if (totalPercent >= 100) {
           byteFillContent.classList.add('danger');
+          paginationOption.classList.remove('hidden');
         } else if (totalPercent >= 80) {
           byteFillContent.classList.add('warning');
+          paginationOption.classList.add('hidden');
+        } else {
+          paginationOption.classList.add('hidden');
         }
       }
 
@@ -714,8 +726,13 @@
           const input = buildInput();
           const result = await App.publish(input);
 
-          showMessage(`Post veröffentlicht: /${result.slug}`, 'success');
-          updateByteCounter(result.bytes);
+          if (result.pageCount && result.pageCount > 1) {
+            showMessage(`Post veröffentlicht: /${result.slug} (${result.pageCount} Seiten)`, 'success');
+            updateByteCounter(result.totalBytes);
+          } else {
+            showMessage(`Post veröffentlicht: /${result.slug}`, 'success');
+            updateByteCounter(result.bytes);
+          }
 
           // Disable editing after publish
           titleInput.disabled = true;
@@ -749,6 +766,24 @@
           const input = buildInput();
           const result = await App.preview(input);
           updateByteCounter(result.bytes, result.overheadBytes || 0);
+
+          // Clear previous block warnings
+          blockEditor.querySelectorAll('.block-item.block-too-large').forEach(el => {
+            el.classList.remove('block-too-large');
+          });
+          contentError.classList.add('hidden');
+
+          // Check if a block is too large for pagination
+          if (result.blockTooLarge) {
+            const blocks = blockEditor.querySelectorAll('.block-item');
+            const blockIndex = result.blockTooLarge.blockIndex;
+            if (blocks[blockIndex]) {
+              blocks[blockIndex].classList.add('block-too-large');
+              const kb = (result.blockTooLarge.blockSize / 1024).toFixed(1);
+              contentError.textContent = `Block ${blockIndex + 1} ist zu groß (${kb} KB). Bitte in mehrere Absätze aufteilen.`;
+              contentError.classList.remove('hidden');
+            }
+          }
         } catch (e) {
           // Ignore preview errors during editing
         }
