@@ -82,6 +82,9 @@
           <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
           <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
           <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
+          <button type="button" data-type="heading" data-level="4">Überschrift 4</button>
+          <button type="button" data-type="heading" data-level="5">Überschrift 5</button>
+          <button type="button" data-type="heading" data-level="6">Überschrift 6</button>
           <button type="button" data-type="bloglist">Blogliste</button>
         </div>
       </div>
@@ -817,16 +820,25 @@ body { font-family: Georgia, serif; }"></textarea>
         blocks.forEach((block, index) => {
           const content = block.querySelector('.block-content');
           const type = block.dataset.type;
+          const level = block.dataset.level;
           const text = content ? content.textContent.trim() : '';
           
           // Rough byte estimation (real calculation happens server-side)
           const bytes = new TextEncoder().encode(text).length + 50; // +50 for markup
           totalContentBytes += bytes;
           
+          // Determine semantic label
+          let label = 'Absatz';
+          if (type === 'heading') {
+            label = `H${level} Überschrift`;
+          } else if (type === 'bloglist') {
+            label = 'Blogliste';
+          }
+          
           // Update block indicator with label
           const indicator = block.querySelector('.block-byte-indicator');
           if (indicator) {
-            indicator.innerHTML = `<span class="block-label">Block ${index + 1}</span><span class="block-bytes">${formatBytes(bytes)}</span>`;
+            indicator.innerHTML = `<span class="block-label">${label}</span><span class="block-bytes">${formatBytes(bytes)}</span>`;
           }
         });
         
