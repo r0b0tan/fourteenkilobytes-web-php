@@ -31,13 +31,25 @@
 
   <!-- Tabs -->
   <div class="settings-tabs">
-    <button type="button" class="tab-btn active" data-tab="header">Header</button>
+    <button type="button" class="tab-btn active" data-tab="general">Allgemein</button>
+    <button type="button" class="tab-btn" data-tab="header">Header</button>
     <button type="button" class="tab-btn" data-tab="footer">Footer</button>
     <button type="button" class="tab-btn" data-tab="css">CSS</button>
   </div>
 
+  <!-- General Tab -->
+  <div id="tab-general" class="tab-content active">
+    <div class="editor-row">
+      <label for="homepage-select">Startseite</label>
+      <p class="text-small text-muted mb-1">Wähle eine Seite, die als Startseite (/) angezeigt werden soll</p>
+      <select id="homepage-select" class="homepage-select">
+        <option value="">Standard (automatische Postliste)</option>
+      </select>
+    </div>
+  </div>
+
   <!-- Header Tab -->
-  <div id="tab-header" class="tab-content active">
+  <div id="tab-header" class="tab-content hidden">
     <div class="editor-row">
       <label class="row-toggle">
         <input type="checkbox" id="header-enabled">
@@ -127,6 +139,7 @@
       }
 
       // Elements
+      const homepageSelect = document.getElementById('homepage-select');
       const headerEnabled = document.getElementById('header-enabled');
       const headerEditor = document.getElementById('header-editor');
       const headerLinks = document.getElementById('header-links');
@@ -255,6 +268,7 @@
       function buildSettings() {
         return {
           version: 1,
+          homepageSlug: homepageSelect.value || null,
           globalCss: globalCss.value.trim(),
           header: {
             enabled: headerEnabled.checked,
@@ -298,6 +312,18 @@
       async function loadSettings() {
         try {
           const settings = await App.getSettings();
+          const postsData = await App.getPosts();
+
+          // Homepage
+          homepageSelect.innerHTML = '<option value="">— Standard (automatische Postliste) —</option>';
+          const pages = postsData.posts.filter(p => p.pageType === 'page' && p.status === 'published');
+          for (const page of pages) {
+            const option = document.createElement('option');
+            option.value = page.slug;
+            option.textContent = page.title;
+            homepageSelect.appendChild(option);
+          }
+          homepageSelect.value = settings.homepageSlug || '';
 
           // Header
           headerEnabled.checked = settings.header.enabled;

@@ -403,6 +403,27 @@ button:disabled {
   text-decoration: underline;
 }
 
+/* Bloglist block */
+.block-bloglist {
+  background: #f5f5f5;
+  padding: 1rem;
+  text-align: center;
+  border: 1px dashed #ccc;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .block-bloglist {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+}
+
+.block-type-label {
+  font-weight: 500;
+  color: var(--muted);
+}
+
 /* Block too large warning */
 .block-item.block-too-large {
   border: 2px solid var(--danger);
@@ -694,6 +715,10 @@ button:disabled {
 .page-type-select {
   width: auto;
   padding: 0.25rem 0.5rem;
+}
+
+.homepage-select {
+  max-width: 400px;
 }
 
 /* Overhead Indicator in Byte Bar */
