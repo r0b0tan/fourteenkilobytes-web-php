@@ -1,2 +1,2 @@
-*.html linguist-documentation
-*.js linguist-vendored
+*.html linguist-documentation=true
+*.js linguist-vendored=true
