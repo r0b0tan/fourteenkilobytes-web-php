@@ -216,6 +216,7 @@ body { font-family: Georgia, serif; }"></textarea>
       const linkCancelBtn = document.getElementById('link-cancel');
       const navEnabled = document.getElementById('nav-enabled');
       const navEditor = document.getElementById('nav-editor');
+      const navGlobalHint = document.getElementById('nav-global-hint');
       const navLinks = document.getElementById('nav-links');
       const addNavLinkBtn = document.getElementById('add-nav-link');
       const navLinkPopup = document.getElementById('nav-link-popup');
@@ -226,6 +227,7 @@ body { font-family: Georgia, serif; }"></textarea>
       const navLinkCancel = document.getElementById('nav-link-cancel');
       const footerEnabled = document.getElementById('footer-enabled');
       const footerEditor = document.getElementById('footer-editor');
+      const footerGlobalHint = document.getElementById('footer-global-hint');
       const footerText = document.getElementById('footer-text');
       const cssRules = document.getElementById('css-rules');
       const liveCSS = document.getElementById('live-css');
@@ -270,6 +272,7 @@ body { font-family: Georgia, serif; }"></textarea>
 
       navEnabled.addEventListener('change', () => {
         navEditor.classList.toggle('hidden', !navEnabled.checked);
+        navGlobalHint.classList.toggle('hidden', navEnabled.checked);
       });
 
       function createNavChip(text, href) {
@@ -331,6 +334,7 @@ body { font-family: Georgia, serif; }"></textarea>
 
       footerEnabled.addEventListener('change', () => {
         footerEditor.classList.toggle('hidden', !footerEnabled.checked);
+        footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
       });
 
       // ============ LIVE CSS ============
@@ -915,16 +919,13 @@ body { font-family: Georgia, serif; }"></textarea>
 
       // ============ INIT ============
 
-      // Show/hide override hints
-      navEnabled.addEventListener('change', () => {
-        navEditor.classList.toggle('hidden', !navEnabled.checked);
-        navGlobalHint.classList.toggle('hidden', navEnabled.checked);
-      });
-
-      footerEnabled.addEventListener('change', () => {
-        footerEditor.classList.toggle('hidden', !footerEnabled.checked);
-        footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
-      });
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn(...args), delay);
+        };
+      }
 
       updateByteCounter(0, 0);
       updateCostRail();
@@ -957,14 +958,6 @@ body { font-family: Georgia, serif; }"></textarea>
           // Ignore preview errors during editing
         }
       }, 500);
-
-      function debounce(fn, delay) {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => fn(...args), delay);
-        };
-      }
 
       // Listen for content changes
       blockEditor.addEventListener('input', () => {

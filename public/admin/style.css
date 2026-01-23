@@ -349,35 +349,6 @@ button:disabled {
   max-width: 680px;
 }
 
-/* Title Row */
-.title-row {
-  /* Legacy - entfernt */
-}
-
-/* Page Type Selector */
-.page-type-row {
-  /* Legacy - in base-data-row integriert */
-}
-
-/* Editor Rows */
-.editor-row {
-  /* Legacy - durch override-section ersetzt */
-}
-
-.editor-row:first-of-type {
-  /* Legacy */
-}
-
-.row-toggle {
-  /* Legacy - siehe override-toggle */
-}
-
-/* Navigation Editor */
-.nav-editor,
-.footer-editor {
-  /* Legacy - durch override-editor ersetzt */
-}
-
 .nav-links {
   display: flex;
   gap: 8px;
@@ -423,11 +394,6 @@ button:disabled {
   display: flex;
   gap: 8px;
   margin-top: 16px;
-}
-
-/* Content Area */
-.content-area {
-  /* Legacy - durch content-section ersetzt */
 }
 
 .block-actions-row {
@@ -675,11 +641,6 @@ button:disabled {
 
 .add-block-dropdown button:hover {
   background: var(--border);
-}
-
-/* CSS Section */
-.css-section {
-  margin: 24px 0 0 0;
 }
 
 .css-section summary {
@@ -1013,35 +974,6 @@ button:disabled {
   color: var(--text-primary);
 }
 
-/* ============ LEGACY STYLES (zu entfernen) ============ */
-
-.global-settings-info,
-.global-settings-header,
-.global-settings-title,
-.global-settings-link,
-.global-settings-breakdown,
-.global-hint,
-.byte-breakdown,
-.byte-breakdown-list {
-  /* Legacy - nicht mehr verwendet */
-}
-
-.breakdown-item {
-  /* Legacy */
-}
-
-.breakdown-label {
-  /* Legacy */
-}
-
-.breakdown-bytes {
-  /* Legacy */
-}
-
-.breakdown-total {
-  /* Legacy */
-}
-
 /* Responsive */
 @media (max-width: 900px) {
   .editor-container {
@@ -1050,10 +982,6 @@ button:disabled {
 
   .cost-rail {
     width: 100%;
-  }
-
-  .cost-rail-content {
-    /* No special positioning needed */
   }
 
   .block-byte-indicator {
