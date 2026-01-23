@@ -235,7 +235,7 @@ button:disabled {
 /* Basisdaten und Header/Footer Override sind außerhalb des Containers */
 .section-base-data {
   margin-bottom: 24px;
-  max-width: 680px;
+  max-width: 100%;
 }
 
 .override-section {
@@ -288,7 +288,7 @@ button:disabled {
 /* ZONE A – Basisdaten */
 .base-data-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr;
+  grid-template-columns: 3fr 3fr 1fr;
   gap: 16px;
 }
 
@@ -297,6 +297,13 @@ button:disabled {
 }
 
 /* ZONE B, D – Override Sections (Header, Footer) */
+.override-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .override-toggle {
   display: flex;
   align-items: center;
@@ -314,7 +321,7 @@ button:disabled {
 .override-hint {
   font-size: 12px;
   color: var(--text-secondary);
-  margin: 4px 0 0 24px;
+  margin: 0;
 }
 
 .override-hint::before {
