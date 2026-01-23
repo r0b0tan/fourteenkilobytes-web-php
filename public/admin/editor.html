@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>Neuer Post</h1>
+    <h1>Neuer Build</h1>
     <nav>
       <a href="index.html">← Zurück</a>
       <a href="/" target="_blank">Blog</a>
@@ -17,63 +17,36 @@
 
   <div id="message" class="message hidden"></div>
 
-  <!-- Global Settings Overview -->
-  <div id="global-settings-info" class="global-settings-info hidden">
-    <div class="global-settings-header">
-      <span class="global-settings-title">Globale Einstellungen aktiv</span>
-      <a href="settings.html" class="global-settings-link">Bearbeiten →</a>
-    </div>
-    <div class="global-settings-breakdown">
-      <div id="global-header-info" class="breakdown-item hidden">
-        <span class="breakdown-label">Header</span>
-        <span id="global-header-bytes" class="breakdown-bytes">0 Bytes</span>
+  <!-- A. Basisdaten -->
+  <div class="section-base-data">
+    <div class="base-data-row">
+      <div class="form-group">
+        <label for="title">Titel</label>
+        <input type="text" id="title" placeholder="Mein erster Post">
       </div>
-      <div id="global-footer-info" class="breakdown-item hidden">
-        <span class="breakdown-label">Footer</span>
-        <span id="global-footer-bytes" class="breakdown-bytes">0 Bytes</span>
+      <div class="form-group">
+        <label for="slug">Slug</label>
+        <input type="text" id="slug" placeholder="mein-erster-post">
       </div>
-      <div id="global-css-info" class="breakdown-item hidden">
-        <span class="breakdown-label">CSS</span>
-        <span id="global-css-bytes" class="breakdown-bytes">0 Bytes</span>
-      </div>
-      <div class="breakdown-item breakdown-total">
-        <span class="breakdown-label">Basis-Overhead</span>
-        <span id="global-base-bytes" class="breakdown-bytes">0 Bytes</span>
+      <div class="form-group">
+        <label for="page-type">Build-Typ</label>
+        <select id="page-type" class="page-type-select">
+          <option value="post">Blog-Post</option>
+          <option value="page">Statische Seite</option>
+        </select>
+        <span id="page-type-hint" class="text-small text-muted"></span>
       </div>
     </div>
   </div>
 
-  <!-- Page Type -->
-  <div class="page-type-row">
-    <label for="page-type">Typ:</label>
-    <select id="page-type" class="page-type-select">
-      <option value="post">Blog-Post</option>
-      <option value="page">Statische Seite</option>
-    </select>
-    <span id="page-type-hint" class="text-small text-muted"></span>
-  </div>
-
-  <!-- Title & Slug -->
-  <div class="title-row">
-    <div class="form-group">
-      <label for="title">Titel</label>
-      <input type="text" id="title" placeholder="Mein erster Post">
-    </div>
-    <div class="form-group">
-      <label for="slug">Slug</label>
-      <input type="text" id="slug" placeholder="mein-erster-post">
-    </div>
-  </div>
-
-  <!-- Navigation -->
-  <div class="editor-row">
-    <label class="row-toggle">
+  <!-- B. Header-Override -->
+  <div class="override-section">
+    <label class="override-toggle">
       <input type="checkbox" id="nav-enabled">
       <span>Header überschreiben</span>
     </label>
-    <p id="nav-global-hint" class="global-hint hidden">Globaler Header wird verwendet</p>
-    <div id="nav-editor" class="nav-editor hidden">
-      <p class="override-hint text-small text-muted mb-1">Eigene Navigation (ersetzt globalen Header)</p>
+    <p id="nav-global-hint" class="override-hint">✓ Globaler Header wird verwendet</p>
+    <div id="nav-editor" class="override-editor hidden">
       <div id="nav-links" class="nav-links"></div>
       <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
     </div>
@@ -98,20 +71,33 @@
     </div>
   </div>
 
-  <!-- Content / Block Editor -->
-  <div class="editor-row content-area">
-    <div id="block-editor" class="block-editor"></div>
-    <div class="block-actions-row">
-      <button type="button" id="add-block-btn" class="btn-small btn-secondary">+ Block</button>
-      <div id="add-block-dropdown" class="add-block-dropdown hidden">
-        <button type="button" data-type="paragraph">Absatz</button>
-        <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
-        <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
-        <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
-        <button type="button" data-type="bloglist">Blogliste</button>
+  <!-- C. Block-Editor mit Cost Rail -->
+  <div class="editor-container">
+    <div class="content-section">
+      <div id="block-editor" class="block-editor"></div>
+      <div class="block-actions-row">
+        <button type="button" id="add-block-btn" class="btn-small btn-secondary">Block hinzufügen</button>
+        <div id="add-block-dropdown" class="add-block-dropdown hidden">
+          <button type="button" data-type="paragraph">Absatz</button>
+          <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
+          <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
+          <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
+          <button type="button" data-type="bloglist">Blogliste</button>
+        </div>
+      </div>
+      <p id="content-error" class="text-small text-danger hidden"></p>
+    </div>
+
+    <!-- Cost Rail rechts vom Block-Editor -->
+    <div class="cost-rail">
+      <div class="cost-rail-content" id="cost-rail-content">
+        <div class="cost-blocks" id="cost-blocks"></div>
+        <div class="cost-total">
+          <span>Content</span>
+          <span id="cost-content-total">0 B</span>
+        </div>
       </div>
     </div>
-    <p id="content-error" class="text-small text-danger hidden"></p>
   </div>
 
   <!-- Floating Format Toolbar (hidden by default) -->
@@ -128,62 +114,58 @@
     <button type="button" id="link-cancel" class="btn-secondary btn-small">×</button>
   </div>
 
-  <!-- Footer -->
-  <div class="editor-row">
-    <label class="row-toggle">
+  <!-- D. Footer-Override -->
+  <div class="override-section">
+    <label class="override-toggle">
       <input type="checkbox" id="footer-enabled">
       <span>Footer überschreiben</span>
     </label>
-    <p id="footer-global-hint" class="global-hint hidden">Globaler Footer wird verwendet</p>
-    <div id="footer-editor" class="footer-editor hidden">
-      <p class="override-hint text-small text-muted mb-1">Eigener Footer (ersetzt globalen Footer)</p>
+    <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
+    <div id="footer-editor" class="override-editor hidden">
       <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
     </div>
   </div>
 
-  <!-- Custom CSS (collapsible) -->
+  <!-- E. Zusätzliches CSS -->
   <details class="css-section">
     <summary>Zusätzliches CSS</summary>
-    <p id="css-global-hint" class="global-hint hidden">Wird zum globalen CSS hinzugefügt</p>
+    <p class="css-warning-hint">Zusätzliches CSS erhöht die Seitengröße und beeinflusst den deterministischen Build.</p>
     <textarea id="css-rules" rows="4" placeholder="/* Wird nach globalem CSS eingefügt */
 body { font-family: Georgia, serif; }"></textarea>
   </details>
 
-  <!-- Publish Row -->
-  <div class="publish-row">
-    <div class="byte-counter">
-      <div class="byte-details">
-        <span id="byte-text" class="byte-main">0 / 14.336 Bytes</span>
-        <details id="byte-breakdown" class="byte-breakdown">
-          <summary class="text-muted">Aufschlüsselung</summary>
-          <div class="byte-breakdown-list">
-            <div class="breakdown-row">
-              <span>Basis (HTML-Struktur)</span>
-              <span id="breakdown-base">0</span>
-            </div>
-            <div class="breakdown-row">
-              <span>Titel</span>
-              <span id="breakdown-title">0</span>
-            </div>
-            <div id="breakdown-nav-row" class="breakdown-row">
-              <span>Header</span>
-              <span id="breakdown-nav">0</span>
-            </div>
-            <div id="breakdown-footer-row" class="breakdown-row">
-              <span>Footer</span>
-              <span id="breakdown-footer">0</span>
-            </div>
-            <div id="breakdown-css-row" class="breakdown-row">
-              <span>CSS</span>
-              <span id="breakdown-css">0</span>
-            </div>
-            <div class="breakdown-row breakdown-row-total">
-              <span>Inhalt</span>
-              <span id="breakdown-content">0</span>
-            </div>
+  <!-- Build Summary -->
+  <div class="build-summary">
+    <div class="build-summary-content">
+      <details class="build-breakdown" open>
+        <summary>Build-Aufschlüsselung</summary>
+        <div class="breakdown-table">
+          <div class="breakdown-row">
+            <span>Fixkosten (Basis)</span>
+            <span id="breakdown-base">0 B</span>
           </div>
-        </details>
-      </div>
+          <div class="breakdown-row" id="breakdown-nav-row" style="display: none;">
+            <span>Navigation</span>
+            <span id="breakdown-nav">0 B</span>
+          </div>
+          <div class="breakdown-row" id="breakdown-footer-row" style="display: none;">
+            <span>Footer</span>
+            <span id="breakdown-footer">0 B</span>
+          </div>
+          <div class="breakdown-row" id="breakdown-css-row" style="display: none;">
+            <span>CSS</span>
+            <span id="breakdown-css">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Content gesamt</span>
+            <span id="breakdown-content">0 B</span>
+          </div>
+          <div class="breakdown-row breakdown-row-total">
+            <span>Gesamt</span>
+            <span id="breakdown-total">0 B / 14.336 B</span>
+          </div>
+        </div>
+      </details>
       <div class="byte-bar">
         <div id="byte-fill-overhead" class="byte-fill-overhead" style="width: 0%"></div>
         <div id="byte-fill-content" class="byte-fill-content" style="width: 0%"></div>
@@ -193,7 +175,7 @@ body { font-family: Georgia, serif; }"></textarea>
         <span>Automatisch auf mehrere Seiten aufteilen</span>
       </label>
     </div>
-    <button id="publish-btn">Veröffentlichen</button>
+    <button id="publish-btn" class="btn-primary">Build & Publish</button>
   </div>
 
   <!-- Live CSS Container -->
@@ -245,29 +227,16 @@ body { font-family: Georgia, serif; }"></textarea>
       const cssRules = document.getElementById('css-rules');
       const liveCSS = document.getElementById('live-css');
       const publishBtn = document.getElementById('publish-btn');
-      const byteText = document.getElementById('byte-text');
-      const byteFillOverhead = document.getElementById('byte-fill-overhead');
-      const byteFillContent = document.getElementById('byte-fill-content');
       const paginationOption = document.getElementById('pagination-option');
       const allowPaginationCheckbox = document.getElementById('allow-pagination');
       const messageEl = document.getElementById('message');
 
-      // Global settings info elements
-      const globalSettingsInfo = document.getElementById('global-settings-info');
-      const globalHeaderInfo = document.getElementById('global-header-info');
-      const globalHeaderBytes = document.getElementById('global-header-bytes');
-      const globalFooterInfo = document.getElementById('global-footer-info');
-      const globalFooterBytes = document.getElementById('global-footer-bytes');
-      const globalCssInfo = document.getElementById('global-css-info');
-      const globalCssBytes = document.getElementById('global-css-bytes');
-      const globalBaseBytes = document.getElementById('global-base-bytes');
-      const navGlobalHint = document.getElementById('nav-global-hint');
-      const footerGlobalHint = document.getElementById('footer-global-hint');
-      const cssGlobalHint = document.getElementById('css-global-hint');
+      // Cost Rail elements
+      const costBlocks = document.getElementById('cost-blocks');
+      const costContentTotal = document.getElementById('cost-content-total');
 
-      // Byte breakdown elements
+      // Build Summary elements
       const breakdownBase = document.getElementById('breakdown-base');
-      const breakdownTitle = document.getElementById('breakdown-title');
       const breakdownNav = document.getElementById('breakdown-nav');
       const breakdownNavRow = document.getElementById('breakdown-nav-row');
       const breakdownFooter = document.getElementById('breakdown-footer');
@@ -275,19 +244,20 @@ body { font-family: Georgia, serif; }"></textarea>
       const breakdownCss = document.getElementById('breakdown-css');
       const breakdownCssRow = document.getElementById('breakdown-css-row');
       const breakdownContent = document.getElementById('breakdown-content');
+      const breakdownTotal = document.getElementById('breakdown-total');
+      const byteFillOverhead = document.getElementById('byte-fill-overhead');
+      const byteFillContent = document.getElementById('byte-fill-content');
 
       // State
       let savedSelection = null;
       let editingNavLink = null; // The chip element being edited
-      let currentOverheadBytes = 0;
-      let globalSettingsState = null;
 
       // ============ PAGE TYPE ============
 
       pageTypeSelect.addEventListener('change', () => {
         const type = pageTypeSelect.value;
         if (type === 'page') {
-          pageTypeHint.textContent = '(erscheint nicht im Blog-Feed)';
+          pageTypeHint.textContent = '(nicht im Feed)';
         } else {
           pageTypeHint.textContent = '';
         }
@@ -479,6 +449,13 @@ body { font-family: Georgia, serif; }"></textarea>
         actions.appendChild(deleteBtn);
 
         header.appendChild(actions);
+        
+        // Byte indicator für diesen Block
+        const byteIndicator = document.createElement('div');
+        byteIndicator.className = 'block-byte-indicator';
+        byteIndicator.textContent = '0 B';
+        block.appendChild(byteIndicator);
+        
         block.appendChild(header);
 
         // Content area
@@ -732,7 +709,7 @@ body { font-family: Georgia, serif; }"></textarea>
         if (content.length === 0) {
           contentError.textContent = 'Mindestens ein Block erforderlich';
           contentError.classList.remove('hidden');
-          throw new Error('Mindestens ein Content-Block erforderlich');
+          throw new Error('Mindestens ein Block erforderlich');
         }
         contentError.classList.add('hidden');
 
@@ -781,33 +758,37 @@ body { font-family: Georgia, serif; }"></textarea>
         };
       }
 
-      // ============ BYTE COUNTER ============
+      // ============ BYTE COUNTER & COST RAIL ============
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        if (bytes < 1000) return bytes + ' B';
+        return (bytes / 1024).toFixed(1) + ' KB';
+      }
 
       function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
         const limit = 14336;
-        // Use provided contentBytes or calculate from total
         const actualContentBytes = contentBytes !== null ? contentBytes : Math.max(0, totalBytes - overheadBytes);
         const overheadPercent = Math.min((overheadBytes / limit) * 100, 100);
         const totalPercent = Math.min((totalBytes / limit) * 100, 100);
 
-        currentOverheadBytes = overheadBytes;
-
-        byteText.textContent = `${totalBytes.toLocaleString('de-DE')} / ${limit.toLocaleString('de-DE')} Bytes`;
-
-        // Update detailed breakdown if available
+        // Update Build Summary breakdown
         if (breakdown) {
-          breakdownBase.textContent = breakdown.base.toLocaleString('de-DE');
-          breakdownTitle.textContent = breakdown.title.toLocaleString('de-DE');
-          breakdownNav.textContent = breakdown.navigation.toLocaleString('de-DE');
-          breakdownFooter.textContent = breakdown.footer.toLocaleString('de-DE');
-          breakdownCss.textContent = breakdown.css.toLocaleString('de-DE');
-          breakdownContent.textContent = breakdown.content.toLocaleString('de-DE');
+          breakdownBase.textContent = formatBytes(breakdown.base);
+          breakdownNav.textContent = formatBytes(breakdown.navigation);
+          breakdownFooter.textContent = formatBytes(breakdown.footer);
+          breakdownCss.textContent = formatBytes(breakdown.css);
+          breakdownContent.textContent = formatBytes(breakdown.content);
+          breakdownTotal.textContent = `${formatBytes(totalBytes)} / 14.336 B`;
 
           // Show/hide rows based on values
           breakdownNavRow.style.display = breakdown.navigation > 0 ? 'flex' : 'none';
           breakdownFooterRow.style.display = breakdown.footer > 0 ? 'flex' : 'none';
           breakdownCssRow.style.display = breakdown.css > 0 ? 'flex' : 'none';
         }
+
+        // Update Cost Rail content total
+        costContentTotal.textContent = formatBytes(actualContentBytes);
 
         // Overhead bar (gray)
         byteFillOverhead.style.width = `${overheadPercent}%`;
@@ -828,6 +809,44 @@ body { font-family: Georgia, serif; }"></textarea>
         }
       }
 
+      function updateCostRail() {
+        // Update byte indicators in block headers
+        const blocks = blockEditor.querySelectorAll('.block-item');
+        let totalContentBytes = 0;
+        
+        blocks.forEach((block, index) => {
+          const content = block.querySelector('.block-content');
+          const type = block.dataset.type;
+          const text = content ? content.textContent.trim() : '';
+          
+          // Rough byte estimation (real calculation happens server-side)
+          const bytes = new TextEncoder().encode(text).length + 50; // +50 for markup
+          totalContentBytes += bytes;
+          
+          // Update block indicator with label
+          const indicator = block.querySelector('.block-byte-indicator');
+          if (indicator) {
+            indicator.innerHTML = `<span class="block-label">Block ${index + 1}</span><span class="block-bytes">${formatBytes(bytes)}</span>`;
+          }
+        });
+        
+        // Update content total
+        costContentTotal.textContent = formatBytes(totalContentBytes);
+        
+        // Clear cost blocks (not used anymore)
+        costBlocks.innerHTML = '';
+        
+        // Position content total at the bottom of block-actions-row
+        const blockActionsRow = document.querySelector('.block-actions-row');
+        const costTotal = document.querySelector('.cost-total');
+        if (blockActionsRow && costTotal) {
+          const rect = blockActionsRow.getBoundingClientRect();
+          const containerRect = document.querySelector('.editor-container').getBoundingClientRect();
+          const topOffset = rect.top - containerRect.top - 12;
+          costTotal.style.marginTop = `${topOffset}px`;
+        }
+      }
+
       // ============ MESSAGES ============
 
       function showMessage(text, type = 'error') {
@@ -843,7 +862,7 @@ body { font-family: Georgia, serif; }"></textarea>
       // ============ PUBLISH ============
 
       publishBtn.addEventListener('click', async () => {
-        if (!confirm('Post wirklich veröffentlichen?')) return;
+        if (!confirm('Build ausführen und veröffentlichen?')) return;
 
         publishBtn.disabled = true;
         hideMessage();
@@ -853,10 +872,10 @@ body { font-family: Georgia, serif; }"></textarea>
           const result = await App.publish(input);
 
           if (result.pageCount && result.pageCount > 1) {
-            showMessage(`Post veröffentlicht: /${result.slug} (${result.pageCount} Seiten)`, 'success');
+            showMessage(`Build abgeschlossen: /${result.slug} (${result.pageCount} Seiten, ${result.totalBytes} Bytes)`, 'success');
             updateByteCounter(result.totalBytes);
           } else {
-            showMessage(`Post veröffentlicht: /${result.slug}`, 'success');
+            showMessage(`Build abgeschlossen: /${result.slug} (${result.bytes} Bytes)`, 'success');
             updateByteCounter(result.bytes);
           }
 
@@ -874,7 +893,7 @@ body { font-family: Georgia, serif; }"></textarea>
           footerEnabled.disabled = true;
           cssRules.disabled = true;
           publishBtn.disabled = true;
-          publishBtn.textContent = 'Veröffentlicht';
+          publishBtn.textContent = 'Build abgeschlossen';
         } catch (err) {
           showMessage(err.message, 'error');
           console.error(err);
@@ -884,50 +903,19 @@ body { font-family: Georgia, serif; }"></textarea>
 
       // ============ INIT ============
 
-      // Load and display global settings info
-      async function loadGlobalSettingsInfo() {
-        try {
-          globalSettingsState = await App.getGlobalSettingsInfo();
+      // Show/hide override hints
+      navEnabled.addEventListener('change', () => {
+        navEditor.classList.toggle('hidden', !navEnabled.checked);
+        navGlobalHint.classList.toggle('hidden', navEnabled.checked);
+      });
 
-          // Check if any global setting is active
-          const hasGlobalSettings = globalSettingsState.header.active ||
-                                    globalSettingsState.footer.active ||
-                                    globalSettingsState.css.active;
-
-          if (hasGlobalSettings) {
-            globalSettingsInfo.classList.remove('hidden');
-
-            // Header
-            if (globalSettingsState.header.active) {
-              globalHeaderInfo.classList.remove('hidden');
-              globalHeaderBytes.textContent = `${globalSettingsState.header.bytes.toLocaleString('de-DE')} Bytes`;
-              navGlobalHint.classList.remove('hidden');
-            }
-
-            // Footer
-            if (globalSettingsState.footer.active) {
-              globalFooterInfo.classList.remove('hidden');
-              globalFooterBytes.textContent = `${globalSettingsState.footer.bytes.toLocaleString('de-DE')} Bytes`;
-              footerGlobalHint.classList.remove('hidden');
-            }
-
-            // CSS
-            if (globalSettingsState.css.active) {
-              globalCssInfo.classList.remove('hidden');
-              globalCssBytes.textContent = `${globalSettingsState.css.bytes.toLocaleString('de-DE')} Bytes`;
-              cssGlobalHint.classList.remove('hidden');
-            }
-
-            // Total base overhead
-            globalBaseBytes.textContent = `${globalSettingsState.totalOverhead.toLocaleString('de-DE')} Bytes`;
-          }
-        } catch (e) {
-          console.warn('Failed to load global settings info:', e);
-        }
-      }
+      footerEnabled.addEventListener('change', () => {
+        footerEditor.classList.toggle('hidden', !footerEnabled.checked);
+        footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
+      });
 
       updateByteCounter(0, 0);
-      loadGlobalSettingsInfo();
+      updateCostRail();
 
       // Auto-update byte counter on content changes
       const debouncedPreview = debounce(async () => {
@@ -967,12 +955,21 @@ body { font-family: Georgia, serif; }"></textarea>
       }
 
       // Listen for content changes
-      blockEditor.addEventListener('input', debouncedPreview);
+      blockEditor.addEventListener('input', () => {
+        debouncedPreview();
+        updateCostRail();
+      });
       titleInput.addEventListener('input', debouncedPreview);
       footerText.addEventListener('input', debouncedPreview);
       cssRules.addEventListener('input', debouncedPreview);
       navEnabled.addEventListener('change', debouncedPreview);
       footerEnabled.addEventListener('change', debouncedPreview);
+
+      // Update cost rail when blocks change
+      const observer = new MutationObserver(() => {
+        updateCostRail();
+      });
+      observer.observe(blockEditor, { childList: true });
 
       // Initial preview to get overhead
       debouncedPreview();
