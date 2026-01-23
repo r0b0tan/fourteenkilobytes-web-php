@@ -414,7 +414,9 @@ ${navItems}
   const bodyOpen = "<body>";
   const bodyClose = "</body>";
   const htmlClose = "</html>";
-  breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + measureBytes(head) + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);
+  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (cssHtml ? measureBytes("\n") : 0) + // newline between title and css
+  measureBytes("\n</head>");
+  breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + headStructureBytes + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);
   if (navigation)
     breakdown.base += measureBytes("\n");
   if (contentHtml)
