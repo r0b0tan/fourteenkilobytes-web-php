@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 define('DATA_DIR', __DIR__ . '/data');
 define('MANIFEST_FILE', DATA_DIR . '/manifest.json');
+define('SETTINGS_FILE', DATA_DIR . '/settings.json');
 define('POSTS_DIR', DATA_DIR . '/posts');
 define('PUBLIC_DIR', __DIR__ . '/public');
 
@@ -19,11 +20,24 @@ $slug = $_GET['slug'] ?? '';
 
 // Root request - show blog index
 if (empty($slug)) {
-    $indexFile = PUBLIC_DIR . '/index.html';
-    if (file_exists($indexFile)) {
-        header('Content-Type: text/html; charset=utf-8');
-        readfile($indexFile);
-        exit;
+    // Check if custom homepage is configured
+    $homepageSlug = null;
+    if (file_exists(SETTINGS_FILE)) {
+        $settingsContent = @file_get_contents(SETTINGS_FILE);
+        $settings = $settingsContent ? json_decode($settingsContent, true) : null;
+        if (is_array($settings)) {
+            $homepageSlug = $settings['homepageSlug'] ?? null;
+        }
+    }
+
+    // Serve custom homepage if configured
+    if ($homepageSlug) {
+        $homepageFile = POSTS_DIR . "/{$homepageSlug}.html";
+        if (file_exists($homepageFile)) {
+            header('Content-Type: text/html; charset=utf-8');
+            readfile($homepageFile);
+            exit;
+        }
     }
 
     // Fallback: generate simple index

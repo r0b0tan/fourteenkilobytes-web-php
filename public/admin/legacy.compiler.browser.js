@@ -180,19 +180,18 @@ function validateContent(blocks) {
   return { valid: true };
 }
 function validateContentBlock(block, path) {
-  const blockType = block.type;
-  if (blockType !== "heading" && blockType !== "paragraph" && blockType !== "bloglist") {
+  if (block.type !== "heading" && block.type !== "paragraph" && block.type !== "bloglist") {
     return {
       valid: false,
       error: {
         code: "CONTENT_INVALID_ELEMENT",
-        element: blockType,
+        element: block.type,
         allowed: ["heading", "paragraph", "bloglist"],
         path
       }
     };
   }
-  if (blockType === "heading") {
+  if (block.type === "heading") {
     if (block.level === void 0 || block.level < 1 || block.level > 6) {
       return {
         valid: false,
@@ -205,7 +204,7 @@ function validateContentBlock(block, path) {
       };
     }
   }
-  if (blockType !== "bloglist") {
+  if (block.type !== "bloglist") {
     for (let i = 0; i < block.children.length; i++) {
       const node = block.children[i];
       const result = validateInlineNode(node, `${path}.children[${i}]`);
@@ -451,22 +450,20 @@ function flattenContentBlock(block, icons, posts) {
   return `<p>${inlineHtml}</p>`;
 }
 function renderBloglist(posts) {
-  const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
+  const published = posts.filter(p => p.status === 'published' && p.pageType === 'post');
   if (published.length === 0) {
     return '<p class="empty">Noch keine Posts.</p>';
   }
-  published.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-  const items = published.map((post) => {
-    const date = new Date(post.publishedAt).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
+  published.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const items = published.map(post => {
+    const date = new Date(post.publishedAt).toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
     return `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a><time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
-  }).join("\n");
-  return `<ul class="posts">
-${items}
-</ul>`;
+  }).join('\n');
+  return `<ul class="posts">\n${items}\n</ul>`;
 }
 function flattenInlineNodes(nodes, icons, placement) {
   return nodes.map((node, index) => flattenInlineNode(node, icons, placement, index)).join("");
