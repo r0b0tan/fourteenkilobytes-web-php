@@ -80,11 +80,23 @@ if ($uri === '/') {
     return true;
 }
 
-// Blog post slug
+// Blog post slug (without .html)
 if (preg_match('/^\/([a-z0-9-]+)\/?$/', $uri, $matches)) {
     $_GET['slug'] = $matches[1];
     require __DIR__ . '/index.php';
     return true;
+}
+
+// Blog post slug (with .html) - serve directly from data/posts/
+if (preg_match('/^\/([a-z0-9-]+)\.html$/', $uri, $matches)) {
+    $slug = $matches[1];
+    $htmlPath = __DIR__ . '/data/posts/' . $slug . '.html';
+
+    if (file_exists($htmlPath)) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile($htmlPath);
+        return true;
+    }
 }
 
 // 404

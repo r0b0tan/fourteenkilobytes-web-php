@@ -398,66 +398,133 @@ if ($method === 'POST' && $path === '/posts') {
     requireAuth();
 
     $body = readJsonBody();
-
-    // Validate required fields
-    if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
-        sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
-    }
-
-    // Validate HTML size (max 1MB to prevent DoS)
-    if (strlen($body['html']) > 1048576) {
-        sendJson(400, ['error' => 'HTML content too large (max 1MB)']);
-    }
-
-    $slug = $body['slug'];
-    $html = $body['html'];
-    $bytes = (int)$body['bytes'];
-    $title = $body['title'] ?? $slug;
-    $hash = $body['hash'] ?? hash('sha256', $html);
-    $pageType = $body['pageType'] ?? 'post';
     $timestamp = date('c');
 
-    // Check slug format
-    if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
-        sendJson(400, ['error' => 'Invalid slug format']);
-    }
+    // Support both single-page (legacy) and multi-page (pagination) format
+    if (isset($body['pages']) && is_array($body['pages'])) {
+        // Multi-page format: { pages: [...], title, pageType }
+        $pages = $body['pages'];
+        $title = $body['title'] ?? 'Untitled';
+        $pageType = $body['pageType'] ?? 'post';
 
-    // Load manifest and check for conflicts
-    $manifest = loadManifest();
-    foreach ($manifest['entries'] ?? [] as $entry) {
-        if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
-            sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned"]);
+        if (empty($pages)) {
+            sendJson(400, ['error' => 'Pages array cannot be empty']);
         }
+
+        // Base slug is from the first page
+        $baseSlug = $pages[0]['slug'] ?? '';
+        if (!preg_match('/^[a-z0-9-]+$/', $baseSlug)) {
+            sendJson(400, ['error' => 'Invalid slug format']);
+        }
+
+        // Validate all pages
+        $totalBytes = 0;
+        foreach ($pages as $i => $page) {
+            if (empty($page['slug']) || empty($page['html'])) {
+                sendJson(400, ['error' => "Page {$i} missing slug or html"]);
+            }
+            if (strlen($page['html']) > 1048576) {
+                sendJson(400, ['error' => "Page {$i} HTML too large (max 1MB)"]);
+            }
+            $totalBytes += strlen($page['html']);
+        }
+
+        // Check for tombstone conflict on base slug
+        $manifest = loadManifest();
+        foreach ($manifest['entries'] ?? [] as $entry) {
+            if ($entry['slug'] === $baseSlug && $entry['status'] === 'tombstone') {
+                sendJson(409, ['error' => "Slug '{$baseSlug}' was previously used and tombstoned"]);
+            }
+        }
+
+        // Save all HTML files
+        $savedSlugs = [];
+        foreach ($pages as $page) {
+            $htmlPath = POSTS_DIR . "/{$page['slug']}.html";
+            file_put_contents($htmlPath, $page['html']);
+            $savedSlugs[] = $page['slug'];
+        }
+
+        // Update manifest with base slug only (paginated pages share one entry)
+        $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $baseSlug);
+        $newEntries[] = [
+            'slug' => $baseSlug,
+            'status' => 'published',
+            'hash' => $pages[0]['hash'] ?? hash('sha256', $pages[0]['html']),
+            'title' => $title,
+            'publishedAt' => $timestamp,
+            'pageCount' => count($pages),
+        ];
+        $manifest['entries'] = array_values($newEntries);
+        saveManifest($manifest);
+
+        // Update page types
+        $pageTypes = loadPageTypes();
+        $pageTypes['types'][$baseSlug] = $pageType;
+        savePageTypes($pageTypes);
+
+        sendJson(201, [
+            'slug' => $baseSlug,
+            'pages' => $savedSlugs,
+            'pageCount' => count($pages),
+            'totalBytes' => $totalBytes,
+            'publishedAt' => $timestamp,
+            'pageType' => $pageType,
+        ]);
+    } else {
+        // Single-page format (legacy): { slug, html, bytes, title, hash, pageType }
+        if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
+            sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
+        }
+
+        if (strlen($body['html']) > 1048576) {
+            sendJson(400, ['error' => 'HTML content too large (max 1MB)']);
+        }
+
+        $slug = $body['slug'];
+        $html = $body['html'];
+        $bytes = (int)$body['bytes'];
+        $title = $body['title'] ?? $slug;
+        $hash = $body['hash'] ?? hash('sha256', $html);
+        $pageType = $body['pageType'] ?? 'post';
+
+        if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+            sendJson(400, ['error' => 'Invalid slug format']);
+        }
+
+        $manifest = loadManifest();
+        foreach ($manifest['entries'] ?? [] as $entry) {
+            if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
+                sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned"]);
+            }
+        }
+
+        $htmlPath = POSTS_DIR . "/{$slug}.html";
+        file_put_contents($htmlPath, $html);
+
+        $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $slug);
+        $newEntries[] = [
+            'slug' => $slug,
+            'status' => 'published',
+            'hash' => $hash,
+            'title' => $title,
+            'publishedAt' => $timestamp,
+        ];
+        $manifest['entries'] = array_values($newEntries);
+        saveManifest($manifest);
+
+        $pageTypes = loadPageTypes();
+        $pageTypes['types'][$slug] = $pageType;
+        savePageTypes($pageTypes);
+
+        sendJson(201, [
+            'slug' => $slug,
+            'hash' => $hash,
+            'bytes' => $bytes,
+            'publishedAt' => $timestamp,
+            'pageType' => $pageType,
+        ]);
     }
-
-    // Save HTML file
-    $htmlPath = POSTS_DIR . "/{$slug}.html";
-    file_put_contents($htmlPath, $html);
-
-    // Update manifest (remove old entry if exists, add new)
-    $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $slug);
-    $newEntries[] = [
-        'slug' => $slug,
-        'status' => 'published',
-        'hash' => $hash,
-        'title' => $title,
-        'publishedAt' => $timestamp,
-    ];
-    $manifest['entries'] = array_values($newEntries);
-    saveManifest($manifest);
-
-    // Update page types
-    $pageTypes = loadPageTypes();
-    $pageTypes['types'][$slug] = $pageType;
-    savePageTypes($pageTypes);
-
-    sendJson(201, [
-        'slug' => $slug,
-        'hash' => $hash,
-        'bytes' => $bytes,
-        'publishedAt' => $timestamp,
-        'pageType' => $pageType,
-    ]);
 }
 
 // Route: DELETE /posts/:slug (protected)

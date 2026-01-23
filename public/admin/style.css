@@ -403,6 +403,17 @@ button:disabled {
   text-decoration: underline;
 }
 
+/* Block too large warning */
+.block-item.block-too-large {
+  border: 2px solid var(--danger);
+  border-radius: 4px;
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.block-item.block-too-large .block-content {
+  border-color: var(--danger);
+}
+
 /* Floating Format Toolbar */
 .format-toolbar {
   position: absolute;
@@ -517,10 +528,15 @@ button:disabled {
 .publish-row .byte-counter {
   flex: 1;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.publish-row .byte-counter .pagination-checkbox {
+  flex-basis: 100%;
 }
 
 .byte-bar {
@@ -718,6 +734,22 @@ button:disabled {
 
 .byte-fill-content.warning { background: var(--warning); }
 .byte-fill-content.danger { background: var(--danger); }
+
+/* Pagination Checkbox */
+.pagination-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: normal;
+  cursor: pointer;
+  color: var(--danger);
+}
+
+.pagination-checkbox input[type="checkbox"] {
+  width: auto;
+}
 
 /* Byte counter text variants */
 .byte-details {

@@ -6,8 +6,8 @@
  * Auth via HttpOnly cookie (set by server).
  */
 
-// Import compiler (loaded as ES module)
-import * as Compiler from './compiler.js';
+// Import compiler (browser bundle)
+import * as Compiler from './compiler.browser.js';
 
 const App = (function() {
 
@@ -152,21 +152,38 @@ const App = (function() {
     const useGlobal = input.useGlobalSettings !== false;
     const compilerInput = useGlobal ? await applyGlobalSettings(input) : input;
 
-    const result = Compiler.dryRun(compilerInput);
+    const result = await Compiler.dryRun(compilerInput);
+
+    // Handle size limit exceeded - still return measurements for the byte counter
     if (!result.wouldSucceed) {
+      if (result.error?.code === 'SIZE_LIMIT_EXCEEDED' && result.partialMeasurements) {
+        const { total, overhead } = result.partialMeasurements.measurements;
+
+        // Check if a single block is too large (from compiler)
+        let blockTooLarge = null;
+        if (result.error.oversizedBlock) {
+          blockTooLarge = {
+            blockIndex: result.error.oversizedBlock.index,
+            blockSize: result.error.oversizedBlock.size,
+            availableBudget: result.error.oversizedBlock.availableBudget,
+          };
+        }
+
+        return {
+          html: '',
+          bytes: total,
+          overheadBytes: overhead,
+          measurements: null,
+          exceeded: true,
+          blockTooLarge,
+        };
+      }
+
       throw new Error(result.error?.code || 'Compilation failed');
     }
 
     const page = result.pages[0];
-
-    // Calculate overhead from global settings
-    let overheadBytes = 0;
-    if (useGlobal) {
-      const bareResult = Compiler.dryRun(input);
-      if (bareResult.wouldSucceed) {
-        overheadBytes = page.bytes - bareResult.pages[0].bytes;
-      }
-    }
+    const { overhead } = result.measurements[0].measurements;
 
     // Replace {{bytes}} placeholder
     const finalHtml = page.html.replace(/\{\{bytes\}\}/g, String(page.bytes));
@@ -174,7 +191,7 @@ const App = (function() {
     return {
       html: finalHtml,
       bytes: page.bytes,
-      overheadBytes,
+      overheadBytes: overhead,
       measurements: result.measurements,
     };
   }
@@ -201,7 +218,7 @@ const App = (function() {
       buildId: 'overhead-test',
     };
 
-    const result = Compiler.dryRun(testInput);
+    const result = await Compiler.dryRun(testInput);
     if (!result.wouldSucceed) {
       throw new Error(result.error?.code || 'Compilation failed');
     }
@@ -221,17 +238,34 @@ const App = (function() {
     const compilerInput = useGlobal ? await applyGlobalSettings(input) : input;
 
     // Compile client-side
-    const result = Compiler.compile(compilerInput);
+    const result = await Compiler.compile(compilerInput);
     if (!result.success) {
       throw new Error(result.error?.code || 'Compilation failed');
     }
 
-    const page = result.pages[0];
+    // Handle pagination: multiple pages
+    if (result.pages.length > 1) {
+      const pages = result.pages.map(page => ({
+        slug: page.slug,
+        html: page.html.replace(/\{\{bytes\}\}/g, String(page.bytes)),
+        bytes: page.bytes,
+        hash: page.hash,
+      }));
 
-    // Replace {{bytes}} placeholder
+      return apiFetch('/api/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          pages,
+          title: input.title,
+          pageType: input.pageType || 'post',
+        }),
+      });
+    }
+
+    // Single page (legacy format)
+    const page = result.pages[0];
     const finalHtml = page.html.replace(/\{\{bytes\}\}/g, String(page.bytes));
 
-    // Send compiled HTML to server
     return apiFetch('/api/posts', {
       method: 'POST',
       body: JSON.stringify({
