@@ -402,10 +402,11 @@ if ($method === 'POST' && $path === '/posts') {
 
     // Support both single-page (legacy) and multi-page (pagination) format
     if (isset($body['pages']) && is_array($body['pages'])) {
-        // Multi-page format: { pages: [...], title, pageType }
+        // Multi-page format: { pages: [...], title, pageType, sourceData }
         $pages = $body['pages'];
         $title = $body['title'] ?? 'Untitled';
         $pageType = $body['pageType'] ?? 'post';
+        $sourceData = $body['sourceData'] ?? null;
 
         if (empty($pages)) {
             sendJson(400, ['error' => 'Pages array cannot be empty']);
@@ -447,7 +448,7 @@ if ($method === 'POST' && $path === '/posts') {
 
         // Update manifest with base slug only (paginated pages share one entry)
         $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $baseSlug);
-        $newEntries[] = [
+        $manifestEntry = [
             'slug' => $baseSlug,
             'status' => 'published',
             'hash' => $pages[0]['hash'] ?? hash('sha256', $pages[0]['html']),
@@ -455,6 +456,10 @@ if ($method === 'POST' && $path === '/posts') {
             'publishedAt' => $timestamp,
             'pageCount' => count($pages),
         ];
+        if ($sourceData !== null) {
+            $manifestEntry['sourceData'] = $sourceData;
+        }
+        $newEntries[] = $manifestEntry;
         $manifest['entries'] = array_values($newEntries);
         saveManifest($manifest);
 
@@ -472,7 +477,7 @@ if ($method === 'POST' && $path === '/posts') {
             'pageType' => $pageType,
         ]);
     } else {
-        // Single-page format (legacy): { slug, html, bytes, title, hash, pageType }
+        // Single-page format (legacy): { slug, html, bytes, title, hash, pageType, sourceData }
         if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
             sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
         }
@@ -487,6 +492,7 @@ if ($method === 'POST' && $path === '/posts') {
         $title = $body['title'] ?? $slug;
         $hash = $body['hash'] ?? hash('sha256', $html);
         $pageType = $body['pageType'] ?? 'post';
+        $sourceData = $body['sourceData'] ?? null;
 
         if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
             sendJson(400, ['error' => 'Invalid slug format']);
@@ -503,13 +509,17 @@ if ($method === 'POST' && $path === '/posts') {
         file_put_contents($htmlPath, $html);
 
         $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $slug);
-        $newEntries[] = [
+        $manifestEntry = [
             'slug' => $slug,
             'status' => 'published',
             'hash' => $hash,
             'title' => $title,
             'publishedAt' => $timestamp,
         ];
+        if ($sourceData !== null) {
+            $manifestEntry['sourceData'] = $sourceData;
+        }
+        $newEntries[] = $manifestEntry;
         $manifest['entries'] = array_values($newEntries);
         saveManifest($manifest);
 
@@ -525,6 +535,37 @@ if ($method === 'POST' && $path === '/posts') {
             'pageType' => $pageType,
         ]);
     }
+}
+
+// Route: POST /posts/:slug/republish (protected) - Regenerate page with current posts
+if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path, $matches)) {
+    requireAuth();
+
+    $slug = $matches[1];
+    $manifest = loadManifest();
+
+    // Find entry with sourceData
+    $entry = null;
+    foreach ($manifest['entries'] as $e) {
+        if ($e['slug'] === $slug) {
+            $entry = $e;
+            break;
+        }
+    }
+
+    if (!$entry) {
+        sendJson(404, ['error' => "Post '{$slug}' not found"]);
+    }
+
+    if (!isset($entry['sourceData'])) {
+        sendJson(400, ['error' => "Post '{$slug}' has no source data (was published before this feature)"]);
+    }
+
+    // Return sourceData - client will compile and republish
+    sendJson(200, [
+        'slug' => $slug,
+        'sourceData' => $entry['sourceData'],
+    ]);
 }
 
 // Route: DELETE /posts/:slug (protected)

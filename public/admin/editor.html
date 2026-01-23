@@ -17,6 +17,32 @@
 
   <div id="message" class="message hidden"></div>
 
+  <!-- Global Settings Overview -->
+  <div id="global-settings-info" class="global-settings-info hidden">
+    <div class="global-settings-header">
+      <span class="global-settings-title">Globale Einstellungen aktiv</span>
+      <a href="settings.html" class="global-settings-link">Bearbeiten →</a>
+    </div>
+    <div class="global-settings-breakdown">
+      <div id="global-header-info" class="breakdown-item hidden">
+        <span class="breakdown-label">Header</span>
+        <span id="global-header-bytes" class="breakdown-bytes">0 Bytes</span>
+      </div>
+      <div id="global-footer-info" class="breakdown-item hidden">
+        <span class="breakdown-label">Footer</span>
+        <span id="global-footer-bytes" class="breakdown-bytes">0 Bytes</span>
+      </div>
+      <div id="global-css-info" class="breakdown-item hidden">
+        <span class="breakdown-label">CSS</span>
+        <span id="global-css-bytes" class="breakdown-bytes">0 Bytes</span>
+      </div>
+      <div class="breakdown-item breakdown-total">
+        <span class="breakdown-label">Basis-Overhead</span>
+        <span id="global-base-bytes" class="breakdown-bytes">0 Bytes</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Page Type -->
   <div class="page-type-row">
     <label for="page-type">Typ:</label>
@@ -43,9 +69,11 @@
   <div class="editor-row">
     <label class="row-toggle">
       <input type="checkbox" id="nav-enabled">
-      <span>Navigation</span>
+      <span>Header überschreiben</span>
     </label>
+    <p id="nav-global-hint" class="global-hint hidden">Globaler Header wird verwendet</p>
     <div id="nav-editor" class="nav-editor hidden">
+      <p class="override-hint text-small text-muted mb-1">Eigene Navigation (ersetzt globalen Header)</p>
       <div id="nav-links" class="nav-links"></div>
       <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
     </div>
@@ -104,17 +132,21 @@
   <div class="editor-row">
     <label class="row-toggle">
       <input type="checkbox" id="footer-enabled">
-      <span>Footer</span>
+      <span>Footer überschreiben</span>
     </label>
+    <p id="footer-global-hint" class="global-hint hidden">Globaler Footer wird verwendet</p>
     <div id="footer-editor" class="footer-editor hidden">
+      <p class="override-hint text-small text-muted mb-1">Eigener Footer (ersetzt globalen Footer)</p>
       <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
     </div>
   </div>
 
   <!-- Custom CSS (collapsible) -->
   <details class="css-section">
-    <summary>Custom CSS</summary>
-    <textarea id="css-rules" rows="4" placeholder="body { font-family: Georgia, serif; }"></textarea>
+    <summary>Zusätzliches CSS</summary>
+    <p id="css-global-hint" class="global-hint hidden">Wird zum globalen CSS hinzugefügt</p>
+    <textarea id="css-rules" rows="4" placeholder="/* Wird nach globalem CSS eingefügt */
+body { font-family: Georgia, serif; }"></textarea>
   </details>
 
   <!-- Publish Row -->
@@ -122,7 +154,35 @@
     <div class="byte-counter">
       <div class="byte-details">
         <span id="byte-text" class="byte-main">0 / 14.336 Bytes</span>
-        <span id="overhead-text" class="text-muted">Overhead: 0 Bytes</span>
+        <details id="byte-breakdown" class="byte-breakdown">
+          <summary class="text-muted">Aufschlüsselung</summary>
+          <div class="byte-breakdown-list">
+            <div class="breakdown-row">
+              <span>Basis (HTML-Struktur)</span>
+              <span id="breakdown-base">0</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Titel</span>
+              <span id="breakdown-title">0</span>
+            </div>
+            <div id="breakdown-nav-row" class="breakdown-row">
+              <span>Header</span>
+              <span id="breakdown-nav">0</span>
+            </div>
+            <div id="breakdown-footer-row" class="breakdown-row">
+              <span>Footer</span>
+              <span id="breakdown-footer">0</span>
+            </div>
+            <div id="breakdown-css-row" class="breakdown-row">
+              <span>CSS</span>
+              <span id="breakdown-css">0</span>
+            </div>
+            <div class="breakdown-row breakdown-row-total">
+              <span>Inhalt</span>
+              <span id="breakdown-content">0</span>
+            </div>
+          </div>
+        </details>
       </div>
       <div class="byte-bar">
         <div id="byte-fill-overhead" class="byte-fill-overhead" style="width: 0%"></div>
@@ -186,17 +246,41 @@
       const liveCSS = document.getElementById('live-css');
       const publishBtn = document.getElementById('publish-btn');
       const byteText = document.getElementById('byte-text');
-      const overheadText = document.getElementById('overhead-text');
       const byteFillOverhead = document.getElementById('byte-fill-overhead');
       const byteFillContent = document.getElementById('byte-fill-content');
       const paginationOption = document.getElementById('pagination-option');
       const allowPaginationCheckbox = document.getElementById('allow-pagination');
       const messageEl = document.getElementById('message');
 
+      // Global settings info elements
+      const globalSettingsInfo = document.getElementById('global-settings-info');
+      const globalHeaderInfo = document.getElementById('global-header-info');
+      const globalHeaderBytes = document.getElementById('global-header-bytes');
+      const globalFooterInfo = document.getElementById('global-footer-info');
+      const globalFooterBytes = document.getElementById('global-footer-bytes');
+      const globalCssInfo = document.getElementById('global-css-info');
+      const globalCssBytes = document.getElementById('global-css-bytes');
+      const globalBaseBytes = document.getElementById('global-base-bytes');
+      const navGlobalHint = document.getElementById('nav-global-hint');
+      const footerGlobalHint = document.getElementById('footer-global-hint');
+      const cssGlobalHint = document.getElementById('css-global-hint');
+
+      // Byte breakdown elements
+      const breakdownBase = document.getElementById('breakdown-base');
+      const breakdownTitle = document.getElementById('breakdown-title');
+      const breakdownNav = document.getElementById('breakdown-nav');
+      const breakdownNavRow = document.getElementById('breakdown-nav-row');
+      const breakdownFooter = document.getElementById('breakdown-footer');
+      const breakdownFooterRow = document.getElementById('breakdown-footer-row');
+      const breakdownCss = document.getElementById('breakdown-css');
+      const breakdownCssRow = document.getElementById('breakdown-css-row');
+      const breakdownContent = document.getElementById('breakdown-content');
+
       // State
       let savedSelection = null;
       let editingNavLink = null; // The chip element being edited
       let currentOverheadBytes = 0;
+      let globalSettingsState = null;
 
       // ============ PAGE TYPE ============
 
@@ -657,8 +741,8 @@
         const hasBloglist = content.some(block => block.type === 'bloglist');
         if (hasBloglist) {
           try {
-            const response = await App.getPosts();
-            posts = response.posts || [];
+            posts = await App.getPosts();
+            console.log('Loaded posts for bloglist:', posts);
           } catch (err) {
             console.warn('Failed to load posts for bloglist:', err);
           }
@@ -699,9 +783,10 @@
 
       // ============ BYTE COUNTER ============
 
-      function updateByteCounter(totalBytes, overheadBytes = 0) {
+      function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
         const limit = 14336;
-        const contentBytes = totalBytes - overheadBytes;
+        // Use provided contentBytes or calculate from total
+        const actualContentBytes = contentBytes !== null ? contentBytes : Math.max(0, totalBytes - overheadBytes);
         const overheadPercent = Math.min((overheadBytes / limit) * 100, 100);
         const totalPercent = Math.min((totalBytes / limit) * 100, 100);
 
@@ -709,13 +794,19 @@
 
         byteText.textContent = `${totalBytes.toLocaleString('de-DE')} / ${limit.toLocaleString('de-DE')} Bytes`;
 
-        if (overheadBytes > 0 && totalBytes > 0) {
-          const overheadRatio = Math.round((overheadBytes / totalBytes) * 100);
-          const contentRatio = 100 - overheadRatio;
-          overheadText.textContent = `Overhead: ${overheadRatio} % · Inhalt: ${contentRatio} %`;
-          overheadText.classList.remove('hidden');
-        } else {
-          overheadText.classList.add('hidden');
+        // Update detailed breakdown if available
+        if (breakdown) {
+          breakdownBase.textContent = breakdown.base.toLocaleString('de-DE');
+          breakdownTitle.textContent = breakdown.title.toLocaleString('de-DE');
+          breakdownNav.textContent = breakdown.navigation.toLocaleString('de-DE');
+          breakdownFooter.textContent = breakdown.footer.toLocaleString('de-DE');
+          breakdownCss.textContent = breakdown.css.toLocaleString('de-DE');
+          breakdownContent.textContent = breakdown.content.toLocaleString('de-DE');
+
+          // Show/hide rows based on values
+          breakdownNavRow.style.display = breakdown.navigation > 0 ? 'flex' : 'none';
+          breakdownFooterRow.style.display = breakdown.footer > 0 ? 'flex' : 'none';
+          breakdownCssRow.style.display = breakdown.css > 0 ? 'flex' : 'none';
         }
 
         // Overhead bar (gray)
@@ -793,14 +884,57 @@
 
       // ============ INIT ============
 
+      // Load and display global settings info
+      async function loadGlobalSettingsInfo() {
+        try {
+          globalSettingsState = await App.getGlobalSettingsInfo();
+
+          // Check if any global setting is active
+          const hasGlobalSettings = globalSettingsState.header.active ||
+                                    globalSettingsState.footer.active ||
+                                    globalSettingsState.css.active;
+
+          if (hasGlobalSettings) {
+            globalSettingsInfo.classList.remove('hidden');
+
+            // Header
+            if (globalSettingsState.header.active) {
+              globalHeaderInfo.classList.remove('hidden');
+              globalHeaderBytes.textContent = `${globalSettingsState.header.bytes.toLocaleString('de-DE')} Bytes`;
+              navGlobalHint.classList.remove('hidden');
+            }
+
+            // Footer
+            if (globalSettingsState.footer.active) {
+              globalFooterInfo.classList.remove('hidden');
+              globalFooterBytes.textContent = `${globalSettingsState.footer.bytes.toLocaleString('de-DE')} Bytes`;
+              footerGlobalHint.classList.remove('hidden');
+            }
+
+            // CSS
+            if (globalSettingsState.css.active) {
+              globalCssInfo.classList.remove('hidden');
+              globalCssBytes.textContent = `${globalSettingsState.css.bytes.toLocaleString('de-DE')} Bytes`;
+              cssGlobalHint.classList.remove('hidden');
+            }
+
+            // Total base overhead
+            globalBaseBytes.textContent = `${globalSettingsState.totalOverhead.toLocaleString('de-DE')} Bytes`;
+          }
+        } catch (e) {
+          console.warn('Failed to load global settings info:', e);
+        }
+      }
+
       updateByteCounter(0, 0);
+      loadGlobalSettingsInfo();
 
       // Auto-update byte counter on content changes
       const debouncedPreview = debounce(async () => {
         try {
           const input = await buildInput();
           const result = await App.preview(input);
-          updateByteCounter(result.bytes, result.overheadBytes || 0);
+          updateByteCounter(result.bytes, result.overheadBytes || 0, result.contentBytes, result.breakdown);
 
           // Clear previous block warnings
           blockEditor.querySelectorAll('.block-item.block-too-large').forEach(el => {
