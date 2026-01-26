@@ -232,6 +232,9 @@ body { font-family: Georgia, serif; }"></textarea>
         return;
       }
 
+      // Store global config for later use
+      window.globalConfig = config;
+
       // Elements
       const pageTypeSelect = document.getElementById('page-type');
       const pageTypeHint = document.getElementById('page-type-hint');
@@ -302,9 +305,26 @@ body { font-family: Georgia, serif; }"></textarea>
 
       // ============ NAVIGATION EDITOR ============
 
+      // Load global navigation into disabled fields
+      function loadGlobalNavigation() {
+        navLinks.innerHTML = '';
+        if (window.globalConfig?.header?.links) {
+          window.globalConfig.header.links.forEach(link => {
+            navLinks.appendChild(createNavChip(link.text, link.href));
+          });
+        }
+      }
+
       navEnabled.addEventListener('change', () => {
-        navEditor.classList.toggle('hidden', !navEnabled.checked);
         navGlobalHint.classList.toggle('hidden', navEnabled.checked);
+        
+        // Toggle disabled state
+        const chips = navLinks.querySelectorAll('.nav-chip');
+        chips.forEach(chip => {
+          chip.style.pointerEvents = navEnabled.checked ? 'auto' : 'none';
+          chip.style.opacity = navEnabled.checked ? '1' : '0.6';
+        });
+        addNavLinkBtn.disabled = !navEnabled.checked;
       });
 
       function createNavChip(text, href) {
@@ -364,9 +384,16 @@ body { font-family: Georgia, serif; }"></textarea>
 
       // ============ FOOTER EDITOR ============
 
+      // Load global footer into disabled field
+      function loadGlobalFooter() {
+        if (window.globalConfig?.footer?.content) {
+          footerText.value = window.globalConfig.footer.content;
+        }
+      }
+
       footerEnabled.addEventListener('change', () => {
-        footerEditor.classList.toggle('hidden', !footerEnabled.checked);
         footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
+        footerText.disabled = !footerEnabled.checked;
       });
 
       // ============ LIVE CSS ============
@@ -949,6 +976,22 @@ body { font-family: Georgia, serif; }"></textarea>
       });
 
       // ============ INIT ============
+
+      // Load global values into fields
+      loadGlobalNavigation();
+      loadGlobalFooter();
+      
+      // Set initial disabled states
+      navEditor.classList.remove('hidden');
+      const chips = navLinks.querySelectorAll('.nav-chip');
+      chips.forEach(chip => {
+        chip.style.pointerEvents = 'none';
+        chip.style.opacity = '0.6';
+      });
+      addNavLinkBtn.disabled = true;
+      
+      footerEditor.classList.remove('hidden');
+      footerText.disabled = true;
 
       function debounce(fn, delay) {
         let timeout;
