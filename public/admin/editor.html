@@ -425,11 +425,10 @@
 
       // ============ CSS EDITOR ============
 
-      // Load global CSS into disabled field
+      // Don't load global CSS - this field is for ADDITIONAL CSS only
       function loadGlobalCSS() {
-        if (window.globalConfig?.globalCss) {
-          cssRules.value = window.globalConfig.globalCss;
-        }
+        // Leave empty - this textarea is for additional CSS only
+        // Global CSS is already included in the base template
       }
 
       cssEnabled.addEventListener('change', () => {
