@@ -1,32 +1,33 @@
 :root {
   /* Graustufen */
   --black:      #000000;
-  --gray-900:   #0A0A0A;
-  --gray-800:   #1A1A1A;
-  --gray-700:   #2A2A2A;
-  --gray-600:   #444444;
-  --gray-500:   #666666;
-  --gray-400:   #888888;
-  --gray-300:   #AAAAAA;
-  --gray-200:   #CCCCCC;
-  --gray-100:   #E5E5E5;
-  --white:      #FFFFFF;
+  --gray-900:   #1a1a1a;
+  --gray-800:   #2d2d2d;
+  --gray-700:   #404040;
+  --gray-600:   #525252;
+  --gray-500:   #737373;
+  --gray-400:   #a3a3a3;
+  --gray-300:   #d4d4d4;
+  --gray-200:   #e5e5e5;
+  --gray-100:   #f5f5f5;
+  --white:      #ffffff;
 
   /* Akzent */
-  --accent:          #2cbfae;
-  --accent-alpha-15: rgba(44, 191, 174, 0.15);
-  --accent-alpha-40: rgba(44, 191, 174, 0.40);
+  --accent:          #0d9488;
+  --accent-hover:    #0f766e;
+  --accent-alpha-15: rgba(13, 148, 136, 0.12);
+  --accent-alpha-40: rgba(13, 148, 136, 0.25);
 
-  /* Semantische Mappings */
-  --bg:       var(--gray-900);
-  --fg:       var(--white);
-  --border:   var(--gray-700);
-  --input-bg: var(--gray-800);
+  /* Semantische Mappings – Helles Theme */
+  --bg:       var(--gray-100);
+  --fg:       var(--gray-900);
+  --border:   var(--gray-300);
+  --input-bg: var(--white);
 
   /* Text */
-  --text-primary:   var(--white);
-  --text-secondary: var(--gray-300);
-  --text-muted:     var(--gray-400);
+  --text-primary:   var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted:     var(--gray-500);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,16 +139,16 @@ button, .btn {
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
-  border: 1px solid var(--gray-700);
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
-  background: var(--gray-800);
+  background: var(--white);
   color: var(--text-primary);
 }
 
 button:hover, .btn:hover {
-  background: var(--gray-700);
-  border-color: var(--gray-600);
+  background: var(--gray-100);
+  border-color: var(--gray-400);
 }
 
 button:disabled {
@@ -165,19 +166,19 @@ button:disabled {
 }
 
 .btn-secondary {
-  background: var(--gray-700);
-  border-color: var(--gray-600);
+  background: var(--gray-200);
+  border-color: var(--gray-300);
 }
 
 .btn-danger {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--black);
+  color: var(--white);
 }
 
 .btn-danger:hover {
-  background: var(--accent);
-  opacity: 0.9;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-small {
@@ -286,6 +287,11 @@ button:disabled {
 }
 
 /* ZONE A – Basisdaten */
+.section-base-data {
+  position: relative;
+  max-width: calc(100% - 232px); /* Gleiche Breite wie Block-Editor (100% - cost-rail - gap) */
+}
+
 .base-data-row {
   display: grid;
   grid-template-columns: 3fr 3fr 1fr;
@@ -294,6 +300,27 @@ button:disabled {
 
 .base-data-row .form-group {
   margin-bottom: 0;
+}
+
+.base-data-byte-indicator {
+  position: absolute;
+  right: -232px;
+  top: 24px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 200px;
+}
+
+.section-base-data:focus-within .base-data-byte-indicator {
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 /* ZONE B, D – Override Sections (Header, Footer) */
@@ -381,7 +408,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   z-index: 1000;
   min-width: 280px;
 }
@@ -430,7 +457,7 @@ button:disabled {
 
 .block-byte-indicator {
   position: absolute;
-  right: -230px;
+  right: -232px;
   top: 16px;
   font-family: ui-monospace, monospace;
   font-size: 12px;
@@ -482,13 +509,13 @@ button:disabled {
 .block-item-actions button {
   padding: 4px 8px;
   font-size: 12px;
-  background: var(--bg);
+  background: var(--white);
   color: var(--text-primary);
   border: 1px solid var(--border);
 }
 
 .block-item-actions button:hover {
-  background: var(--border);
+  background: var(--gray-200);
 }
 
 .block-content {
@@ -539,10 +566,10 @@ button:disabled {
 
 /* Bloglist block */
 .block-bloglist {
-  background: var(--gray-800);
+  background: var(--gray-200);
   padding: 16px;
   text-align: center;
-  border: 1px dashed var(--gray-600);
+  border: 1px dashed var(--gray-400);
   cursor: not-allowed;
 }
 
@@ -553,13 +580,13 @@ button:disabled {
 
 /* Block too large warning */
 .block-item.block-too-large {
-  border: 2px solid var(--white);
+  border: 2px solid #dc2626;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(220, 38, 38, 0.05);
 }
 
 .block-item.block-too-large .block-content {
-  border-color: var(--white);
+  border-color: #dc2626;
 }
 
 /* Floating Format Toolbar */
@@ -569,7 +596,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   z-index: 1000;
   display: flex;
   gap: 4px;
@@ -586,7 +613,7 @@ button:disabled {
 }
 
 .format-toolbar button:hover {
-  background: var(--border);
+  background: var(--gray-200);
 }
 
 /* Link Popup */
@@ -596,7 +623,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   z-index: 1000;
   display: flex;
   gap: 8px;
@@ -622,7 +649,7 @@ button:disabled {
   background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   z-index: 100;
   min-width: 150px;
   margin-bottom: 4px;
@@ -640,7 +667,7 @@ button:disabled {
 }
 
 .add-block-dropdown button:hover {
-  background: var(--border);
+  background: var(--gray-200);
 }
 
 .css-section summary {
@@ -731,12 +758,12 @@ button:disabled {
   font-weight: 600;
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--black);
+  color: var(--white);
 }
 
 .build-summary .btn-primary:hover {
-  background: var(--accent);
-  opacity: 0.9;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .build-summary .btn-primary:disabled {
@@ -758,8 +785,8 @@ button:disabled {
   transition: width 0.3s, background 0.3s;
 }
 
-.byte-fill.warning { background: var(--accent-alpha-40); }
-.byte-fill.danger { background: var(--white); }
+.byte-fill.warning { background: #f59e0b; }
+.byte-fill.danger { background: #dc2626; }
 
 /* Messages */
 .message {
@@ -770,15 +797,15 @@ button:disabled {
 }
 
 .message.error {
-  background: var(--gray-800);
-  border: 1px solid var(--white);
-  color: var(--white);
+  background: #fef2f2;
+  border: 1px solid #dc2626;
+  color: #991b1b;
 }
 
 .message.success {
   background: var(--accent-alpha-15);
   border: 1px solid var(--accent);
-  color: var(--white);
+  color: var(--accent-hover);
 }
 
 /* Empty state */
@@ -792,7 +819,7 @@ button:disabled {
 /* Utility */
 .hidden { display: none !important; }
 .text-muted { color: var(--text-muted); }
-.text-danger { color: var(--white); font-weight: 500; }
+.text-danger { color: #dc2626; font-weight: 500; }
 .text-small { font-size: 13px; }
 .mt-1 { margin-top: 8px; }
 .mt-2 { margin-top: 16px; }
@@ -928,7 +955,7 @@ button:disabled {
   left: 0;
   top: 0;
   height: 100%;
-  background: var(--gray-600);
+  background: var(--gray-400);
   opacity: 0.5;
   transition: width 0.3s;
 }
@@ -942,8 +969,8 @@ button:disabled {
   transition: width 0.3s, background 0.3s, left 0.3s;
 }
 
-.byte-fill-content.warning { background: var(--accent-alpha-40); }
-.byte-fill-content.danger { background: var(--white); }
+.byte-fill-content.warning { background: #f59e0b; }
+.byte-fill-content.danger { background: #dc2626; }
 
 /* Pagination Checkbox */
 .pagination-checkbox {
@@ -989,6 +1016,16 @@ button:disabled {
     margin-top: 8px;
     flex-direction: row;
     justify-content: space-between;
+  }
+
+  .section-base-data {
+    max-width: 100%;
+  }
+
+  .base-data-byte-indicator {
+    position: static;
+    margin-top: 12px;
+    width: 100%;
   }
 
   .base-data-row {
