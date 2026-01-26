@@ -37,6 +37,10 @@
         <span id="page-type-hint" class="text-small text-muted"></span>
       </div>
     </div>
+    <div class="base-data-byte-indicator" id="title-byte-indicator">
+      <span class="block-label">Title-Meta</span>
+      <span class="block-bytes" id="title-bytes">0 B</span>
+    </div>
   </div>
 
   <!-- B. Header-Override -->
@@ -239,6 +243,7 @@ body { font-family: Georgia, serif; }"></textarea>
       // Cost Rail elements
       const costBlocks = document.getElementById('cost-blocks');
       const costContentTotal = document.getElementById('cost-content-total');
+      const titleBytesEl = document.getElementById('title-bytes');
 
       // Build Summary elements
       const breakdownBase = document.getElementById('breakdown-base');
@@ -380,6 +385,7 @@ body { font-family: Georgia, serif; }"></textarea>
         if (!slugInput.dataset.manual) {
           slugInput.value = App.slugify(titleInput.value);
         }
+        updateTitleBytes();
       });
 
       slugInput.addEventListener('input', () => {
@@ -851,7 +857,7 @@ body { font-family: Georgia, serif; }"></textarea>
         
         // Clear cost blocks (not used anymore)
         costBlocks.innerHTML = '';
-        
+
         // Position content total at the bottom of block-actions-row
         const blockActionsRow = document.querySelector('.block-actions-row');
         const costTotal = document.querySelector('.cost-total');
@@ -861,6 +867,13 @@ body { font-family: Georgia, serif; }"></textarea>
           const topOffset = rect.top - containerRect.top - 12;
           costTotal.style.marginTop = `${topOffset}px`;
         }
+      }
+
+      function updateTitleBytes() {
+        const title = titleInput.value.trim() || 'Untitled';
+        // <title>TITEL</title> = 15 bytes markup + title bytes
+        const titleBytes = new TextEncoder().encode(title).length + 15;
+        titleBytesEl.textContent = formatBytes(titleBytes);
       }
 
       // ============ MESSAGES ============
@@ -929,6 +942,7 @@ body { font-family: Georgia, serif; }"></textarea>
 
       updateByteCounter(0, 0);
       updateCostRail();
+      updateTitleBytes();
 
       // Auto-update byte counter on content changes
       const debouncedPreview = debounce(async () => {
