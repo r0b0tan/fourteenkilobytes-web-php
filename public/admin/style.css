@@ -362,8 +362,15 @@ button:disabled {
   max-width: 400px;
 }
 
+.nav-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .override-editor .nav-links {
-  margin-bottom: 8px;
+  flex: 1;
+  margin-bottom: 0;
 }
 
 /* ZONE C – Content-Pipeline (Block-Editor) */
