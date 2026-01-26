@@ -121,16 +121,26 @@
           </div>
         </div>
 
-        <!-- Zusätzliches CSS -->
-        <details class="css-section">
-          <summary>Zusätzliches CSS</summary>
-          <p class="css-warning-hint">Zusätzliches CSS erhöht die Seitengröße und beeinflusst den deterministischen Build.</p>
-          <textarea id="css-rules" rows="4" placeholder="/* Wird nach globalem CSS eingefügt */
-body { font-family: Georgia, serif; }"></textarea>
-        </details>
+        <!-- CSS Override -->
+        <div class="override-section">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="css-enabled">
+              <span>CSS ergänzen</span>
+            </label>
+            <p id="css-global-hint" class="override-hint">✓ Nur globales CSS wird verwendet</p>
+          </div>
+          <div id="css-editor" class="override-editor">
+            <p class="css-warning-hint">Zusätzliches CSS wird nach globalem CSS eingefügt und erhöht die Seitengröße.</p>
+            <textarea id="css-rules" rows="10" placeholder="/* Zusätzliches CSS */"></textarea>
+          </div>
+        </div>
       </div>
       <div class="card-rail">
-        <!-- Platzhalter für konsistentes Layout -->
+        <div class="rail-item">
+          <span>CSS</span>
+          <span id="css-bytes">0 B</span>
+        </div>
       </div>
     </div>
   </div>
@@ -263,6 +273,9 @@ body { font-family: Georgia, serif; }"></textarea>
       const footerEditor = document.getElementById('footer-editor');
       const footerGlobalHint = document.getElementById('footer-global-hint');
       const footerText = document.getElementById('footer-text');
+      const cssEnabled = document.getElementById('css-enabled');
+      const cssEditor = document.getElementById('css-editor');
+      const cssGlobalHint = document.getElementById('css-global-hint');
       const cssRules = document.getElementById('css-rules');
       const liveCSS = document.getElementById('live-css');
       const publishBtn = document.getElementById('publish-btn');
@@ -274,6 +287,7 @@ body { font-family: Georgia, serif; }"></textarea>
       const costContentTotal = document.getElementById('cost-content-total');
       const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
+      const cssBytesEl = document.getElementById('css-bytes');
 
       // Build Summary elements
       const breakdownBase = document.getElementById('breakdown-base');
@@ -394,6 +408,20 @@ body { font-family: Georgia, serif; }"></textarea>
       footerEnabled.addEventListener('change', () => {
         footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
         footerText.disabled = !footerEnabled.checked;
+      });
+
+      // ============ CSS EDITOR ============
+
+      // Load global CSS into disabled field
+      function loadGlobalCSS() {
+        if (window.globalConfig?.globalCss) {
+          cssRules.value = window.globalConfig.globalCss;
+        }
+      }
+
+      cssEnabled.addEventListener('change', () => {
+        cssGlobalHint.classList.toggle('hidden', cssEnabled.checked);
+        cssRules.disabled = !cssEnabled.checked;
       });
 
       // ============ LIVE CSS ============
@@ -806,7 +834,7 @@ body { font-family: Georgia, serif; }"></textarea>
         }
 
         let css = null;
-        if (cssRules.value.trim()) {
+        if (cssEnabled.checked && cssRules.value.trim()) {
           css = { rules: cssRules.value.trim() };
         }
 
@@ -847,6 +875,9 @@ body { font-family: Georgia, serif; }"></textarea>
           breakdownCss.textContent = formatBytes(breakdown.css);
           breakdownContent.textContent = formatBytes(breakdown.content);
           breakdownTotal.textContent = `${formatBytes(totalBytes)} / 14.336 B`;
+
+          // Update CSS rail indicator
+          cssBytesEl.textContent = formatBytes(breakdown.css);
 
           // Show/hide rows based on values
           breakdownNavRow.style.display = breakdown.navigation > 0 ? 'flex' : 'none';
@@ -980,6 +1011,7 @@ body { font-family: Georgia, serif; }"></textarea>
       // Load global values into fields
       loadGlobalNavigation();
       loadGlobalFooter();
+      loadGlobalCSS();
       
       // Set initial disabled states
       navEditor.classList.remove('hidden');
@@ -992,6 +1024,9 @@ body { font-family: Georgia, serif; }"></textarea>
       
       footerEditor.classList.remove('hidden');
       footerText.disabled = true;
+      
+      cssEditor.classList.remove('hidden');
+      cssRules.disabled = true;
 
       function debounce(fn, delay) {
         let timeout;
@@ -1044,6 +1079,7 @@ body { font-family: Georgia, serif; }"></textarea>
       cssRules.addEventListener('input', debouncedPreview);
       navEnabled.addEventListener('change', debouncedPreview);
       footerEnabled.addEventListener('change', debouncedPreview);
+      cssEnabled.addEventListener('change', debouncedPreview);
 
       // Update cost rail when blocks change
       const observer = new MutationObserver(() => {
