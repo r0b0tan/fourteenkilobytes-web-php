@@ -65,6 +65,10 @@
           <span>Title</span>
           <span id="title-bytes">0 B</span>
         </div>
+        <div class="rail-item">
+          <span>Navigation</span>
+          <span id="nav-bytes">0 B</span>
+        </div>
       </div>
     </div>
   </div>
@@ -139,6 +143,10 @@
         </div>
       </div>
       <div class="card-rail">
+        <div class="rail-item">
+          <span>Footer</span>
+          <span id="footer-bytes">0 B</span>
+        </div>
         <div class="rail-item">
           <span>CSS</span>
           <span id="css-bytes">0 B</span>
@@ -290,6 +298,8 @@
       const costContentTotal = document.getElementById('cost-content-total');
       const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
+      const navBytesEl = document.getElementById('nav-bytes');
+      const footerBytesEl = document.getElementById('footer-bytes');
       const cssBytesEl = document.getElementById('css-bytes');
 
       // Build Summary elements
@@ -879,7 +889,9 @@
           breakdownContent.textContent = formatBytes(breakdown.content);
           breakdownTotal.textContent = `${formatBytes(totalBytes)} / 14.336 B`;
 
-          // Update CSS rail indicator
+          // Update rail indicators
+          navBytesEl.textContent = formatBytes(breakdown.navigation);
+          footerBytesEl.textContent = formatBytes(breakdown.footer);
           cssBytesEl.textContent = formatBytes(breakdown.css);
 
           // Show/hide rows based on values
