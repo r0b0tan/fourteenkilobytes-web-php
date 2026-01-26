@@ -17,42 +17,121 @@
 
   <div id="message" class="message hidden"></div>
 
-  <!-- A. Basisdaten -->
-  <div class="section-base-data">
-    <div class="base-data-row">
-      <div class="form-group">
-        <label for="title">Titel</label>
-        <input type="text" id="title" placeholder="Mein erster Post">
-      </div>
-      <div class="form-group">
-        <label for="slug">Slug</label>
-        <input type="text" id="slug" placeholder="mein-erster-post">
-      </div>
-      <div class="form-group">
-        <label for="page-type">Build-Typ</label>
-        <select id="page-type" class="page-type-select">
-          <option value="post">Blog-Post</option>
-          <option value="page">Statische Seite</option>
-        </select>
-        <span id="page-type-hint" class="text-small text-muted"></span>
-      </div>
+  <!-- Card: Head -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Head</h2>
     </div>
-    <div class="base-data-byte-indicator" id="title-byte-indicator">
-      <span class="block-label">Title-Meta</span>
-      <span class="block-bytes" id="title-bytes">0 B</span>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
+        <div class="base-data-row">
+          <div class="form-group">
+            <label for="title">Titel</label>
+            <input type="text" id="title" placeholder="Mein erster Post">
+          </div>
+          <div class="form-group">
+            <label for="slug">Slug</label>
+            <input type="text" id="slug" placeholder="mein-erster-post">
+          </div>
+          <div class="form-group">
+            <label for="page-type">Build-Typ</label>
+            <select id="page-type" class="page-type-select">
+              <option value="post">Blog-Post</option>
+              <option value="page">Statische Seite</option>
+            </select>
+            <span id="page-type-hint" class="text-small text-muted"></span>
+          </div>
+        </div>
+
+        <!-- Header-Override -->
+        <div class="override-section override-section-spaced">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="nav-enabled">
+              <span>Navigation überschreiben</span>
+            </label>
+            <p id="nav-global-hint" class="override-hint">✓ Globale Navigation wird verwendet</p>
+          </div>
+          <div id="nav-editor" class="override-editor hidden">
+            <div id="nav-links" class="nav-links"></div>
+            <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-rail">
+        <div class="rail-item">
+          <span>Title</span>
+          <span id="title-bytes">0 B</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- B. Header-Override -->
-  <div class="override-section">
-    <label class="override-toggle">
-      <input type="checkbox" id="nav-enabled">
-      <span>Header überschreiben</span>
-    </label>
-    <p id="nav-global-hint" class="override-hint">✓ Globaler Header wird verwendet</p>
-    <div id="nav-editor" class="override-editor hidden">
-      <div id="nav-links" class="nav-links"></div>
-      <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
+  <!-- Card: Body -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Body</h2>
+    </div>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
+        <div id="block-editor" class="block-editor"></div>
+        <div class="block-actions-row">
+          <button type="button" id="add-block-btn" class="btn-small btn-secondary">Block hinzufügen</button>
+          <div id="add-block-dropdown" class="add-block-dropdown hidden">
+            <button type="button" data-type="paragraph">Absatz</button>
+            <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
+            <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
+            <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
+            <button type="button" data-type="heading" data-level="4">Überschrift 4</button>
+            <button type="button" data-type="heading" data-level="5">Überschrift 5</button>
+            <button type="button" data-type="heading" data-level="6">Überschrift 6</button>
+            <button type="button" data-type="bloglist">Blogliste</button>
+          </div>
+        </div>
+        <p id="content-error" class="text-small text-danger hidden"></p>
+      </div>
+      <div class="card-rail" id="content-rail">
+        <!-- Block byte indicators werden hier per JS eingefügt -->
+        <div class="rail-total">
+          <span>Content</span>
+          <span id="cost-content-total">0 B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Footer -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Footer</h2>
+    </div>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
+        <!-- Footer-Override -->
+        <div class="override-section override-section-first">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="footer-enabled">
+              <span>Footer überschreiben</span>
+            </label>
+            <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
+          </div>
+          <div id="footer-editor" class="override-editor hidden">
+            <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
+          </div>
+        </div>
+
+        <!-- Zusätzliches CSS -->
+        <details class="css-section">
+          <summary>Zusätzliches CSS</summary>
+          <p class="css-warning-hint">Zusätzliches CSS erhöht die Seitengröße und beeinflusst den deterministischen Build.</p>
+          <textarea id="css-rules" rows="4" placeholder="/* Wird nach globalem CSS eingefügt */
+body { font-family: Georgia, serif; }"></textarea>
+        </details>
+      </div>
+      <div class="card-rail">
+        <!-- Platzhalter für konsistentes Layout -->
+      </div>
     </div>
   </div>
 
@@ -75,38 +154,6 @@
     </div>
   </div>
 
-  <!-- C. Block-Editor mit Cost Rail -->
-  <div class="editor-container">
-    <div class="content-section">
-      <div id="block-editor" class="block-editor"></div>
-      <div class="block-actions-row">
-        <button type="button" id="add-block-btn" class="btn-small btn-secondary">Block hinzufügen</button>
-        <div id="add-block-dropdown" class="add-block-dropdown hidden">
-          <button type="button" data-type="paragraph">Absatz</button>
-          <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
-          <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
-          <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
-          <button type="button" data-type="heading" data-level="4">Überschrift 4</button>
-          <button type="button" data-type="heading" data-level="5">Überschrift 5</button>
-          <button type="button" data-type="heading" data-level="6">Überschrift 6</button>
-          <button type="button" data-type="bloglist">Blogliste</button>
-        </div>
-      </div>
-      <p id="content-error" class="text-small text-danger hidden"></p>
-    </div>
-
-    <!-- Cost Rail rechts vom Block-Editor -->
-    <div class="cost-rail">
-      <div class="cost-rail-content" id="cost-rail-content">
-        <div class="cost-blocks" id="cost-blocks"></div>
-        <div class="cost-total">
-          <span>Content</span>
-          <span id="cost-content-total">0 B</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Floating Format Toolbar (hidden by default) -->
   <div id="format-toolbar" class="format-toolbar hidden">
     <button type="button" data-cmd="bold" title="Fett"><b>B</b></button>
@@ -120,26 +167,6 @@
     <button type="button" id="link-apply">OK</button>
     <button type="button" id="link-cancel" class="btn-secondary btn-small">×</button>
   </div>
-
-  <!-- D. Footer-Override -->
-  <div class="override-section">
-    <label class="override-toggle">
-      <input type="checkbox" id="footer-enabled">
-      <span>Footer überschreiben</span>
-    </label>
-    <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
-    <div id="footer-editor" class="override-editor hidden">
-      <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
-    </div>
-  </div>
-
-  <!-- E. Zusätzliches CSS -->
-  <details class="css-section">
-    <summary>Zusätzliches CSS</summary>
-    <p class="css-warning-hint">Zusätzliches CSS erhöht die Seitengröße und beeinflusst den deterministischen Build.</p>
-    <textarea id="css-rules" rows="4" placeholder="/* Wird nach globalem CSS eingefügt */
-body { font-family: Georgia, serif; }"></textarea>
-  </details>
 
   <!-- Build Summary -->
   <div class="build-summary">
@@ -240,9 +267,9 @@ body { font-family: Georgia, serif; }"></textarea>
       const allowPaginationCheckbox = document.getElementById('allow-pagination');
       const messageEl = document.getElementById('message');
 
-      // Cost Rail elements
-      const costBlocks = document.getElementById('cost-blocks');
+      // Byte display elements
       const costContentTotal = document.getElementById('cost-content-total');
+      const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
 
       // Build Summary elements
@@ -823,50 +850,41 @@ body { font-family: Georgia, serif; }"></textarea>
       }
 
       function updateCostRail() {
-        // Update byte indicators in block headers
         const blocks = blockEditor.querySelectorAll('.block-item');
         let totalContentBytes = 0;
-        
+
+        // Clear existing rail items (except the total)
+        contentRail.querySelectorAll('.rail-item').forEach(el => el.remove());
+
+        const railTotal = contentRail.querySelector('.rail-total');
+
         blocks.forEach((block, index) => {
           const content = block.querySelector('.block-content');
           const type = block.dataset.type;
           const level = block.dataset.level;
           const text = content ? content.textContent.trim() : '';
-          
+
           // Rough byte estimation (real calculation happens server-side)
           const bytes = new TextEncoder().encode(text).length + 50; // +50 for markup
           totalContentBytes += bytes;
-          
+
           // Determine semantic label
           let label = 'Absatz';
           if (type === 'heading') {
-            label = `H${level} Überschrift`;
+            label = `H${level}`;
           } else if (type === 'bloglist') {
-            label = 'Blogliste';
+            label = 'Liste';
           }
-          
-          // Update block indicator with label
-          const indicator = block.querySelector('.block-byte-indicator');
-          if (indicator) {
-            indicator.innerHTML = `<span class="block-label">${label}</span><span class="block-bytes">${formatBytes(bytes)}</span>`;
-          }
+
+          // Create rail item
+          const railItem = document.createElement('div');
+          railItem.className = 'rail-item';
+          railItem.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
+          contentRail.insertBefore(railItem, railTotal);
         });
-        
+
         // Update content total
         costContentTotal.textContent = formatBytes(totalContentBytes);
-        
-        // Clear cost blocks (not used anymore)
-        costBlocks.innerHTML = '';
-
-        // Position content total at the bottom of block-actions-row
-        const blockActionsRow = document.querySelector('.block-actions-row');
-        const costTotal = document.querySelector('.cost-total');
-        if (blockActionsRow && costTotal) {
-          const rect = blockActionsRow.getBoundingClientRect();
-          const containerRect = document.querySelector('.editor-container').getBoundingClientRect();
-          const topOffset = rect.top - containerRect.top - 12;
-          costTotal.style.marginTop = `${topOffset}px`;
-        }
       }
 
       function updateTitleBytes() {
