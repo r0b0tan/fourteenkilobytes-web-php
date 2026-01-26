@@ -801,16 +801,16 @@
 
       async function buildInput() {
         const content = getContentFromBlocks();
-        if (content.length === 0) {
-          contentError.textContent = 'Mindestens ein Block erforderlich';
-          contentError.classList.remove('hidden');
-          throw new Error('Mindestens ein Block erforderlich');
-        }
+        
+        // For preview with empty content, use minimal placeholder
+        const finalContent = content.length > 0 
+          ? content 
+          : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
         contentError.classList.add('hidden');
 
         // Load posts if bloglist block is present
         let posts = [];
-        const hasBloglist = content.some(block => block.type === 'bloglist');
+        const hasBloglist = finalContent.some(block => block.type === 'bloglist');
         if (hasBloglist) {
           try {
             posts = await App.getPosts();
@@ -841,7 +841,7 @@
         return {
           slug: slugInput.value.trim() || 'untitled',
           title: titleInput.value.trim() || 'Untitled',
-          content,
+          content: finalContent,
           navigation,
           footer,
           css,
@@ -968,6 +968,16 @@
 
       publishBtn.addEventListener('click', async () => {
         if (!confirm('Build ausführen und veröffentlichen?')) return;
+
+        // Validate content before publish
+        const blocks = blockEditor.querySelectorAll('.block-item');
+        if (blocks.length === 0) {
+          contentError.textContent = 'Mindestens ein Block erforderlich';
+          contentError.classList.remove('hidden');
+          showMessage('Mindestens ein Block erforderlich', 'error');
+          return;
+        }
+        contentError.classList.add('hidden');
 
         publishBtn.disabled = true;
         hideMessage();
