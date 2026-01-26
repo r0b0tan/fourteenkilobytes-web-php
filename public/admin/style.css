@@ -19,10 +19,11 @@
   --accent-alpha-40: rgba(13, 148, 136, 0.25);
 
   /* Semantische Mappings – Helles Theme */
-  --bg:       var(--gray-100);
+  --bg:       var(--white);
   --fg:       var(--gray-900);
   --border:   var(--gray-300);
   --input-bg: var(--white);
+  --card-header-bg: var(--gray-100);
 
   /* Text */
   --text-primary:   var(--gray-900);
@@ -39,7 +40,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   padding: 32px;
-  max-width: 960px;
+  max-width: 1120px;
   margin: 0 auto;
 }
 
@@ -74,6 +75,71 @@ h2 {
 }
 
 .header nav a:hover { text-decoration: underline; }
+
+/* ============ EDITOR CARDS ============ */
+.editor-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-header-bg);
+  border-radius: 8px 8px 0 0;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.card-body-with-rail {
+  display: flex;
+  gap: 24px;
+}
+
+.card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-rail {
+  width: 140px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  display: flex;
+  flex-direction: column;
+}
+
+.rail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.rail-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
 
 /* Login */
 .login-form {
@@ -233,68 +299,10 @@ button:disabled {
 
 /* ============ EDITOR LAYOUT ============ */
 
-/* Basisdaten und Header/Footer Override sind außerhalb des Containers */
-.section-base-data {
-  margin-bottom: 24px;
-  max-width: 100%;
-}
-
-.override-section {
-  padding: 16px 0;
-  max-width: 680px;
-}
-
-/* Main Container: Flex-Layout für Block-Editor + Cost Rail */
-.editor-container {
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-  margin-bottom: 48px;
-}
-
-/* Cost Rail (rechts vom Block-Editor) */
-.cost-rail {
-  width: 200px;
-  flex-shrink: 0;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-}
-
-.cost-rail-content {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-family: ui-monospace, monospace;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.cost-blocks {
-  display: none;
-}
-
-.cost-total {
-  display: flex;
-  justify-content: space-between;
-  padding: 18px 0;
-  border-top: 1px solid var(--border);
-  font-weight: 400;
-  color: var(--text-muted);
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  transition: margin-top 0.2s ease;
-}
-
-/* ZONE A – Basisdaten */
-.section-base-data {
-  position: relative;
-  max-width: calc(100% - 232px); /* Gleiche Breite wie Block-Editor (100% - cost-rail - gap) */
-}
-
+/* ZONE A – Basisdaten (in Card) */
 .base-data-row {
   display: grid;
-  grid-template-columns: 3fr 3fr 1fr;
+  grid-template-columns: 2fr 2fr 1fr;
   gap: 16px;
 }
 
@@ -302,33 +310,25 @@ button:disabled {
   margin-bottom: 0;
 }
 
-.base-data-byte-indicator {
-  position: absolute;
-  right: -232px;
-  top: 24px;
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 200px;
-}
-
-.section-base-data:focus-within .base-data-byte-indicator {
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-/* ZONE B, D – Override Sections (Header, Footer) */
+/* Override Sections (Header, Footer) - innerhalb Card */
 .override-section {
+  padding: 12px 0;
+}
+
+.override-section-spaced {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.override-section-first {
+  padding-top: 0;
+}
+
+.override-section-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .override-toggle {
@@ -347,21 +347,23 @@ button:disabled {
 
 .override-hint {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   margin: 0;
-}
-
-.override-hint::before {
-  content: '';
 }
 
 .override-editor {
   margin-top: 12px;
-  margin-left: 24px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
 }
 
 .override-editor input[type="text"] {
   max-width: 400px;
+}
+
+.override-editor .nav-links {
+  margin-bottom: 8px;
 }
 
 /* ZONE C – Content-Pipeline (Block-Editor) */
@@ -370,10 +372,11 @@ button:disabled {
   min-width: 0;
 }
 
-/* ZONE D – Erweiterungen (CSS) */
+/* CSS Section (innerhalb Content Card) */
 .css-section {
-  margin: 24px 0 0 0;
-  max-width: 680px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 .nav-links {
@@ -430,10 +433,11 @@ button:disabled {
 
 /* Block Editor */
 .block-editor {
+  flex: 1;
   border: 1px solid var(--border);
   border-radius: 4px;
-  background: var(--input-bg);
-  min-height: 300px;
+  background: var(--bg);
+  min-height: 200px;
   position: relative;
 }
 
@@ -456,34 +460,7 @@ button:disabled {
 }
 
 .block-byte-indicator {
-  position: absolute;
-  right: -232px;
-  top: 16px;
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-muted);
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  width: 200px;
-}
-
-.block-label {
-  color: var(--text-muted);
-}
-
-.block-bytes {
-  text-align: right;
-}
-
-.block-item:focus-within .block-byte-indicator {
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  display: none;
 }
 
 .block-header {
@@ -1003,29 +980,29 @@ button:disabled {
 
 /* Responsive */
 @media (max-width: 900px) {
-  .editor-container {
+  .card-body-with-rail {
     flex-direction: column;
   }
 
-  .cost-rail {
+  .card-rail {
     width: 100%;
-  }
-
-  .block-byte-indicator {
-    position: static;
-    margin-top: 8px;
     flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .section-base-data {
-    max-width: 100%;
-  }
-
-  .base-data-byte-indicator {
-    position: static;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
     margin-top: 12px;
+  }
+
+  .rail-item {
+    flex: 0 0 auto;
+  }
+
+  .rail-total {
     width: 100%;
+    margin-top: 8px;
+    border-top: none;
+    padding-top: 8px;
   }
 
   .base-data-row {
