@@ -181,6 +181,13 @@ select:focus {
   border-color: var(--accent);
 }
 
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: var(--gray-400);
+  opacity: 1;
+}
+
 textarea {
   min-height: 100px;
   resize: vertical;
@@ -521,7 +528,7 @@ button:disabled {
 
 .block-content:empty::before {
   content: attr(data-placeholder);
-  color: var(--text-muted);
+  color: var(--gray-400);
 }
 
 .block-content b, .block-content strong {
