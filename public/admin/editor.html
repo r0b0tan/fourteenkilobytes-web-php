@@ -79,14 +79,14 @@
         <div class="block-actions-row">
           <button type="button" id="add-block-btn" class="btn-primary">+ Block hinzufügen</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
-            <button type="button" data-type="paragraph">Absatz</button>
-            <button type="button" data-type="heading" data-level="1">Überschrift 1</button>
-            <button type="button" data-type="heading" data-level="2">Überschrift 2</button>
-            <button type="button" data-type="heading" data-level="3">Überschrift 3</button>
-            <button type="button" data-type="heading" data-level="4">Überschrift 4</button>
-            <button type="button" data-type="heading" data-level="5">Überschrift 5</button>
-            <button type="button" data-type="heading" data-level="6">Überschrift 6</button>
-            <button type="button" data-type="bloglist">Blogliste</button>
+            <button type="button" data-type="paragraph">Paragraph</button>
+            <button type="button" data-type="heading" data-level="1">Heading 1</button>
+            <button type="button" data-type="heading" data-level="2">Heading 2</button>
+            <button type="button" data-type="heading" data-level="3">Heading 3</button>
+            <button type="button" data-type="heading" data-level="4">Heading 4</button>
+            <button type="button" data-type="heading" data-level="5">Heading 5</button>
+            <button type="button" data-type="heading" data-level="6">Heading 6</button>
+            <button type="button" data-type="bloglist">Bloglist</button>
           </div>
         </div>
       </div>
@@ -586,7 +586,7 @@
           const typeSelect = document.createElement('select');
           typeSelect.className = 'block-type-select';
           typeSelect.innerHTML = `
-            <option value="paragraph">Absatz</option>
+            <option value="paragraph">Paragraph</option>
             <option value="heading-1">H1</option>
             <option value="heading-2">H2</option>
             <option value="heading-3">H3</option>
@@ -610,7 +610,7 @@
         } else {
           const label = document.createElement('span');
           label.className = 'block-type-label';
-          label.textContent = 'Blogliste';
+          label.textContent = 'Bloglist';
           header.appendChild(label);
         }
 
