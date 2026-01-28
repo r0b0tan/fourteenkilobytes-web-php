@@ -612,7 +612,7 @@ button:disabled {
 }
 
 .block-editor:empty::before {
-  content: "+ Block hinzufügen um zu beginnen";
+  content: "+ Add block to begin";
   color: var(--text-muted);
   font-style: italic;
   padding: 48px 16px;
