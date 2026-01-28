@@ -31,3 +31,4 @@ data/manifest.json
 data/settings.json
 data/page-types.json
 data/posts/
+data/sources/*.json
