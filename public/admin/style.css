@@ -421,10 +421,9 @@ button:disabled {
 }
 
 .nav-chip::before {
-  content: '⋮⋮';
+  content: '⠿';
   color: var(--gray-400);
-  font-size: 10px;
-  letter-spacing: -2px;
+  font-size: 12px;
 }
 
 .nav-chip:hover {
