@@ -1,0 +1,43 @@
+{
+    "slug": "titelseite",
+    "title": "Titelseite",
+    "content": [
+        {
+            "type": "heading",
+            "level": 1,
+            "children": [
+                {
+                    "type": "text",
+                    "text": "www.meinblog.de"
+                }
+            ]
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Willkommen auf meinem Blog. Schauts euch an. Ist mega."
+                }
+            ]
+        },
+        {
+            "type": "bloglist"
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Falls ihr wollt, folgt mir auf Social Media. Bussi <3"
+                }
+            ]
+        }
+    ],
+    "navigation": null,
+    "footer": null,
+    "css": null,
+    "icons": [],
+    "allowPagination": false,
+    "pageType": "page"
+}
