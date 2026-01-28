@@ -21,53 +21,49 @@
     <div class="card-header">
       <h2 class="card-title">Head</h2>
     </div>
-    <div class="card-body card-body-with-rail">
-      <div class="card-content">
-        <div class="base-data-row">
-          <div class="form-group">
-            <label for="title">Titel</label>
-            <input type="text" id="title" placeholder="Mein erster Post">
-          </div>
-          <div class="form-group">
-            <label for="slug">Slug</label>
-            <input type="text" id="slug" placeholder="mein-erster-post">
-          </div>
-          <div class="form-group">
-            <label for="page-type">Build-Typ</label>
-            <select id="page-type" class="page-type-select">
-              <option value="post">Blog-Post</option>
-              <option value="page">Statische Seite</option>
-            </select>
-            <span id="page-type-hint" class="text-small text-muted"></span>
-          </div>
+    <div class="card-body card-body-grid">
+      <div class="base-data-row">
+        <div class="form-group">
+          <label for="title">Titel</label>
+          <input type="text" id="title" placeholder="Mein erster Post">
         </div>
+        <div class="form-group">
+          <label for="slug">Slug</label>
+          <input type="text" id="slug" placeholder="mein-erster-post">
+        </div>
+        <div class="form-group">
+          <label for="page-type">Build-Typ</label>
+          <select id="page-type" class="page-type-select">
+            <option value="post">Blog-Post</option>
+            <option value="page">Statische Seite</option>
+          </select>
+          <span id="page-type-hint" class="text-small text-muted"></span>
+        </div>
+      </div>
+      <div class="rail-item">
+        <span>Title</span>
+        <span id="title-bytes">0 B</span>
+      </div>
 
-        <!-- Header-Override -->
-        <div class="override-section override-section-spaced">
-          <div class="override-section-header">
-            <label class="override-toggle">
-              <input type="checkbox" id="nav-enabled">
-              <span>Navigation überschreiben</span>
-            </label>
-            <p id="nav-global-hint" class="override-hint">✓ Globale Navigation wird verwendet</p>
-          </div>
-          <div id="nav-editor" class="override-editor hidden">
-            <div class="nav-editor-row">
-              <div id="nav-links" class="nav-links"></div>
-              <button type="button" id="add-nav-link" class="btn-primary">+ Link</button>
-            </div>
+      <!-- Header-Override -->
+      <div class="override-section">
+        <div class="override-section-header">
+          <label class="override-toggle">
+            <input type="checkbox" id="nav-enabled">
+            <span>Navigation überschreiben</span>
+          </label>
+          <p id="nav-global-hint" class="override-hint">✓ Globale Navigation wird verwendet</p>
+        </div>
+        <div id="nav-editor" class="override-editor hidden">
+          <div class="nav-editor-row">
+            <div id="nav-links" class="nav-links"></div>
+            <button type="button" id="add-nav-link" class="btn-primary">+ Link</button>
           </div>
         </div>
       </div>
-      <div class="card-rail">
-        <div class="rail-item">
-          <span>Title</span>
-          <span id="title-bytes">0 B</span>
-        </div>
-        <div class="rail-item">
-          <span>Navigation</span>
-          <span id="nav-bytes">0 B</span>
-        </div>
+      <div class="rail-item">
+        <span>Navigation</span>
+        <span id="nav-bytes">0 B</span>
       </div>
     </div>
   </div>
