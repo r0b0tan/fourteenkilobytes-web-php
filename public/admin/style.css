@@ -237,19 +237,26 @@ button:disabled {
 }
 
 .btn-secondary {
-  background: var(--gray-200);
+  background: var(--gray-100);
   border-color: var(--gray-300);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--gray-200);
+  border-color: var(--gray-400);
 }
 
 .btn-danger {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--white);
+  background: var(--white);
+  border-color: #dc2626;
+  color: #dc2626;
 }
 
 .btn-danger:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: #fef2f2;
+  border-color: #b91c1c;
+  color: #b91c1c;
 }
 
 .btn-small {
@@ -456,15 +463,16 @@ button:disabled {
 }
 
 .block-editor:empty::before {
-  content: 'Block hinzufügen um zu beginnen';
+  content: '+ Block hinzufügen um zu beginnen';
   color: var(--text-muted);
   font-style: italic;
-  padding: 16px;
+  padding: 48px 16px;
   display: block;
+  text-align: center;
 }
 
 .block-item {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px dashed var(--gray-300);
   padding: 12px;
   position: relative;
 }
@@ -501,12 +509,23 @@ button:disabled {
   padding: 4px 8px;
   font-size: 12px;
   background: var(--white);
-  color: var(--text-primary);
+  color: var(--text-muted);
   border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 28px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
 .block-item-actions button:hover {
-  background: var(--gray-200);
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border-color: var(--gray-400);
+}
+
+.block-item-actions button:last-child:hover {
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
 }
 
 .block-content {
@@ -816,6 +835,11 @@ button:disabled {
 .build-publish-btn:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+  transform: scale(1.02);
+}
+
+.build-publish-btn {
+  transition: transform 0.15s, background 0.15s;
 }
 
 .build-publish-btn:disabled {

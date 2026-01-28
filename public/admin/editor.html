@@ -15,8 +15,7 @@
     </nav>
   </div>
 
-  <div id="message" class="message hidden"></div>
-
+  
   <!-- Card: Head -->
   <div class="editor-card">
     <div class="card-header">
@@ -55,7 +54,7 @@
           <div id="nav-editor" class="override-editor hidden">
             <div class="nav-editor-row">
               <div id="nav-links" class="nav-links"></div>
-              <button type="button" id="add-nav-link" class="btn-small btn-secondary">+ Link</button>
+              <button type="button" id="add-nav-link" class="btn-primary">+ Link</button>
             </div>
           </div>
         </div>
@@ -167,8 +166,8 @@
         <input type="text" id="nav-link-href" placeholder="/">
       </div>
       <div class="popup-actions">
-        <button type="button" id="nav-link-save">OK</button>
-        <button type="button" id="nav-link-delete" class="btn-danger btn-small">Löschen</button>
+        <button type="button" id="nav-link-save" class="btn-primary">OK</button>
+        <button type="button" id="nav-link-delete" class="btn-danger">Löschen</button>
         <button type="button" id="nav-link-cancel" class="btn-secondary">Abbrechen</button>
       </div>
     </div>
@@ -184,8 +183,17 @@
   <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
     <input type="text" id="link-href" placeholder="/pfad oder #anker">
-    <button type="button" id="link-apply">OK</button>
-    <button type="button" id="link-cancel" class="btn-secondary btn-small">×</button>
+    <button type="button" id="link-apply" class="btn-primary">OK</button>
+    <button type="button" id="link-cancel" class="btn-secondary">×</button>
+  </div>
+
+  <!-- Modal System -->
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <div id="modal-actions" class="popup-actions"></div>
+    </div>
   </div>
 
   <!-- Card: Build -->
@@ -1017,9 +1025,38 @@
 
       // ============ PUBLISH ============
 
-      publishBtn.addEventListener('click', async () => {
-        if (!confirm('Build ausführen und veröffentlichen?')) return;
+      // Confirm Popup
+      const confirmPopup = document.getElementById('confirm-popup');
+      const confirmYes = document.getElementById('confirm-yes');
+      const confirmNo = document.getElementById('confirm-no');
 
+      function showConfirm() {
+        return new Promise((resolve) => {
+          confirmPopup.classList.remove('hidden');
+
+          const handleYes = () => {
+            confirmPopup.classList.add('hidden');
+            cleanup();
+            resolve(true);
+          };
+
+          const handleNo = () => {
+            confirmPopup.classList.add('hidden');
+            cleanup();
+            resolve(false);
+          };
+
+          const cleanup = () => {
+            confirmYes.removeEventListener('click', handleYes);
+            confirmNo.removeEventListener('click', handleNo);
+          };
+
+          confirmYes.addEventListener('click', handleYes);
+          confirmNo.addEventListener('click', handleNo);
+        });
+      }
+
+      publishBtn.addEventListener('click', async () => {
         // Validate content before publish
         const blocks = blockEditor.querySelectorAll('.block-item');
         if (blocks.length === 0) {
@@ -1029,6 +1066,9 @@
           return;
         }
         contentError.classList.add('hidden');
+
+        const confirmed = await showConfirm();
+        if (!confirmed) return;
 
         publishBtn.disabled = true;
         hideMessage();
