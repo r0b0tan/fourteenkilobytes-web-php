@@ -188,11 +188,13 @@
     <button type="button" id="link-cancel" class="btn-secondary btn-small">×</button>
   </div>
 
-  <!-- Build Summary -->
-  <div class="build-summary">
-    <div class="build-summary-content">
-      <details class="build-breakdown" open>
-        <summary>Build-Aufschlüsselung</summary>
+  <!-- Card: Build -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Build</h2>
+    </div>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
         <div class="breakdown-table">
           <div class="breakdown-row">
             <span>Fixkosten (Basis)</span>
@@ -219,17 +221,34 @@
             <span id="breakdown-total">0 B / 14.336 B</span>
           </div>
         </div>
-      </details>
-      <div class="byte-bar">
-        <div id="byte-fill-overhead" class="byte-fill-overhead" style="width: 0%"></div>
-        <div id="byte-fill-content" class="byte-fill-content" style="width: 0%"></div>
+        <label id="pagination-option" class="pagination-checkbox hidden">
+          <input type="checkbox" id="allow-pagination">
+          <span>Automatisch auf mehrere Seiten aufteilen</span>
+        </label>
       </div>
-      <label id="pagination-option" class="pagination-checkbox hidden">
-        <input type="checkbox" id="allow-pagination">
-        <span>Automatisch auf mehrere Seiten aufteilen</span>
-      </label>
+      <div class="card-rail build-rail">
+        <div class="build-progress">
+          <div class="pie-chart" id="pie-chart">
+              <span class="pie-percent" id="pie-percent">0%</span>
+            </div>
+          <div class="pie-legend">
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-overhead"></span>
+              <span>Overhead</span>
+            </div>
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-content"></span>
+              <span>Content</span>
+            </div>
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-free"></span>
+              <span>Frei</span>
+            </div>
+          </div>
+        </div>
+        <button id="publish-btn" class="btn-primary build-publish-btn">Build & Publish</button>
+      </div>
     </div>
-    <button id="publish-btn" class="btn-primary">Build & Publish</button>
   </div>
 
   <!-- Live CSS Container -->
@@ -302,7 +321,7 @@
       const footerBytesEl = document.getElementById('footer-bytes');
       const cssBytesEl = document.getElementById('css-bytes');
 
-      // Build Summary elements
+      // Build Card elements
       const breakdownBase = document.getElementById('breakdown-base');
       const breakdownNav = document.getElementById('breakdown-nav');
       const breakdownNavRow = document.getElementById('breakdown-nav-row');
@@ -312,8 +331,9 @@
       const breakdownCssRow = document.getElementById('breakdown-css-row');
       const breakdownContent = document.getElementById('breakdown-content');
       const breakdownTotal = document.getElementById('breakdown-total');
-      const byteFillOverhead = document.getElementById('byte-fill-overhead');
-      const byteFillContent = document.getElementById('byte-fill-content');
+      const pieChart = document.getElementById('pie-chart');
+      const piePercent = document.getElementById('pie-percent');
+      const pieContentDot = document.querySelector('.pie-dot-content');
 
       // State
       let savedSelection = null;
@@ -902,23 +922,34 @@
         // Update Cost Rail content total
         costContentTotal.textContent = formatBytes(actualContentBytes);
 
-        // Overhead bar (gray)
-        byteFillOverhead.style.width = `${overheadPercent}%`;
+        // Calculate angles for pie chart (360 degrees = 100%)
+        const overheadDeg = (overheadPercent / 100) * 360;
+        const totalDeg = (totalPercent / 100) * 360;
 
-        // Content bar (colored, starts after overhead)
-        byteFillContent.style.left = `${overheadPercent}%`;
-        byteFillContent.style.width = `${totalPercent - overheadPercent}%`;
-
-        byteFillContent.classList.remove('warning', 'danger');
+        // Determine content color based on usage
+        let contentColor = 'var(--accent)';
+        pieContentDot.classList.remove('warning', 'danger');
         if (totalPercent >= 100) {
-          byteFillContent.classList.add('danger');
+          contentColor = '#dc2626';
+          pieContentDot.classList.add('danger');
           paginationOption.classList.remove('hidden');
         } else if (totalPercent >= 80) {
-          byteFillContent.classList.add('warning');
+          contentColor = '#f59e0b';
+          pieContentDot.classList.add('warning');
           paginationOption.classList.add('hidden');
         } else {
           paginationOption.classList.add('hidden');
         }
+
+        // Update pie chart with conic-gradient
+        pieChart.style.background = `conic-gradient(
+          var(--gray-400) 0deg ${overheadDeg}deg,
+          ${contentColor} ${overheadDeg}deg ${totalDeg}deg,
+          var(--gray-200) ${totalDeg}deg 360deg
+        )`;
+
+        // Update percentage in center
+        piePercent.textContent = `${Math.round(totalPercent)}%`;
       }
 
       function updateCostRail() {
