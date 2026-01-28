@@ -35,8 +35,8 @@ define('ITERATIONS', 600000);
 define('KEY_LENGTH', 32);
 
 // Cookie settings
-define('COOKIE_NAME', 'fkb_auth');
-define('COOKIE_LIFETIME', 86400 * 7); // 7 days
+define('COOKIE_NAME', 'fkb_auth_v2');
+define('COOKIE_LIFETIME', 86400); // 24 hours
 
 // Ensure data directories exist
 if (!is_dir(DATA_DIR)) {

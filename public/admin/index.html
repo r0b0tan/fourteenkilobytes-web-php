@@ -7,17 +7,6 @@
   <link rel="stylesheet" href="/admin/style.css">
 </head>
 <body>
-  <!-- Login -->
-  <div id="login-view" class="login-form">
-    <h2>Login</h2>
-    <div class="form-group">
-      <label for="password">Passwort</label>
-      <input type="password" id="password" placeholder="Passwort eingeben">
-    </div>
-    <button id="login-btn" style="width: 100%">Anmelden</button>
-    <p id="login-error" class="message error hidden mt-1"></p>
-  </div>
-
   <!-- Dashboard -->
   <div id="dashboard-view" class="hidden">
     <div class="header">
@@ -54,11 +43,7 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     (async function() {
-      const loginView = document.getElementById('login-view');
       const dashboardView = document.getElementById('dashboard-view');
-      const passwordInput = document.getElementById('password');
-      const loginBtn = document.getElementById('login-btn');
-      const loginError = document.getElementById('login-error');
       const logoutBtn = document.getElementById('logout-btn');
       const postsList = document.getElementById('posts-list');
       const pagesList = document.getElementById('pages-list');
@@ -75,64 +60,25 @@
       // Check if auth is required
       const config = await App.getConfig();
 
-      if (!config.authEnabled) {
-        // No auth required, show dashboard directly
-        showDashboard();
-      } else {
-        // Check if already logged in (cookie)
+      if (config.authEnabled) {
+        // Check if logged in
         const loggedIn = await App.isLoggedIn();
-        if (loggedIn) {
-          showDashboard();
-        } else {
-          showLogin();
+        if (!loggedIn) {
+          window.location.href = '/admin/login.html';
+          return;
         }
       }
 
-      // Login handler
-      loginBtn.addEventListener('click', async () => {
-        const password = passwordInput.value.trim();
-        if (!password) {
-          showError('Bitte Passwort eingeben');
-          return;
-        }
-
-        loginBtn.disabled = true;
-        loginError.classList.add('hidden');
-
-        try {
-          await App.login(password);
-          showDashboard();
-        } catch (err) {
-          showError(err.message === 'Invalid password' ? 'Falsches Passwort' : 'Fehler bei Anmeldung');
-          console.error(err);
-        } finally {
-          loginBtn.disabled = false;
-        }
-      });
-
-      passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') loginBtn.click();
-      });
+      // Show dashboard
+      dashboardView.classList.remove('hidden');
+      loadAllContent();
 
       // Logout handler
       logoutBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         await App.logout();
-        passwordInput.value = '';
-        showLogin();
+        window.location.href = '/admin/login.html';
       });
-
-      function showLogin() {
-        loginView.classList.remove('hidden');
-        dashboardView.classList.add('hidden');
-        passwordInput.focus();
-      }
-
-      function showDashboard() {
-        loginView.classList.add('hidden');
-        dashboardView.classList.remove('hidden');
-        loadAllContent();
-      }
 
       // ============ TABS ============
 
@@ -144,11 +90,6 @@
           tabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`));
         });
       });
-
-      function showError(msg) {
-        loginError.textContent = msg;
-        loginError.classList.remove('hidden');
-      }
 
       async function loadAllContent() {
         try {
