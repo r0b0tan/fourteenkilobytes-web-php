@@ -900,6 +900,23 @@ button:disabled {
   font-size: 13px;
 }
 
+/* CSS Preset Preview */
+.css-preview-code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text-muted);
+}
+
 /* ============ EDITOR ENHANCEMENTS ============ */
 
 /* Page Type Selector */

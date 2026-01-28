@@ -1,0 +1,49 @@
+/**
+ * fourteenkilobytes - Dark Theme
+ *
+ * A dark mode design for reduced eye strain.
+ * Clean and modern appearance.
+ */
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+  line-height: 1.6;
+  color: #e0e0e0;
+  background: #1a1a1a;
+}
+
+a {
+  color: #6db3f2;
+}
+
+h1, h2, h3 {
+  line-height: 1.3;
+  color: #fff;
+}
+
+pre, code {
+  background: #2d2d2d;
+  border-radius: 3px;
+}
+
+pre {
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+code {
+  padding: 0.15rem 0.3rem;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
