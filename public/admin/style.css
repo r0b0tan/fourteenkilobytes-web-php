@@ -370,16 +370,29 @@ button:disabled {
   max-width: 400px;
 }
 
-#nav-editor {
+#nav-editor,
+#footer-editor {
   padding: 12px;
   background: var(--accent-alpha-15);
   border-radius: 6px;
 }
 
-.nav-editor-row {
+.nav-editor-row,
+.footer-editor-row {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.footer-editor-row input[type="text"] {
+  flex: 1;
+  max-width: none;
+}
+
+.footer-editor-row input[type="text"]:disabled,
+.footer-editor-row button:disabled {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .override-editor .nav-links {
