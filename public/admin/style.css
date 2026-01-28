@@ -122,7 +122,7 @@ h2 {
 
 .card-body-grid {
   display: grid;
-  grid-template-columns: 1fr 140px;
+  grid-template-columns: 1fr 180px;
   gap: 16px 24px;
   align-items: center;
 }
@@ -144,11 +144,27 @@ h2 {
 
 .card-body-grid > .override-section + .rail-item {
   align-self: start;
-  padding-top: 44px;
+}
+
+#nav-rail-item {
+  padding-top: 43px;
+}
+
+/* Footer card: align with top of green bar */
+.card-body-grid > .override-section-first + .rail-item {
+  padding-top: 32px;
+}
+
+/* CSS section: align with top of textarea */
+.card-body-grid > .override-section:not(.override-section-first) + .rail-item {
+  padding-top: 68px;
 }
 
 .card-body-grid > .rail-item-total {
   align-self: end;
+  border-top: 1px dashed var(--gray-400);
+  padding-top: 23px;
+  margin-top: 16px;
 }
 
 .card-content {
@@ -157,7 +173,7 @@ h2 {
 }
 
 .card-rail {
-  width: 140px;
+  width: 180px;
   flex-shrink: 0;
   font-size: 11px;
   color: var(--text-muted);
@@ -617,11 +633,11 @@ button:disabled {
 .block-byte-indicator {
   position: absolute;
   top: 12px;
-  right: -164px;
+  right: -204px;
   font-size: 11px;
   color: var(--text-muted);
   font-family: ui-monospace, monospace;
-  width: 140px;
+  width: 180px;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -1171,6 +1187,7 @@ button:disabled {
 
 .page-type-select {
   width: auto;
+  min-width: 140px;
   padding: 7px 8px;
 }
 
