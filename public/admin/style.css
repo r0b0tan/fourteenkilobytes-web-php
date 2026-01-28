@@ -89,9 +89,6 @@ h2 {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--card-header-bg);
-  border-radius: 8px 8px 0 0;
 }
 
 .card-title {
@@ -231,6 +228,7 @@ button:disabled {
 
 .btn-primary {
   border-color: var(--accent);
+  font-weight: 500;
 }
 
 .btn-primary:hover {
@@ -359,13 +357,16 @@ button:disabled {
 
 .override-editor {
   margin-top: 12px;
-  padding: 12px;
-  background: var(--gray-100);
-  border-radius: 6px;
 }
 
 .override-editor input[type="text"] {
   max-width: 400px;
+}
+
+#nav-editor {
+  padding: 12px;
+  background: var(--accent-alpha-15);
+  border-radius: 6px;
 }
 
 .nav-editor-row {
@@ -403,15 +404,15 @@ button:disabled {
   align-items: center;
   padding: 4px 12px;
   background: var(--input-bg);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 16px;
   font-size: 13px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: background 0.15s;
 }
 
 .nav-chip:hover {
-  border-color: var(--accent);
+  background: var(--white);
 }
 
 /* Nav Link Popup */
