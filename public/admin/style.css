@@ -409,17 +409,37 @@ button:disabled {
 .nav-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  background: var(--input-bg);
-  border: none;
-  border-radius: 16px;
+  gap: 6px;
+  padding: 8px 12px;
   font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
+  font-weight: 500;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+}
+
+.nav-chip::before {
+  content: '⋮⋮';
+  color: var(--gray-400);
+  font-size: 10px;
+  letter-spacing: -2px;
 }
 
 .nav-chip:hover {
-  background: var(--white);
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
+.nav-chip.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.nav-chip.drag-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-alpha-15);
 }
 
 /* Modal System */
