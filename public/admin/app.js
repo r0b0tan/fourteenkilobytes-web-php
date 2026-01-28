@@ -116,6 +116,47 @@ const App = (function() {
   }
 
   /**
+   * CSS Presets - loaded from files
+   */
+  const CSS_PRESET_NAMES = ['default', 'light', 'dark'];
+  let cssPresetsCache = null;
+
+  /**
+   * Load all CSS presets from files
+   */
+  async function loadCssPresets() {
+    if (cssPresetsCache) {
+      return cssPresetsCache;
+    }
+
+    const presets = {};
+    await Promise.all(CSS_PRESET_NAMES.map(async (name) => {
+      try {
+        const res = await fetch(`/admin/presets/${name}.css`);
+        if (res.ok) {
+          presets[name] = await res.text();
+        }
+      } catch (e) {
+        console.warn(`Failed to load preset ${name}:`, e);
+      }
+    }));
+
+    cssPresetsCache = presets;
+    return presets;
+  }
+
+  /**
+   * Get CSS for a given mode
+   */
+  async function getPresetCSS(cssMode, customCss = '') {
+    if (cssMode === 'custom') {
+      return customCss;
+    }
+    const presets = await loadCssPresets();
+    return presets[cssMode] || presets.default || '';
+  }
+
+  /**
    * Apply global settings to compiler input
    */
   async function applyGlobalSettings(input) {
@@ -132,12 +173,13 @@ const App = (function() {
       mergedInput.footer = { content: settings.footer.content };
     }
 
-    // CSS: merge global CSS with page-specific CSS
-    if (settings.globalCss) {
+    // CSS: get preset or custom CSS, then merge with page-specific CSS
+    const globalCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
+    if (globalCss) {
       if (input.css?.rules) {
-        mergedInput.css = { rules: settings.globalCss + '\n' + input.css.rules };
+        mergedInput.css = { rules: globalCss + '\n' + input.css.rules };
       } else {
-        mergedInput.css = { rules: settings.globalCss };
+        mergedInput.css = { rules: globalCss };
       }
     }
 
@@ -497,6 +539,8 @@ const App = (function() {
     slugify,
     getAvailableIcons,
     getIconSvg,
+    loadCssPresets,
+    getPresetCSS,
   };
 })();
 

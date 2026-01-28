@@ -204,13 +204,19 @@ function loadSettings(): array {
     if (!file_exists(SETTINGS_FILE)) {
         return [
             'version' => 1,
+            'cssMode' => 'default',
             'globalCss' => '',
             'header' => ['enabled' => false, 'links' => []],
             'footer' => ['enabled' => false, 'content' => ''],
         ];
     }
     $content = file_get_contents(SETTINGS_FILE);
-    return json_decode($content, true);
+    $settings = json_decode($content, true);
+    // Ensure cssMode has a default for existing settings
+    if (!isset($settings['cssMode'])) {
+        $settings['cssMode'] = 'default';
+    }
+    return $settings;
 }
 
 /**

@@ -1,0 +1,52 @@
+/**
+ * fourteenkilobytes - Light Theme
+ *
+ * A bright, serif-based design with subtle styling.
+ * Classic, elegant appearance.
+ */
+
+body {
+  font-family: Georgia, serif;
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  line-height: 1.7;
+  color: #333;
+  background: #fafafa;
+}
+
+a {
+  color: #0055aa;
+}
+
+h1, h2, h3 {
+  font-family: system-ui, sans-serif;
+  line-height: 1.2;
+  color: #111;
+}
+
+pre, code {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+pre {
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+code {
+  padding: 0.2rem 0.4rem;
+}
+
+pre code {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}

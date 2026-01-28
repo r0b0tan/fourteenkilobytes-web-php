@@ -84,17 +84,30 @@
   <!-- CSS Tab -->
   <div id="tab-css" class="tab-content hidden">
     <div class="editor-row">
-      <p class="text-small text-muted mb-1">Globale CSS-Regeln (werden in jede Seite eingebettet)</p>
-      <textarea id="global-css" rows="12" placeholder="body {
+      <label for="css-mode">CSS-Vorlage</label>
+      <p class="text-small text-muted mb-1">Wähle eine Vorlage oder verwende eigenes CSS</p>
+      <select id="css-mode" style="margin-bottom: 1rem;">
+        <option value="default">Default (System-Fonts, neutral)</option>
+        <option value="light">Light (Serif, hell)</option>
+        <option value="dark">Dark (Dunkelmodus)</option>
+        <option value="custom">Eigenes CSS</option>
+      </select>
+
+      <!-- Preview for presets -->
+      <div id="css-preset-preview" class="css-preview">
+        <p class="text-small text-muted mb-1">Vorschau (nur lesen)</p>
+        <pre id="css-preview-content" class="css-preview-code"></pre>
+      </div>
+
+      <!-- Custom CSS editor -->
+      <div id="css-custom-editor" class="hidden">
+        <p class="text-small text-muted mb-1">Eigene CSS-Regeln (werden in jede Seite eingebettet)</p>
+        <textarea id="global-css" rows="12" placeholder="body {
   font-family: Georgia, serif;
   max-width: 600px;
   margin: 0 auto;
-}
-
-:root {
-  --primary: #1a1a1a;
-  --accent: #0066cc;
 }"></textarea>
+      </div>
     </div>
   </div>
 
@@ -152,6 +165,10 @@
       const footerEnabled = document.getElementById('footer-enabled');
       const footerEditor = document.getElementById('footer-editor');
       const footerContent = document.getElementById('footer-content');
+      const cssMode = document.getElementById('css-mode');
+      const cssPresetPreview = document.getElementById('css-preset-preview');
+      const cssPreviewContent = document.getElementById('css-preview-content');
+      const cssCustomEditor = document.getElementById('css-custom-editor');
       const globalCss = document.getElementById('global-css');
       const linkPopup = document.getElementById('link-popup');
       const linkText = document.getElementById('link-text');
@@ -296,6 +313,22 @@
 
       // ============ CSS EDITOR ============
 
+      async function updateCssModeUI() {
+        const mode = cssMode.value;
+        const isCustom = mode === 'custom';
+
+        cssPresetPreview.classList.toggle('hidden', isCustom);
+        cssCustomEditor.classList.toggle('hidden', !isCustom);
+
+        if (!isCustom) {
+          // Show preset CSS in preview
+          const presets = await App.loadCssPresets();
+          cssPreviewContent.textContent = presets[mode] || '';
+        }
+        updateOverhead();
+      }
+
+      cssMode.addEventListener('change', () => updateCssModeUI());
       globalCss.addEventListener('input', debounce(updateOverhead, 300));
 
       // ============ BUILD SETTINGS ============
@@ -312,6 +345,7 @@
         return {
           version: 1,
           homepageSlug: homepageSelect.value || null,
+          cssMode: cssMode.value,
           globalCss: globalCss.value.trim(),
           header: {
             enabled: headerEnabled.checked,
@@ -389,7 +423,9 @@
           footerContent.value = settings.footer.content;
 
           // CSS
-          globalCss.value = settings.globalCss;
+          cssMode.value = settings.cssMode || 'default';
+          globalCss.value = settings.globalCss || '';
+          updateCssModeUI();
 
           await updateOverhead();
         } catch (e) {
