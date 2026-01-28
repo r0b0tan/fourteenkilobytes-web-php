@@ -28,6 +28,7 @@ define('MANIFEST_FILE', DATA_DIR . '/manifest.json');
 define('SETTINGS_FILE', DATA_DIR . '/settings.json');
 define('PAGE_TYPES_FILE', DATA_DIR . '/page-types.json');
 define('POSTS_DIR', DATA_DIR . '/posts');
+define('SOURCES_DIR', DATA_DIR . '/sources');
 
 // Token derivation settings
 define('ITERATIONS', 600000);
@@ -43,6 +44,9 @@ if (!is_dir(DATA_DIR)) {
 }
 if (!is_dir(POSTS_DIR)) {
     mkdir(POSTS_DIR, 0755, true);
+}
+if (!is_dir(SOURCES_DIR)) {
+    mkdir(SOURCES_DIR, 0755, true);
 }
 
 /**
@@ -237,6 +241,35 @@ function loadPageTypes(): array {
  */
 function savePageTypes(array $index): void {
     file_put_contents(PAGE_TYPES_FILE, json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
+/**
+ * Save source data to separate file
+ */
+function saveSourceData(string $slug, array $sourceData): void {
+    $path = SOURCES_DIR . "/{$slug}.json";
+    file_put_contents($path, json_encode($sourceData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+
+/**
+ * Load source data from separate file (with fallback to manifest for migration)
+ */
+function loadSourceData(string $slug): ?array {
+    $path = SOURCES_DIR . "/{$slug}.json";
+    if (file_exists($path)) {
+        $content = file_get_contents($path);
+        return json_decode($content, true);
+    }
+
+    // Fallback: check manifest for legacy sourceData
+    $manifest = loadManifest();
+    foreach ($manifest['entries'] as $entry) {
+        if ($entry['slug'] === $slug && isset($entry['sourceData'])) {
+            return $entry['sourceData'];
+        }
+    }
+
+    return null;
 }
 
 // Parse request
@@ -456,10 +489,12 @@ if ($method === 'POST' && $path === '/posts') {
             'publishedAt' => $timestamp,
             'pageCount' => count($pages),
         ];
-        if ($sourceData !== null) {
-            $manifestEntry['sourceData'] = $sourceData;
-        }
         $newEntries[] = $manifestEntry;
+
+        // Save sourceData to separate file
+        if ($sourceData !== null) {
+            saveSourceData($baseSlug, $sourceData);
+        }
         $manifest['entries'] = array_values($newEntries);
         saveManifest($manifest);
 
@@ -516,12 +551,14 @@ if ($method === 'POST' && $path === '/posts') {
             'title' => $title,
             'publishedAt' => $timestamp,
         ];
-        if ($sourceData !== null) {
-            $manifestEntry['sourceData'] = $sourceData;
-        }
         $newEntries[] = $manifestEntry;
         $manifest['entries'] = array_values($newEntries);
         saveManifest($manifest);
+
+        // Save sourceData to separate file
+        if ($sourceData !== null) {
+            saveSourceData($slug, $sourceData);
+        }
 
         $pageTypes = loadPageTypes();
         $pageTypes['types'][$slug] = $pageType;
@@ -544,27 +581,30 @@ if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path,
     $slug = $matches[1];
     $manifest = loadManifest();
 
-    // Find entry with sourceData
-    $entry = null;
-    foreach ($manifest['entries'] as $e) {
-        if ($e['slug'] === $slug) {
-            $entry = $e;
+    // Check if post exists
+    $found = false;
+    foreach ($manifest['entries'] as $entry) {
+        if ($entry['slug'] === $slug) {
+            $found = true;
             break;
         }
     }
 
-    if (!$entry) {
+    if (!$found) {
         sendJson(404, ['error' => "Post '{$slug}' not found"]);
     }
 
-    if (!isset($entry['sourceData'])) {
+    // Load sourceData from separate file (with fallback to manifest)
+    $sourceData = loadSourceData($slug);
+
+    if ($sourceData === null) {
         sendJson(400, ['error' => "Post '{$slug}' has no source data (was published before this feature)"]);
     }
 
     // Return sourceData - client will compile and republish
     sendJson(200, [
         'slug' => $slug,
-        'sourceData' => $entry['sourceData'],
+        'sourceData' => $sourceData,
     ]);
 }
 
