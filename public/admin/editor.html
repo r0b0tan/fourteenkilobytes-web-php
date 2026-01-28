@@ -93,8 +93,7 @@
             <button type="button" data-type="bloglist">Blogliste</button>
           </div>
         </div>
-        <p id="content-error" class="text-small text-danger hidden"></p>
-      </div>
+              </div>
       <div class="card-rail" id="content-rail">
         <!-- Block byte indicators werden hier per JS eingefügt -->
         <div class="rail-total">
@@ -319,7 +318,6 @@
       const publishBtn = document.getElementById('publish-btn');
       const paginationOption = document.getElementById('pagination-option');
       const allowPaginationCheckbox = document.getElementById('allow-pagination');
-      const messageEl = document.getElementById('message');
 
       // Byte display elements
       const costContentTotal = document.getElementById('cost-content-total');
@@ -848,16 +846,14 @@
         }));
       }
 
-      const contentError = document.getElementById('content-error');
-
+      
       async function buildInput() {
         const content = getContentFromBlocks();
         
         // For preview with empty content, use minimal placeholder
-        const finalContent = content.length > 0 
-          ? content 
+        const finalContent = content.length > 0
+          ? content
           : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
-        contentError.classList.add('hidden');
 
         // Load posts if bloglist block is present
         let posts = [];
@@ -1011,77 +1007,88 @@
         titleBytesEl.textContent = formatBytes(titleBytes);
       }
 
-      // ============ MESSAGES ============
+      // ============ MODAL SYSTEM ============
 
-      function showMessage(text, type = 'error') {
-        messageEl.textContent = text;
-        messageEl.className = `message ${type}`;
-        messageEl.classList.remove('hidden');
-      }
+      const Modal = (() => {
+        const backdrop = document.getElementById('modal-backdrop');
+        const modal = document.getElementById('modal');
+        const message = document.getElementById('modal-message');
+        const actions = document.getElementById('modal-actions');
 
-      function hideMessage() {
-        messageEl.classList.add('hidden');
-      }
+        function hide() {
+          modal.classList.add('hidden');
+          backdrop.classList.add('hidden');
+          modal.className = 'modal hidden';
+          actions.innerHTML = '';
+        }
+
+        function show(text, buttons, type = '') {
+          message.textContent = text;
+          actions.innerHTML = '';
+          modal.className = 'modal' + (type ? ` modal-${type}` : '');
+
+          buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = btn.text;
+            button.className = btn.class || '';
+            button.addEventListener('click', () => {
+              hide();
+              if (btn.action) btn.action();
+            });
+            actions.appendChild(button);
+          });
+
+          backdrop.classList.remove('hidden');
+          modal.classList.remove('hidden');
+        }
+
+        return {
+          confirm(text) {
+            return new Promise(resolve => {
+              show(text, [
+                { text: 'Ja', class: 'btn-primary', action: () => resolve(true) },
+                { text: 'Abbrechen', class: 'btn-secondary', action: () => resolve(false) }
+              ]);
+            });
+          },
+
+          success(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'success');
+          },
+
+          error(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error');
+          },
+
+          hide
+        };
+      })();
 
       // ============ PUBLISH ============
-
-      // Confirm Popup
-      const confirmPopup = document.getElementById('confirm-popup');
-      const confirmYes = document.getElementById('confirm-yes');
-      const confirmNo = document.getElementById('confirm-no');
-
-      function showConfirm() {
-        return new Promise((resolve) => {
-          confirmPopup.classList.remove('hidden');
-
-          const handleYes = () => {
-            confirmPopup.classList.add('hidden');
-            cleanup();
-            resolve(true);
-          };
-
-          const handleNo = () => {
-            confirmPopup.classList.add('hidden');
-            cleanup();
-            resolve(false);
-          };
-
-          const cleanup = () => {
-            confirmYes.removeEventListener('click', handleYes);
-            confirmNo.removeEventListener('click', handleNo);
-          };
-
-          confirmYes.addEventListener('click', handleYes);
-          confirmNo.addEventListener('click', handleNo);
-        });
-      }
 
       publishBtn.addEventListener('click', async () => {
         // Validate content before publish
         const blocks = blockEditor.querySelectorAll('.block-item');
         if (blocks.length === 0) {
-          contentError.textContent = 'Mindestens ein Block erforderlich';
-          contentError.classList.remove('hidden');
-          showMessage('Mindestens ein Block erforderlich', 'error');
+          Modal.error('Mindestens ein Block erforderlich');
           return;
         }
-        contentError.classList.add('hidden');
 
-        const confirmed = await showConfirm();
+        const confirmed = await Modal.confirm('Build ausführen und veröffentlichen?');
         if (!confirmed) return;
 
         publishBtn.disabled = true;
-        hideMessage();
 
         try {
           const input = await buildInput();
           const result = await App.publish(input);
 
           if (result.pageCount && result.pageCount > 1) {
-            showMessage(`Build abgeschlossen: /${result.slug} (${result.pageCount} Seiten, ${result.totalBytes} Bytes)`, 'success');
+            Modal.success(`Build abgeschlossen: /${result.slug} (${result.pageCount} Seiten, ${result.totalBytes} Bytes)`);
             updateByteCounter(result.totalBytes);
           } else {
-            showMessage(`Build abgeschlossen: /${result.slug} (${result.bytes} Bytes)`, 'success');
+            Modal.success(`Build abgeschlossen: /${result.slug} (${result.bytes} Bytes)`);
             updateByteCounter(result.bytes);
           }
 
@@ -1101,7 +1108,7 @@
           publishBtn.disabled = true;
           publishBtn.textContent = 'Build abgeschlossen';
         } catch (err) {
-          showMessage(err.message, 'error');
+          Modal.error(err.message);
           console.error(err);
           publishBtn.disabled = false;
         }
@@ -1154,7 +1161,6 @@
           blockEditor.querySelectorAll('.block-item.block-too-large').forEach(el => {
             el.classList.remove('block-too-large');
           });
-          contentError.classList.add('hidden');
 
           // Check if a block is too large for pagination
           if (result.blockTooLarge) {
@@ -1162,9 +1168,6 @@
             const blockIndex = result.blockTooLarge.blockIndex;
             if (blocks[blockIndex]) {
               blocks[blockIndex].classList.add('block-too-large');
-              const kb = (result.blockTooLarge.blockSize / 1024).toFixed(1);
-              contentError.textContent = `Block ${blockIndex + 1} ist zu groß (${kb} KB). Bitte in mehrere Absätze aufteilen.`;
-              contentError.classList.remove('hidden');
             }
           }
         } catch (e) {
