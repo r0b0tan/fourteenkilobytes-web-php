@@ -73,8 +73,8 @@
     <div class="card-header">
       <h2 class="card-title">Body</h2>
     </div>
-    <div class="card-body card-body-with-rail">
-      <div class="card-content">
+    <div class="card-body card-body-grid">
+      <div class="block-editor-wrapper">
         <div id="block-editor" class="block-editor"></div>
         <div class="block-actions-row">
           <button type="button" id="add-block-btn" class="btn-primary">+ Block hinzufügen</button>
@@ -89,13 +89,10 @@
             <button type="button" data-type="bloglist">Blogliste</button>
           </div>
         </div>
-              </div>
-      <div class="card-rail" id="content-rail">
-        <!-- Block byte indicators werden hier per JS eingefügt -->
-        <div class="rail-total">
-          <span>Content</span>
-          <span id="cost-content-total">0 B</span>
-        </div>
+      </div>
+      <div class="rail-item rail-item-total" id="content-rail">
+        <span>Content</span>
+        <span id="cost-content-total">0 B</span>
       </div>
     </div>
   </div>
@@ -105,49 +102,45 @@
     <div class="card-header">
       <h2 class="card-title">Footer</h2>
     </div>
-    <div class="card-body card-body-with-rail">
-      <div class="card-content">
-        <!-- Footer-Override -->
-        <div class="override-section override-section-first">
-          <div class="override-section-header">
-            <label class="override-toggle">
-              <input type="checkbox" id="footer-enabled">
-              <span>Footer überschreiben</span>
-            </label>
-            <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
-          </div>
-          <div id="footer-editor" class="override-editor hidden">
-            <div class="footer-editor-row">
-              <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
-              <button type="button" id="insert-bytes-btn" class="btn-primary">+ Bytes</button>
-            </div>
-          </div>
+    <div class="card-body card-body-grid">
+      <!-- Footer-Override -->
+      <div class="override-section override-section-first">
+        <div class="override-section-header">
+          <label class="override-toggle">
+            <input type="checkbox" id="footer-enabled">
+            <span>Footer überschreiben</span>
+          </label>
+          <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
         </div>
-
-        <!-- CSS Override -->
-        <div class="override-section">
-          <div class="override-section-header">
-            <label class="override-toggle">
-              <input type="checkbox" id="css-enabled">
-              <span>CSS ergänzen</span>
-            </label>
-            <p id="css-global-hint" class="override-hint"></p>
-          </div>
-          <div id="css-editor" class="override-editor">
-            <p class="css-warning-hint">Zusätzliches CSS wird nach globalem CSS eingefügt und erhöht die Seitengröße.</p>
-            <textarea id="css-rules" rows="10" placeholder="/* Zusätzliches CSS */"></textarea>
+        <div id="footer-editor" class="override-editor hidden">
+          <div class="footer-editor-row">
+            <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
+            <button type="button" id="insert-bytes-btn" class="btn-primary">+ Bytes</button>
           </div>
         </div>
       </div>
-      <div class="card-rail">
-        <div class="rail-item">
-          <span>Footer</span>
-          <span id="footer-bytes">0 B</span>
+      <div class="rail-item">
+        <span>Footer</span>
+        <span id="footer-bytes">0 B</span>
+      </div>
+
+      <!-- CSS Override -->
+      <div class="override-section">
+        <div class="override-section-header">
+          <label class="override-toggle">
+            <input type="checkbox" id="css-enabled">
+            <span>CSS ergänzen</span>
+          </label>
+          <p id="css-global-hint" class="override-hint"></p>
         </div>
-        <div class="rail-item">
-          <span>CSS</span>
-          <span id="css-bytes">0 B</span>
+        <div id="css-editor" class="override-editor">
+          <p class="css-warning-hint">Zusätzliches CSS wird nach globalem CSS eingefügt und erhöht die Seitengröße.</p>
+          <textarea id="css-rules" rows="10" placeholder="/* Zusätzliches CSS */"></textarea>
         </div>
+      </div>
+      <div class="rail-item">
+        <span>CSS</span>
+        <span id="css-bytes">0 B</span>
       </div>
     </div>
   </div>
@@ -1019,13 +1012,9 @@
         const blocks = blockEditor.querySelectorAll('.block-item');
         let totalContentBytes = 0;
 
-        // Clear existing rail items (except the total)
-        contentRail.querySelectorAll('.rail-item').forEach(el => el.remove());
-
-        const railTotal = contentRail.querySelector('.rail-total');
-
         blocks.forEach((block, index) => {
           const content = block.querySelector('.block-content');
+          const byteIndicator = block.querySelector('.block-byte-indicator');
           const type = block.dataset.type;
           const level = block.dataset.level;
           const text = content ? content.textContent.trim() : '';
@@ -1042,11 +1031,10 @@
             label = 'Liste';
           }
 
-          // Create rail item
-          const railItem = document.createElement('div');
-          railItem.className = 'rail-item';
-          railItem.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
-          contentRail.insertBefore(railItem, railTotal);
+          // Update inline byte indicator
+          if (byteIndicator) {
+            byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
+          }
         });
 
         // Update content total
