@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +8,9 @@
 </head>
 <body>
   <div class="header">
-    <h1>Neuer Build</h1>
+    <h1>New Build</h1>
     <nav>
-      <a href="index.html">← Zurück</a>
+      <a href="index.html">← Back</a>
       <a href="/" target="_blank">Blog</a>
     </nav>
   </div>
@@ -24,18 +24,18 @@
     <div class="card-body card-body-grid">
       <div class="base-data-row">
         <div class="form-group">
-          <label for="title">Titel</label>
-          <input type="text" id="title" placeholder="Mein erster Post">
+          <label for="title">Title</label>
+          <input type="text" id="title" placeholder="My first post">
         </div>
         <div class="form-group">
           <label for="slug">Slug</label>
-          <input type="text" id="slug" placeholder="mein-erster-post">
+          <input type="text" id="slug" placeholder="my-first-post">
         </div>
         <div class="form-group">
-          <label for="page-type">Build-Typ</label>
+          <label for="page-type">Build Type</label>
           <select id="page-type" class="page-type-select">
-            <option value="post">Blog-Post</option>
-            <option value="page">Statische Seite</option>
+            <option value="post">Blog Post</option>
+            <option value="page">Static Page</option>
           </select>
           <span id="page-type-hint" class="text-small text-muted"></span>
         </div>
@@ -50,9 +50,9 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="nav-enabled">
-            <span>Navigation überschreiben</span>
+            <span>Override Navigation</span>
           </label>
-          <p id="nav-global-hint" class="override-hint">✓ Globale Navigation wird verwendet</p>
+          <p id="nav-global-hint" class="override-hint">✓ Using global navigation</p>
         </div>
         <div id="nav-editor" class="override-editor hidden">
           <div class="nav-editor-row">
@@ -77,7 +77,7 @@
       <div class="block-editor-wrapper">
         <div id="block-editor" class="block-editor"></div>
         <div class="block-actions-row">
-          <button type="button" id="add-block-btn" class="btn-primary">+ Block hinzufügen</button>
+          <button type="button" id="add-block-btn" class="btn-primary">+ Add Block</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
             <button type="button" data-type="paragraph">Paragraph</button>
             <button type="button" data-type="heading" data-level="1">Heading 1</button>
@@ -108,13 +108,13 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="footer-enabled">
-            <span>Footer überschreiben</span>
+            <span>Override Footer</span>
           </label>
-          <p id="footer-global-hint" class="override-hint">✓ Globaler Footer wird verwendet</p>
+          <p id="footer-global-hint" class="override-hint">✓ Using global footer</p>
         </div>
         <div id="footer-editor" class="override-editor hidden">
           <div class="footer-editor-row">
-            <input type="text" id="footer-text" placeholder="© 2024 Mein Blog">
+            <input type="text" id="footer-text" placeholder="© 2024 My Blog">
             <button type="button" id="insert-bytes-btn" class="btn-primary">+ Bytes</button>
           </div>
         </div>
@@ -129,13 +129,13 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="css-enabled">
-            <span>CSS ergänzen</span>
+            <span>Add CSS</span>
           </label>
           <p id="css-global-hint" class="override-hint"></p>
         </div>
         <div id="css-editor" class="override-editor">
-          <p class="css-warning-hint">Zusätzliches CSS wird nach globalem CSS eingefügt und erhöht die Seitengröße.</p>
-          <textarea id="css-rules" rows="10" placeholder="/* Zusätzliches CSS */"></textarea>
+          <p class="css-warning-hint">Additional CSS is inserted after global CSS and increases page size.</p>
+          <textarea id="css-rules" rows="10" placeholder="/* Additional CSS */"></textarea>
         </div>
       </div>
       <div class="rail-item">
@@ -153,27 +153,27 @@
         <input type="text" id="nav-link-text" placeholder="Home">
       </div>
       <div class="form-group">
-        <label>Ziel</label>
+        <label>Target</label>
         <input type="text" id="nav-link-href" placeholder="/">
       </div>
       <div class="popup-actions">
         <button type="button" id="nav-link-save" class="btn-primary">OK</button>
-        <button type="button" id="nav-link-delete" class="btn-danger">Löschen</button>
-        <button type="button" id="nav-link-cancel" class="btn-secondary">Abbrechen</button>
+        <button type="button" id="nav-link-delete" class="btn-danger">Delete</button>
+        <button type="button" id="nav-link-cancel" class="btn-secondary">Cancel</button>
       </div>
     </div>
   </div>
 
   <!-- Floating Format Toolbar (hidden by default) -->
   <div id="format-toolbar" class="format-toolbar hidden">
-    <button type="button" data-cmd="bold" title="Fett"><b>B</b></button>
-    <button type="button" data-cmd="italic" title="Kursiv"><i>I</i></button>
+    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
     <button type="button" data-cmd="link" title="Link">🔗</button>
   </div>
 
   <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
-    <input type="text" id="link-href" placeholder="/pfad oder #anker">
+    <input type="text" id="link-href" placeholder="/path or #anchor">
     <button type="button" id="link-apply" class="btn-primary">OK</button>
     <button type="button" id="link-cancel" class="btn-secondary">×</button>
   </div>
@@ -196,7 +196,7 @@
       <div class="card-content">
         <div class="breakdown-table">
           <div class="breakdown-row">
-            <span>Basis</span>
+            <span>Base</span>
             <span id="breakdown-base">0 B</span>
           </div>
           <div class="breakdown-row">
@@ -216,13 +216,13 @@
             <span id="breakdown-content">0 B</span>
           </div>
           <div class="breakdown-row breakdown-row-total">
-            <span>Gesamt</span>
+            <span>Total</span>
             <span id="breakdown-total">0 B / 14.336 B</span>
           </div>
         </div>
         <label id="pagination-option" class="pagination-checkbox hidden">
           <input type="checkbox" id="allow-pagination">
-          <span>Automatisch auf mehrere Seiten aufteilen</span>
+          <span>Automatically split into multiple pages</span>
         </label>
       </div>
       <div class="card-rail build-rail">
@@ -241,7 +241,7 @@
             </div>
             <div class="pie-legend-item">
               <span class="pie-dot pie-dot-free"></span>
-              <span>Frei</span>
+              <span>Free</span>
             </div>
           </div>
         </div>
@@ -339,7 +339,7 @@
       pageTypeSelect.addEventListener('change', () => {
         const type = pageTypeSelect.value;
         if (type === 'page') {
-          pageTypeHint.textContent = '(nicht im Feed)';
+          pageTypeHint.textContent = '(not in feed)';
         } else {
           pageTypeHint.textContent = '';
         }
@@ -496,12 +496,12 @@
 
       function getThemeDisplayName(cssMode) {
         const names = {
-          'default': 'CMS Standard-Theme',
+          'default': 'CMS Default Theme',
           'light': 'CMS Light Theme',
           'dark': 'CMS Dark Theme',
-          'custom': 'Benutzerdefiniertes CSS'
+          'custom': 'Custom CSS'
         };
-        return names[cssMode] || cssMode || 'CMS Standard-Theme';
+        return names[cssMode] || cssMode || 'CMS Default Theme';
       }
 
       // Don't load global CSS - this field is for ADDITIONAL CSS only
@@ -511,7 +511,7 @@
 
         // Update hint with theme name
         const themeName = getThemeDisplayName(window.globalConfig?.cssMode);
-        cssGlobalHint.textContent = `✓ ${themeName} wird global verwendet`;
+        cssGlobalHint.textContent = `✓ ${themeName} is used globally`;
       }
 
       cssEnabled.addEventListener('change', () => {
@@ -620,21 +620,21 @@
         const upBtn = document.createElement('button');
         upBtn.type = 'button';
         upBtn.textContent = '↑';
-        upBtn.title = 'Nach oben';
+        upBtn.title = 'Move up';
         upBtn.addEventListener('click', () => moveBlock(block, -1));
         actions.appendChild(upBtn);
 
         const downBtn = document.createElement('button');
         downBtn.type = 'button';
         downBtn.textContent = '↓';
-        downBtn.title = 'Nach unten';
+        downBtn.title = 'Move down';
         downBtn.addEventListener('click', () => moveBlock(block, 1));
         actions.appendChild(downBtn);
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.textContent = '×';
-        deleteBtn.title = 'Löschen';
+        deleteBtn.title = 'Delete';
         deleteBtn.addEventListener('click', () => block.remove());
         actions.appendChild(deleteBtn);
 
@@ -654,10 +654,10 @@
         if (type === 'bloglist') {
           content.contentEditable = 'false';
           content.className = 'block-content block-bloglist';
-          content.innerHTML = '<em style="color: #999;">Hier werden automatisch alle Blog-Posts aufgelistet</em>';
+          content.innerHTML = '<em style="color: #999;">All blog posts will be listed here automatically</em>';
         } else {
           content.contentEditable = 'true';
-          content.dataset.placeholder = type === 'heading' ? 'Überschrift...' : 'Text eingeben...';
+          content.dataset.placeholder = type === 'heading' ? 'Heading...' : 'Enter text...';
           content.innerHTML = initialHtml;
         }
         block.appendChild(content);
@@ -679,9 +679,9 @@
           content.style.fontWeight = 'bold';
           const sizes = { 1: '2rem', 2: '1.5rem', 3: '1.25rem', 4: '1.1rem', 5: '1rem', 6: '0.875rem' };
           content.style.fontSize = sizes[level] || '1rem';
-          content.dataset.placeholder = 'Überschrift...';
+          content.dataset.placeholder = 'Heading...';
         } else {
-          content.dataset.placeholder = 'Text eingeben...';
+          content.dataset.placeholder = 'Enter text...';
         }
       }
 
@@ -1024,11 +1024,11 @@
           totalContentBytes += bytes;
 
           // Determine semantic label
-          let label = 'Absatz';
+          let label = 'Paragraph';
           if (type === 'heading') {
             label = `H${level}`;
           } else if (type === 'bloglist') {
-            label = 'Liste';
+            label = 'List';
           }
 
           // Update inline byte indicator
@@ -1088,8 +1088,8 @@
           confirm(text) {
             return new Promise(resolve => {
               show(text, [
-                { text: 'Ja', class: 'btn-primary', action: () => resolve(true) },
-                { text: 'Abbrechen', class: 'btn-secondary', action: () => resolve(false) }
+                { text: 'Yes', class: 'btn-primary', action: () => resolve(true) },
+                { text: 'Cancel', class: 'btn-secondary', action: () => resolve(false) }
               ]);
             });
           },
@@ -1112,11 +1112,11 @@
         // Validate content before publish
         const blocks = blockEditor.querySelectorAll('.block-item');
         if (blocks.length === 0) {
-          Modal.error('Mindestens ein Block erforderlich');
+          Modal.error('At least one block required');
           return;
         }
 
-        const confirmed = await Modal.confirm('Build ausführen und veröffentlichen?');
+        const confirmed = await Modal.confirm('Execute build and publish?');
         if (!confirmed) return;
 
         publishBtn.disabled = true;
@@ -1126,10 +1126,10 @@
           const result = await App.publish(input);
 
           if (result.pageCount && result.pageCount > 1) {
-            Modal.success(`Build abgeschlossen: /${result.slug} (${result.pageCount} Seiten, ${result.totalBytes} Bytes)`);
+            Modal.success(`Build completed: /${result.slug} (${result.pageCount} pages, ${result.totalBytes} bytes)`);
             updateByteCounter(result.totalBytes);
           } else {
-            Modal.success(`Build abgeschlossen: /${result.slug} (${result.bytes} Bytes)`);
+            Modal.success(`Build completed: /${result.slug} (${result.bytes} bytes)`);
             updateByteCounter(result.bytes);
           }
 
@@ -1147,7 +1147,7 @@
           footerEnabled.disabled = true;
           cssRules.disabled = true;
           publishBtn.disabled = true;
-          publishBtn.textContent = 'Build abgeschlossen';
+          publishBtn.textContent = 'Build completed';
         } catch (err) {
           Modal.error(err.message);
           console.error(err);
