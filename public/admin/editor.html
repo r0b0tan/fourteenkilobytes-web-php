@@ -134,7 +134,7 @@
               <input type="checkbox" id="css-enabled">
               <span>CSS ergänzen</span>
             </label>
-            <p id="css-global-hint" class="override-hint">✓ Nur globales CSS wird verwendet</p>
+            <p id="css-global-hint" class="override-hint"></p>
           </div>
           <div id="css-editor" class="override-editor">
             <p class="css-warning-hint">Zusätzliches CSS wird nach globalem CSS eingefügt und erhöht die Seitengröße.</p>
@@ -197,23 +197,23 @@
       <div class="card-content">
         <div class="breakdown-table">
           <div class="breakdown-row">
-            <span>Fixkosten (Basis)</span>
+            <span>Basis</span>
             <span id="breakdown-base">0 B</span>
           </div>
-          <div class="breakdown-row" id="breakdown-nav-row" style="display: none;">
+          <div class="breakdown-row">
             <span>Navigation</span>
             <span id="breakdown-nav">0 B</span>
           </div>
-          <div class="breakdown-row" id="breakdown-footer-row" style="display: none;">
+          <div class="breakdown-row">
             <span>Footer</span>
             <span id="breakdown-footer">0 B</span>
           </div>
-          <div class="breakdown-row" id="breakdown-css-row" style="display: none;">
+          <div class="breakdown-row">
             <span>CSS</span>
             <span id="breakdown-css">0 B</span>
           </div>
           <div class="breakdown-row">
-            <span>Content gesamt</span>
+            <span>Content</span>
             <span id="breakdown-content">0 B</span>
           </div>
           <div class="breakdown-row breakdown-row-total">
@@ -324,11 +324,8 @@
       // Build Card elements
       const breakdownBase = document.getElementById('breakdown-base');
       const breakdownNav = document.getElementById('breakdown-nav');
-      const breakdownNavRow = document.getElementById('breakdown-nav-row');
       const breakdownFooter = document.getElementById('breakdown-footer');
-      const breakdownFooterRow = document.getElementById('breakdown-footer-row');
       const breakdownCss = document.getElementById('breakdown-css');
-      const breakdownCssRow = document.getElementById('breakdown-css-row');
       const breakdownContent = document.getElementById('breakdown-content');
       const breakdownTotal = document.getElementById('breakdown-total');
       const pieChart = document.getElementById('pie-chart');
@@ -445,10 +442,24 @@
 
       // ============ CSS EDITOR ============
 
+      function getThemeDisplayName(cssMode) {
+        const names = {
+          'default': 'CMS Standard-Theme',
+          'light': 'CMS Light Theme',
+          'dark': 'CMS Dark Theme',
+          'custom': 'Benutzerdefiniertes CSS'
+        };
+        return names[cssMode] || cssMode || 'CMS Standard-Theme';
+      }
+
       // Don't load global CSS - this field is for ADDITIONAL CSS only
       function loadGlobalCSS() {
         // Leave empty - this textarea is for additional CSS only
         // Global CSS is already included in the base template
+
+        // Update hint with theme name
+        const themeName = getThemeDisplayName(window.globalConfig?.cssMode);
+        cssGlobalHint.textContent = `✓ ${themeName} wird global verwendet`;
       }
 
       cssEnabled.addEventListener('change', () => {
@@ -912,11 +923,6 @@
           navBytesEl.textContent = formatBytes(breakdown.navigation);
           footerBytesEl.textContent = formatBytes(breakdown.footer);
           cssBytesEl.textContent = formatBytes(breakdown.css);
-
-          // Show/hide rows based on values
-          breakdownNavRow.style.display = breakdown.navigation > 0 ? 'flex' : 'none';
-          breakdownFooterRow.style.display = breakdown.footer > 0 ? 'flex' : 'none';
-          breakdownCssRow.style.display = breakdown.css > 0 ? 'flex' : 'none';
         }
 
         // Update Cost Rail content total
