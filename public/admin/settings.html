@@ -126,11 +126,13 @@
 
       <!-- Header Tab -->
       <div id="tab-header" class="tab-content hidden">
+        <!-- Navigation Section -->
         <div class="override-section override-section-first">
+          <h3 class="override-section-title">Navigation</h3>
           <div class="override-section-header">
             <label class="override-toggle">
               <input type="checkbox" id="header-enabled">
-              <span>Header aktivieren</span>
+              <span>Navigation aktivieren</span>
             </label>
           </div>
           <div id="header-editor" class="override-editor hidden">
@@ -142,17 +144,19 @@
           </div>
         </div>
 
+        <!-- Meta Section -->
         <div class="override-section">
-          <h3 class="override-section-title">Meta-Informationen</h3>
-          <p class="text-small text-muted mb-1">SEO-Tags die im &lt;head&gt; jeder Seite eingebettet werden</p>
-          <div class="form-group">
-            <label for="meta-description">Beschreibung</label>
-            <p class="text-small text-muted mb-1">Erscheint in Suchergebnissen (max. 160 Zeichen)</p>
-            <input type="text" id="meta-description" maxlength="160" placeholder="Eine kurze Beschreibung deines Blogs...">
-          </div>
-          <div class="form-group">
-            <label for="meta-author">Autor</label>
-            <input type="text" id="meta-author" maxlength="100" placeholder="Max Mustermann">
+          <h3 class="override-section-title">Meta</h3>
+          <p class="text-small text-muted mb-1">Globale SEO-Tags die im &lt;head&gt; jeder Seite eingebettet werden (können pro Seite überschrieben werden)</p>
+          <div class="meta-row">
+            <div class="form-group">
+              <label for="meta-description">Beschreibung</label>
+              <input type="text" id="meta-description" maxlength="160" placeholder="Eine kurze Beschreibung deines Blogs...">
+            </div>
+            <div class="form-group">
+              <label for="meta-author">Autor</label>
+              <input type="text" id="meta-author" maxlength="100" placeholder="Max Mustermann">
+            </div>
           </div>
         </div>
       </div>

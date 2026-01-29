@@ -333,6 +333,7 @@ h2 {
   align-self: start;
 }
 
+#meta-rail-item,
 #nav-rail-item {
   padding-top: 43px;
 }
@@ -649,7 +650,8 @@ button:disabled {
 }
 
 #nav-editor,
-#footer-editor {
+#footer-editor,
+#meta-editor {
   padding: 12px;
   background: var(--gray-100); /* Light gray background instead of teal */
   border-radius: 6px;
@@ -662,13 +664,28 @@ button:disabled {
   gap: 12px;
 }
 
+.meta-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.meta-row .form-group {
+  margin-bottom: 0;
+}
+
+.meta-row input[type="text"] {
+  max-width: none;
+}
+
 .footer-editor-row input[type="text"] {
   flex: 1;
   max-width: none;
 }
 
 .footer-editor-row input[type="text"]:disabled,
-.footer-editor-row button:disabled {
+.footer-editor-row button:disabled,
+.meta-row input[type="text"]:disabled {
   opacity: 0.6;
   pointer-events: none;
 }
