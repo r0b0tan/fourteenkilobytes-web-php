@@ -77,6 +77,10 @@ h2 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .header .logo {
@@ -1305,11 +1309,12 @@ button:disabled {
   background: transparent;
   border: none;
   gap: 16px;
+  align-items: flex-end;
 }
 
-.card-header:has(.dashboard-tabs) .page-size-selector,
-.card-header:has(.settings-tabs) .page-size-selector {
-  padding: 8px 0;
+.card-header:has(.dashboard-tabs) .list-controls,
+.card-header:has(.settings-tabs) .list-controls {
+  padding-bottom: 8px;
 }
 
 /* Card body when preceded by tab header */
@@ -1328,10 +1333,17 @@ button:disabled {
   display: none;
 }
 
+/* List Controls (Search + Page Size) */
+.list-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
 /* Search Box */
 .search-box {
   position: relative;
-  margin-left: auto;
 }
 
 .search-box .search-icon {
@@ -1344,8 +1356,8 @@ button:disabled {
 }
 
 .search-box input {
-  width: 180px;
-  padding: 6px 10px 6px 32px;
+  width: 160px;
+  padding: 6px 8px 6px 30px;
   font-size: 13px;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -1377,8 +1389,8 @@ button:disabled {
 
 .page-size-selector select {
   width: auto;
-  min-width: 70px;
-  padding: 4px 8px;
+  min-width: 65px;
+  padding: 6px 8px;
   font-size: 13px;
 }
 
