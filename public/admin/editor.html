@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor - fourteenkilobytes</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <!-- Use semantic header element for better document structure -->
   <header class="header">
     <div class="header-top">
       <!-- Logo with improved accessibility -->
-       <div class="logo-container">
-      <a href="index.html" class="logo" aria-label="14KB Dashboard">
-        <!-- SVG uses currentColor to inherit accent from CSS -->
-        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-          viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-          <g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
-            <path d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149
+      <div class="logo-container">
+        <a href="index.html" class="logo" aria-label="14KB Dashboard">
+          <!-- SVG uses currentColor to inherit accent from CSS -->
+          <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+            viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+              <path d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149
 47 -176 194 -315 374 -353 61 -13 1058 -16 1066 -3 2 4 -22 29 -55 55 -67 54
 -152 157 -220 265 -24 39 -46 71 -49 72 -3 0 -18 -21 -34 -46 -41 -65 -64 -78
 -116 -64 -63 17 -74 3 -65 -82 5 -57 4 -69 -10 -74 -24 -10 -45 15 -45 54 0
@@ -38,29 +40,33 @@
 -31 -33 -41 -71 -41 -14 0 -34 -5 -45 -11 -26 -13 -15 -27 61 -79 30 -21 91
 -70 135 -109 44 -39 85 -71 92 -71 20 0 18 909 -2 1003 -15 73 -58 162 -106
 221 -40 48 -135 112 -207 139 -55 21 -71 22 -587 23 -305 1 -551 -2 -579 -7z" />
-          </g>
-        </svg>
-        <!-- Stacked wordmark for compact branding -->
-        <span class="logo-text" aria-hidden="true">14<br>KB</span>
-      </a></div>
+            </g>
+          </svg>
+          <!-- Stacked wordmark for compact branding -->
+          <span class="logo-text" aria-hidden="true">14<br>KB</span>
+        </a>
+      </div>
       <!-- Semantic nav with improved structure -->
       <nav class="header-nav" aria-label="Main navigation">
         <a href="index.html" class="nav-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
           Übersicht
         </a>
         <a href="editor.html" class="nav-icon active" aria-current="page">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Neu
         </a>
         <a href="settings.html" class="nav-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <circle cx="12" cy="12" r="3" />
             <path
               d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -68,7 +74,8 @@
           Einstellungen
         </a>
         <a href="/" target="_blank" rel="noopener" class="nav-icon external-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" />
             <line x1="10" y1="14" x2="21" y2="3" />
@@ -78,7 +85,8 @@
         <!-- Visual separator before logout -->
         <span class="nav-separator" aria-hidden="true"></span>
         <a href="#" id="logout-btn" class="nav-icon logout-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
@@ -87,10 +95,18 @@
         </a>
       </nav>
     </div>
-    <h1 class="page-title">Editor</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+      <h1 class="page-title" style="margin: 0;">Editor</h1>
+      <button type="button" id="clear-all-btn" class="btn btn-primary"> <svg width="14" height="14" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>Zurücksetzen</button>
+    </div>
   </header>
 
-  
+
   <!-- Card: Head -->
   <div class="editor-card">
     <div class="card-header">
@@ -334,8 +350,8 @@
       <div class="card-rail build-rail">
         <div class="build-progress">
           <div class="pie-chart" id="pie-chart">
-              <span class="pie-percent" id="pie-percent">0%</span>
-            </div>
+            <span class="pie-percent" id="pie-percent">0%</span>
+          </div>
           <div class="pie-legend">
             <div class="pie-legend-item">
               <span class="pie-dot pie-dot-overhead"></span>
@@ -361,7 +377,10 @@
 
   <script type="module" src="app.js"></script>
   <script type="module">
-    (async function() {
+    // Import compiler (browser bundle)
+    import * as Compiler from './compiler.browser.js';
+
+    (async function () {
       // Check if setup is complete
       const status = await App.getSetupStatus();
       if (!status.setupComplete) {
@@ -454,6 +473,130 @@
       let savedSelection = null;
       let editingNavLink = null; // The chip element being edited
 
+      // ============ AUTO-SAVE ============
+
+      const AUTOSAVE_KEY = 'editor-autosave';
+
+      function saveToLocalStorage() {
+        try {
+          const data = {
+            title: titleInput.value,
+            slug: slugInput.value,
+            pageType: pageTypeSelect.value,
+            blocks: [],
+            navEnabled: navEnabled.checked,
+            navigation: navEnabled.checked ? getNavigationItems() : null,
+            footerEnabled: footerEnabled.checked,
+            footer: footerEnabled.checked ? footerText.value : null,
+            metaEnabled: metaEnabled.checked,
+            metaDescription: metaDescription.value,
+            metaAuthor: metaAuthor.value,
+            cssEnabled: cssEnabled.checked,
+            css: cssEnabled.checked ? cssRules.value : null,
+            allowPagination: allowPaginationCheckbox.checked,
+            timestamp: Date.now()
+          };
+
+          // Save blocks
+          const blocks = blockEditor.querySelectorAll('.block-item');
+          blocks.forEach(blockItem => {
+            const type = blockItem.dataset.type;
+            const level = blockItem.dataset.level || null;
+            const content = blockItem.querySelector('.block-content');
+            if (content) {
+              data.blocks.push({
+                type,
+                level,
+                html: content.innerHTML
+              });
+            }
+          });
+
+          localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+        } catch (err) {
+          console.warn('Failed to auto-save:', err);
+        }
+      }
+
+      function loadFromLocalStorage() {
+        try {
+          const saved = localStorage.getItem(AUTOSAVE_KEY);
+          if (!saved) return false;
+
+          const data = JSON.parse(saved);
+
+          // Check if data is not too old (older than 7 days)
+          const age = Date.now() - (data.timestamp || 0);
+          if (age > 7 * 24 * 60 * 60 * 1000) {
+            localStorage.removeItem(AUTOSAVE_KEY);
+            return false;
+          }
+
+          // Restore basic fields
+          titleInput.value = data.title || '';
+          slugInput.value = data.slug || '';
+          pageTypeSelect.value = data.pageType || 'post';
+          allowPaginationCheckbox.checked = data.allowPagination || false;
+
+          // Restore blocks
+          if (data.blocks && data.blocks.length > 0) {
+            blockEditor.innerHTML = '';
+            data.blocks.forEach(block => {
+              const level = block.level || null;
+              const blockElement = createBlockElement(block.type, level, block.html || '');
+              blockEditor.appendChild(blockElement);
+            });
+          }
+
+          // Restore navigation
+          if (data.navEnabled) {
+            navEnabled.checked = true;
+            navEnabled.dispatchEvent(new Event('change'));
+            if (data.navigation && data.navigation.length > 0) {
+              navLinks.innerHTML = '';
+              data.navigation.forEach(link => {
+                navLinks.appendChild(createNavChip(link.text, link.href));
+              });
+            }
+          }
+
+          // Restore footer
+          if (data.footerEnabled) {
+            footerEnabled.checked = true;
+            footerEnabled.dispatchEvent(new Event('change'));
+            footerText.value = data.footer || '';
+          }
+
+          // Restore meta
+          if (data.metaEnabled) {
+            metaEnabled.checked = true;
+            metaEnabled.dispatchEvent(new Event('change'));
+            metaDescription.value = data.metaDescription || '';
+            metaAuthor.value = data.metaAuthor || '';
+          }
+
+          // Restore CSS
+          if (data.cssEnabled) {
+            cssEnabled.checked = true;
+            cssEnabled.dispatchEvent(new Event('change'));
+            cssRules.value = data.css || '';
+          }
+
+          return true;
+        } catch (err) {
+          console.warn('Failed to restore auto-save:', err);
+          return false;
+        }
+      }
+
+      function clearAutoSave() {
+        try {
+          localStorage.removeItem(AUTOSAVE_KEY);
+        } catch (err) {
+          console.warn('Failed to clear auto-save:', err);
+        }
+      }
+
       // ============ PAGE TYPE ============
 
       pageTypeSelect.addEventListener('change', () => {
@@ -479,7 +622,7 @@
 
       navEnabled.addEventListener('change', () => {
         navGlobalHint.classList.toggle('hidden', navEnabled.checked);
-        
+
         // Toggle disabled state
         const chips = navLinks.querySelectorAll('.nav-chip');
         chips.forEach(chip => {
@@ -777,13 +920,13 @@
         actions.appendChild(deleteBtn);
 
         header.appendChild(actions);
-        
+
         // Byte indicator für diesen Block
         const byteIndicator = document.createElement('div');
         byteIndicator.className = 'block-byte-indicator';
         byteIndicator.textContent = '0 B';
         block.appendChild(byteIndicator);
-        
+
         block.appendChild(header);
 
         // Content area
@@ -1030,10 +1173,10 @@
         }));
       }
 
-      
+
       async function buildInput() {
         const content = getContentFromBlocks();
-        
+
         // For preview with empty content, use minimal placeholder
         const finalContent = content.length > 0
           ? content
@@ -1274,32 +1417,136 @@
         publishBtn.disabled = true;
 
         try {
+          // First, check if pagination would be needed
+          const inputPreview = await buildInput();
+          inputPreview.allowPagination = false; // Force single page to check size
+
+          let shouldPaginate = false;
+          let estimatedPageCount = 1;
+
+          // Try compiling without pagination first
+          const previewResult = await Compiler.compile(inputPreview);
+          
+          // Check if compilation failed due to size limit
+          if (!previewResult.success && previewResult.error?.code === 'SIZE_LIMIT_EXCEEDED') {
+            // Post is too large, try with pagination
+            const inputWithPagination = await buildInput();
+            inputWithPagination.allowPagination = true;
+            const paginatedResult = await Compiler.compile(inputWithPagination);
+            
+            if (paginatedResult.success && paginatedResult.pages.length > 1) {
+              estimatedPageCount = paginatedResult.pages.length;
+              
+              // Ask user if they want to split
+              const splitConfirmed = await Modal.confirm(
+                `Your post exceeds the 14KB limit (${previewResult.error.measured} bytes). Do you want to split it into ${estimatedPageCount} pages?`
+              );
+              
+              if (splitConfirmed) {
+                shouldPaginate = true;
+                allowPaginationCheckbox.checked = true;
+              } else {
+                // User declined, abort publish
+                Modal.error('Post is too large and cannot be published as a single page.');
+                publishBtn.disabled = false;
+                return;
+              }
+            } else {
+              // Can't be paginated
+              Modal.error('Post is too large and cannot be split into pages.');
+              publishBtn.disabled = false;
+              return;
+            }
+          } else if (previewResult.success && previewResult.pages[0] && previewResult.pages[0].bytes > 14336) {
+            // Compiled successfully but over 14KB - offer to split
+            const inputWithPagination = await buildInput();
+            inputWithPagination.allowPagination = true;
+            const paginatedResult = await Compiler.compile(inputWithPagination);
+            
+            if (paginatedResult.success && paginatedResult.pages.length > 1) {
+              estimatedPageCount = paginatedResult.pages.length;
+              
+              // Ask user if they want to split
+              const splitConfirmed = await Modal.confirm(
+                `Your post is ${previewResult.pages[0].bytes} bytes and exceeds the 14KB limit. Do you want to split it into ${estimatedPageCount} pages?`
+              );
+              
+              if (splitConfirmed) {
+                shouldPaginate = true;
+                allowPaginationCheckbox.checked = true;
+              } else {
+                // User declined, abort publish
+                publishBtn.disabled = false;
+                return;
+              }
+            }
+          } else if (!previewResult.success) {
+            // Other compilation error
+            Modal.error(previewResult.error?.code || 'Compilation failed');
+            publishBtn.disabled = false;
+            return;
+          }
+
+          // Now do the actual publish with the user's choice
           const input = await buildInput();
           const result = await App.publish(input);
 
           if (result.pageCount && result.pageCount > 1) {
             Modal.success(`Build completed: /${result.slug} (${result.pageCount} pages, ${result.totalBytes} bytes)`);
-            updateByteCounter(result.totalBytes);
           } else {
             Modal.success(`Build completed: /${result.slug} (${result.bytes} bytes)`);
-            updateByteCounter(result.bytes);
           }
 
-          // Disable editing after publish
-          titleInput.disabled = true;
-          slugInput.disabled = true;
-          blockEditor.querySelectorAll('.block-content').forEach(el => {
-            el.contentEditable = 'false';
-          });
-          blockEditor.querySelectorAll('button, select').forEach(el => {
-            el.disabled = true;
-          });
-          addBlockBtn.disabled = true;
-          navEnabled.disabled = true;
-          footerEnabled.disabled = true;
-          cssRules.disabled = true;
-          publishBtn.disabled = true;
-          publishBtn.textContent = 'Build completed';
+          // Clear all fields after publish
+          titleInput.value = '';
+          slugInput.value = '';
+          blockEditor.innerHTML = '';
+
+          // Add one empty paragraph block
+          const emptyBlock = createBlockElement('paragraph');
+          blockEditor.appendChild(emptyBlock);
+
+          // Reset navigation
+          navEnabled.checked = false;
+          navEnabled.dispatchEvent(new Event('change'));
+          loadGlobalNavigation();
+
+          // Reset footer
+          footerEnabled.checked = false;
+          footerEnabled.dispatchEvent(new Event('change'));
+          footerText.value = '';
+
+          // Reset meta
+          metaEnabled.checked = false;
+          metaEnabled.dispatchEvent(new Event('change'));
+          metaDescription.value = '';
+          metaAuthor.value = '';
+
+          // Reset CSS
+          cssEnabled.checked = false;
+          cssEnabled.dispatchEvent(new Event('change'));
+          cssRules.value = '';
+          liveCSS.textContent = '';
+
+          // Reset pagination
+          allowPaginationCheckbox.checked = false;
+          paginationOption.classList.add('hidden');
+
+          // Reset page type
+          pageTypeSelect.value = 'post';
+          pageTypeHint.textContent = '';
+
+          // Clear auto-save
+          clearAutoSave();
+
+          // Reset byte counter
+          updateByteCounter(0, 0);
+          updateCostRail();
+          updateTitleBytes();
+
+          // Re-enable publish button
+          publishBtn.disabled = false;
+          publishBtn.textContent = 'Build & Publish';
         } catch (err) {
           Modal.error(err.message);
           console.error(err);
@@ -1314,18 +1561,18 @@
       loadGlobalFooter();
       loadGlobalMeta();
       loadGlobalCSS();
-      
+
       // Set initial disabled states (after loading global values)
       navEditor.classList.remove('hidden');
       addNavLinkBtn.disabled = true;
-      
+
       // Apply disabled state to navigation chips
       const initialChips = navLinks.querySelectorAll('.nav-chip');
       initialChips.forEach(chip => {
         chip.style.pointerEvents = 'none';
         chip.style.opacity = '0.6';
       });
-      
+
       footerEditor.classList.remove('hidden');
       footerText.disabled = true;
       insertBytesBtn.disabled = true;
@@ -1345,12 +1592,71 @@
         };
       }
 
+      // Try to restore from auto-save
+      const restored = loadFromLocalStorage();
+      if (restored) {
+        console.log('Restored from auto-save');
+      }
+
+      // ============ CLEAR ALL BUTTON ============
+
+      document.getElementById('clear-all-btn').addEventListener('click', async () => {
+        const confirmed = await Modal.confirm('Wirklich alle Eingaben löschen?');
+        if (!confirmed) return;
+
+        // Clear all fields
+        titleInput.value = '';
+        slugInput.value = '';
+        blockEditor.innerHTML = '';
+
+        // Add one empty paragraph block
+        const emptyBlock = createBlockElement('paragraph');
+        blockEditor.appendChild(emptyBlock);
+
+        // Reset navigation to global (disabled)
+        navEnabled.checked = false;
+        navEnabled.dispatchEvent(new Event('change'));
+        loadGlobalNavigation();
+
+        // Reset footer to global (disabled)
+        footerEnabled.checked = false;
+        footerEnabled.dispatchEvent(new Event('change'));
+        loadGlobalFooter();
+
+        // Reset meta to global (disabled)
+        metaEnabled.checked = false;
+        metaEnabled.dispatchEvent(new Event('change'));
+        loadGlobalMeta();
+
+        // Reset CSS to global (disabled)
+        cssEnabled.checked = false;
+        cssEnabled.dispatchEvent(new Event('change'));
+        loadGlobalCSS();
+
+        // Reset pagination
+        allowPaginationCheckbox.checked = false;
+        paginationOption.classList.add('hidden');
+
+        // Reset page type
+        pageTypeSelect.value = 'post';
+        pageTypeHint.textContent = '';
+
+        // Clear auto-save
+        clearAutoSave();
+
+        // Reset byte counter
+        updateByteCounter(0, 0);
+        updateCostRail();
+        updateTitleBytes();
+      });
+
       updateByteCounter(0, 0);
       updateCostRail();
       updateTitleBytes();
 
       // Auto-update byte counter on content changes
       const debouncedPreview = debounce(async () => {
+        saveToLocalStorage(); // Auto-save on changes
         try {
           const input = await buildInput();
           const result = await App.preview(input);
@@ -1401,4 +1707,5 @@
     })();
   </script>
 </body>
+
 </html>

@@ -414,14 +414,14 @@ function flatten(input) {
   const breakdown = {
     base: 0,
     title: 0,
+    favicon: 0,
     meta: 0,
     css: 0,
     navigation: 0,
     footer: 0,
     pagination: 0,
     icons: 0,
-    content: 0,
-    favicon: 0
+    content: 0
   };
   let iconBytes = 0;
   for (const iconRef of input.icons) {
@@ -434,6 +434,11 @@ function flatten(input) {
   if (input.css !== null) {
     cssHtml = `<style>${input.css.rules}</style>`;
     breakdown.css = measureBytes(cssHtml);
+  }
+  let faviconHtml = "";
+  if (input.favicon) {
+    faviconHtml = `<link rel="icon" href="${input.favicon}">`;
+    breakdown.favicon = measureBytes(faviconHtml);
   }
   let metaHtml = "";
   if (input.meta !== null) {
@@ -448,11 +453,6 @@ function flatten(input) {
       metaHtml = metaParts.join("\n");
       breakdown.meta = measureBytes(metaHtml);
     }
-  }
-  let faviconHtml = "";
-  if (input.favicon) {
-    faviconHtml = `<link rel="icon" href="${input.favicon}">`;
-    breakdown.favicon = measureBytes(faviconHtml);
   }
   const headContent = `<meta charset="utf-8">
 ${titleHtml}${faviconHtml ? "\n" + faviconHtml : ""}${metaHtml ? "\n" + metaHtml : ""}${cssHtml ? "\n" + cssHtml : ""}`;
