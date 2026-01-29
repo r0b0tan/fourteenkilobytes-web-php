@@ -98,8 +98,6 @@
     <h1 class="page-title">Einstellungen</h1>
   </header>
 
-  <div id="message" class="message hidden"></div>
-
   <!-- Settings Card -->
   <div class="editor-card">
     <div class="card-header">
@@ -109,6 +107,14 @@
         <button type="button" class="tab-btn" data-tab="footer">Footer</button>
         <button type="button" class="tab-btn" data-tab="css">CSS</button>
       </div>
+      <button id="save-btn" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        Speichern
+      </button>
     </div>
     <div class="card-body">
       <!-- General Tab -->
@@ -120,7 +126,7 @@
             <select id="homepage-select" class="homepage-select" style="flex: 1;">
               <option value="">Standard (automatische Postliste)</option>
             </select>
-            <button type="button" id="regenerate-homepage-btn" class="btn btn-primary" style="display: none;">
+            <button type="button" id="regenerate-homepage-btn" class="btn btn-secondary" style="display: none;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="23 4 23 10 17 10"></polyline>
                 <polyline points="1 20 1 14 7 14"></polyline>
@@ -141,7 +147,7 @@
               </div>
             </div>
             <div class="favicon-actions">
-              <label class="btn btn-primary">
+              <label class="btn btn-secondary">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="17 8 12 3 7 8"></polyline>
@@ -150,7 +156,7 @@
                 Hochladen
                 <input type="file" id="favicon-input" accept="image/png,image/x-icon,image/svg+xml,image/gif" hidden>
               </label>
-              <button type="button" id="favicon-remove" class="btn btn-primary hidden">
+              <button type="button" id="favicon-remove" class="btn btn-danger hidden">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -178,7 +184,7 @@
             <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
             <div class="nav-editor-row">
               <div id="header-links" class="nav-links"></div>
-              <button type="button" id="add-header-link" class="btn-primary">+ Link</button>
+              <button type="button" id="add-header-link" class="btn btn-secondary">+ Link</button>
             </div>
           </div>
         </div>
@@ -324,9 +330,9 @@
         <input type="text" id="link-href" placeholder="/">
       </div>
       <div class="popup-actions">
-        <button type="button" id="link-save">OK</button>
-        <button type="button" id="link-delete" class="btn-danger btn-small hidden">Löschen</button>
-        <button type="button" id="link-cancel" class="btn-secondary">Abbrechen</button>
+        <button type="button" id="link-save" class="btn btn-primary">OK</button>
+        <button type="button" id="link-delete" class="btn btn-danger btn-small hidden">Löschen</button>
+        <button type="button" id="link-cancel" class="btn btn-secondary">Abbrechen</button>
       </div>
     </div>
   </div>
@@ -340,13 +346,6 @@
     </div>
   </div>
 
-  <!-- Save Card -->
-  <div class="editor-card">
-    <div class="card-body" style="display: flex; justify-content: flex-end; gap: 16px; align-items: center;">
-      <span id="byte-text" class="text-muted text-small">Overhead: 0 / 14.336 Bytes</span>
-      <button id="save-btn" class="btn-primary build-publish-btn" style="width: auto;">Speichern</button>
-    </div>
-  </div>
 
   <script type="module" src="app.js"></script>
   <script type="module">
@@ -400,11 +399,9 @@
       const faviconRemove = document.getElementById('favicon-remove');
       const faviconData = document.getElementById('favicon-data');
       const saveBtn = document.getElementById('save-btn');
-      const messageEl = document.getElementById('message');
       const overheadBytesEl = document.getElementById('overhead-bytes');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
       const overheadPercent = document.getElementById('overhead-percent');
-      const byteText = document.getElementById('byte-text');
 
       // Tab elements
       const tabBtns = document.querySelectorAll('.tab-btn');
@@ -435,18 +432,16 @@
 
         regenerateHomepageBtn.disabled = true;
         regenerateHomepageBtn.textContent = '⏳ Generiere...';
-        hideMessage();
-
         try {
           await App.republishPost(slug);
-          showMessage('Startseite erfolgreich aktualisiert!', 'success');
+          Toast.success('Startseite erfolgreich aktualisiert!');
           regenerateHomepageBtn.textContent = '✓ Aktualisiert';
           setTimeout(() => {
             regenerateHomepageBtn.textContent = 'Aktualisieren';
             regenerateHomepageBtn.disabled = false;
           }, 2000);
         } catch (err) {
-          showMessage(`Fehler: ${err.message}`, 'error');
+          Toast.error(`Fehler: ${err.message}`);
           regenerateHomepageBtn.textContent = 'Aktualisieren';
           regenerateHomepageBtn.disabled = false;
         }
@@ -545,7 +540,7 @@
         if (!file) return;
 
         if (file.size > MAX_FAVICON_SIZE) {
-          showMessage(`Favicon zu groß (${formatBytes(file.size)}). Maximum: ${formatBytes(MAX_FAVICON_SIZE)}`, 'error');
+          Toast.error(`Favicon zu groß (${formatBytes(file.size)}). Maximum: ${formatBytes(MAX_FAVICON_SIZE)}`);
           faviconInput.value = '';
           return;
         }
@@ -556,7 +551,7 @@
           faviconData.value = base64;
           updateOverhead();
         } catch (err) {
-          showMessage('Fehler beim Lesen der Datei', 'error');
+          Toast.error('Fehler beim Lesen der Datei');
         }
         faviconInput.value = '';
       });
@@ -680,7 +675,6 @@
           if (breakdownTotalEl) breakdownTotalEl.textContent = `${formatBytes(bytes)} / 14.336 B`;
 
           overheadBytesEl.textContent = formatBytes(bytes);
-          byteText.textContent = `Overhead: ${formatBytes(bytes)} / ${formatBytes(limit)}`;
           overheadPercent.textContent = `${Math.round(percent)}%`;
 
           // Determine color based on usage
@@ -766,30 +760,46 @@
 
       saveBtn.addEventListener('click', async () => {
         saveBtn.disabled = true;
-        hideMessage();
 
         try {
           const settings = buildSettings();
           await App.saveSettings(settings);
-          showMessage('Einstellungen gespeichert', 'success');
+          Toast.success('Einstellungen gespeichert');
         } catch (err) {
-          showMessage(err.message, 'error');
+          Toast.error(err.message);
         } finally {
           saveBtn.disabled = false;
         }
       });
 
-      // ============ MESSAGES ============
+      // ============ TOAST NOTIFICATIONS ============
 
-      function showMessage(text, type = 'error') {
-        messageEl.textContent = text;
-        messageEl.className = `message ${type}`;
-        messageEl.classList.remove('hidden');
-      }
+      const Toast = (() => {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toast-container';
+          container.className = 'toast-container';
+          document.body.appendChild(container);
+        }
 
-      function hideMessage() {
-        messageEl.classList.add('hidden');
-      }
+        function show(text, type = 'success', duration = 3000) {
+          const toast = document.createElement('div');
+          toast.className = `toast ${type}`;
+          toast.textContent = text;
+          container.appendChild(toast);
+
+          setTimeout(() => {
+            toast.classList.add('hiding');
+            toast.addEventListener('animationend', () => toast.remove());
+          }, duration);
+        }
+
+        return {
+          success: (text) => show(text, 'success'),
+          error: (text) => show(text, 'error')
+        };
+      })();
 
       // ============ MODAL SYSTEM ============
 

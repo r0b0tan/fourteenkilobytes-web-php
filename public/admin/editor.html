@@ -97,7 +97,7 @@
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
       <h1 class="page-title" style="margin: 0;">Editor</h1>
-      <button type="button" id="clear-all-btn" class="btn btn-primary"> <svg width="14" height="14" viewBox="0 0 24 24"
+      <button type="button" id="clear-all-btn" class="btn btn-secondary"> <svg width="14" height="14" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10"></polyline>
           <polyline points="1 20 1 14 7 14"></polyline>
@@ -175,7 +175,7 @@
         <div id="nav-editor" class="override-editor hidden">
           <div class="nav-editor-row">
             <div id="nav-links" class="nav-links"></div>
-            <button type="button" id="add-nav-link" class="btn-primary">+ Link</button>
+            <button type="button" id="add-nav-link" class="btn btn-secondary">+ Link</button>
           </div>
         </div>
       </div>
@@ -195,7 +195,7 @@
       <div class="block-editor-wrapper">
         <div id="block-editor" class="block-editor"></div>
         <div class="block-actions-row">
-          <button type="button" id="add-block-btn" class="btn-primary">+ Add Block</button>
+          <button type="button" id="add-block-btn" class="btn btn-secondary">+ Add Block</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
             <button type="button" data-type="paragraph">Paragraph</button>
             <button type="button" data-type="heading" data-level="1">Heading 1</button>
@@ -233,7 +233,7 @@
         <div id="footer-editor" class="override-editor hidden">
           <div class="footer-editor-row">
             <input type="text" id="footer-text" placeholder="© 2024 My Blog">
-            <button type="button" id="insert-bytes-btn" class="btn-primary">+ Bytes</button>
+            <button type="button" id="insert-bytes-btn" class="btn btn-secondary">+ Bytes</button>
           </div>
         </div>
       </div>
@@ -275,9 +275,9 @@
         <input type="text" id="nav-link-href" placeholder="/">
       </div>
       <div class="popup-actions">
-        <button type="button" id="nav-link-save" class="btn-primary">OK</button>
-        <button type="button" id="nav-link-delete" class="btn-danger">Delete</button>
-        <button type="button" id="nav-link-cancel" class="btn-secondary">Cancel</button>
+        <button type="button" id="nav-link-save" class="btn btn-primary">OK</button>
+        <button type="button" id="nav-link-delete" class="btn btn-danger">Delete</button>
+        <button type="button" id="nav-link-cancel" class="btn btn-secondary">Cancel</button>
       </div>
     </div>
   </div>
@@ -292,8 +292,8 @@
   <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
     <input type="text" id="link-href" placeholder="/path or #anchor">
-    <button type="button" id="link-apply" class="btn-primary">OK</button>
-    <button type="button" id="link-cancel" class="btn-secondary">×</button>
+    <button type="button" id="link-apply" class="btn btn-primary">OK</button>
+    <button type="button" id="link-cancel" class="btn btn-secondary">×</button>
   </div>
 
   <!-- Modal System -->
@@ -363,7 +363,7 @@
             </div>
           </div>
         </div>
-        <button id="publish-btn" class="btn-primary build-publish-btn">Build & Publish</button>
+        <button id="publish-btn" class="btn btn-primary build-publish-btn">Build & Publish</button>
       </div>
     </div>
   </div>

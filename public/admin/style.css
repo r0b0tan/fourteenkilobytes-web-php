@@ -496,24 +496,26 @@ button:disabled {
 }
 
 .btn-primary {
+  background: var(--accent);
   border-color: var(--accent);
+  color: var(--white);
   font-weight: 500;
 }
 
 .btn-primary:hover {
-  border-color: var(--accent);
-  background: var(--accent-alpha-15);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: var(--gray-100);
-  border-color: var(--gray-300);
-  color: var(--text-secondary);
+  background: var(--white);
+  border-color: var(--accent);
+  color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  background: var(--gray-200);
-  border-color: var(--gray-400);
+  background: var(--accent-alpha-15);
+  border-color: var(--accent);
 }
 
 .btn-danger {
@@ -789,15 +791,6 @@ button:disabled {
 
 .modal .popup-actions {
   justify-content: center;
-}
-
-.modal .btn-primary {
-  background: var(--accent);
-  color: var(--white);
-}
-
-.modal .btn-primary:hover {
-  background: var(--accent-hover);
 }
 
 .modal.modal-success .modal-content p {
@@ -1433,6 +1426,13 @@ button:disabled {
   align-items: flex-end;
 }
 
+.card-header:has(.settings-tabs) > .btn {
+  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .card-header:has(.dashboard-tabs) .list-controls,
 .card-header:has(.settings-tabs) .list-controls {
   padding-bottom: 8px;
@@ -1836,4 +1836,62 @@ button:disabled {
 .favicon-actions label.btn {
   margin: 0;
   cursor: pointer;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  animation: toast-in 0.3s ease-out;
+}
+
+.toast.hiding {
+  animation: toast-out 0.3s ease-in forwards;
+}
+
+.toast.success {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.toast.error {
+  background: #dc2626;
+  color: var(--white);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
 }
