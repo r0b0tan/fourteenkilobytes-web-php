@@ -78,49 +78,46 @@ h2 {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  margin-top: 40px;
+  margin-top: 32px; /* Reduced from 40px to tighten layout */
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--gray-300);
+  align-items: center; /* Center alignment keeps logo and nav optically balanced */
+  padding: 10px 0; /* Reduced padding for tighter header */
+  border-bottom: 1px solid var(--border);
 }
 
 .header .logo {
-  font-size: 12px;
-  font-weight: 600;
-  color: #5dbdad;
+  /* Slightly brighter than accent but still subtle */
+  color: #0f9b8e;
   text-decoration: none;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
   display: flex;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center; /* Center-align icon and text for clean look */
+  gap: 8px; /* Slightly larger gap for breathing room */
   padding: 0;
   border-radius: 0;
+  transition: color 0.15s ease;
 }
 
 .header .logo svg {
-  width: 32px;
-  height: 32px;
+  width: 28px; /* Reduced from 32px to feel less prominent */
+  height: 28px;
   flex-shrink: 0;
 }
 
-.header .logo span {
-  font-size:16px;
-  line-height: 1;
-  padding-bottom: 0px;
+.header .logo-text {
+  font-size: 14px; /* Reduced from 16px for subtler branding */
+  line-height: 1.1; /* Tighter line-height for compact stacked text */
   font-family: ui-monospace, "SF Mono", "Consolas", "Menlo", monospace;
+  font-weight: 600;
   letter-spacing: 0.05em;
+  opacity: 0.55; /* More muted for minimal branding presence */
 }
 
 .header .logo:hover {
-  color: var(--accent-hover);
+  color: var(--accent-hover); /* Use defined hover color */
   background: transparent;
 }
 
@@ -128,22 +125,22 @@ h2 {
 .header-nav {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px; /* Tighter gap creates more cohesive nav group */
 }
 
 .nav-icon {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  color: var(--gray-500);
+  padding: 7px 12px; /* Increased horizontal padding for better proportions */
+  color: var(--text-secondary);
   text-decoration: none;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   transition:
-    color 0.15s,
-    background 0.15s;
+    color 0.15s ease,
+    background 0.15s ease; /* Consistent easing */
 }
 
 .nav-icon svg {
@@ -152,7 +149,7 @@ h2 {
 
 .nav-icon:hover {
   color: var(--accent);
-  background: var(--gray-100);
+  background: var(--accent-alpha-15); /* Consistent with active state */
 }
 
 .nav-icon.active {
