@@ -69,12 +69,104 @@ h2 {
 
 /* Header */
 .header {
+  margin-bottom: 48px;
+}
+
+.header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 48px;
-  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.header .logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  font-family: ui-monospace, monospace;
+}
+
+.header .logo:hover {
+  color: var(--accent-hover);
+}
+
+.header-secondary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-secondary a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.header-secondary a:hover {
+  color: var(--accent);
+}
+
+.header-secondary .logout-link {
+  color: var(--text-muted);
+}
+
+/* Main Navigation Tabs */
+.main-nav {
+  display: flex;
+  gap: 0;
   border-bottom: 1px solid var(--border);
+}
+
+.main-nav a {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.main-nav a:first-child {
+  padding-left: 0;
+  margin-left: 0;
+}
+
+.main-nav a:hover {
+  color: var(--text-primary);
+}
+
+.main-nav a.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Legacy header support */
+.header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.header-title .logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  font-family: ui-monospace, monospace;
+}
+
+.header-title .logo:hover {
+  color: var(--accent-hover);
+}
+
+.header-title .title-separator {
+  color: var(--gray-400);
+  font-weight: 300;
 }
 
 .header h1 {
