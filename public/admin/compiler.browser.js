@@ -17,7 +17,7 @@ function normalizeLineEndings(str) {
   return str.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 function createPageMeasurement(slug, breakdown) {
-  const overhead = breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons;
+  const overhead = breakdown.base + breakdown.title + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons;
   const content = breakdown.content;
   const total = overhead + content;
   return {
@@ -34,7 +34,7 @@ function createPageMeasurement(slug, breakdown) {
   };
 }
 function totalFromBreakdown(breakdown) {
-  return breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
+  return breakdown.base + breakdown.title + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
 }
 
 // src/icons.ts
@@ -96,6 +96,8 @@ function getIconBytes(id) {
 var SLUG_PATTERN = /^[a-z0-9-]+$/;
 var HREF_PATTERN = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html)$/i;
 var MAX_TITLE_LENGTH = 200;
+var MAX_META_DESCRIPTION_LENGTH = 160;
+var MAX_META_AUTHOR_LENGTH = 100;
 function validateInput(input) {
   const slugResult = validateSlug(input.slug);
   if (!slugResult.valid)
@@ -120,6 +122,11 @@ function validateInput(input) {
     const cssResult = validateCss(input.css);
     if (!cssResult.valid)
       return cssResult;
+  }
+  if (input.meta !== null) {
+    const metaResult = validateMeta(input.meta);
+    if (!metaResult.valid)
+      return metaResult;
   }
   const iconsResult = validateIcons(input.icons);
   if (!iconsResult.valid)
@@ -326,6 +333,53 @@ function validateCss(css) {
   }
   return { valid: true };
 }
+function validateMeta(meta) {
+  if (meta.description !== void 0) {
+    if (typeof meta.description !== "string") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "meta description with non-string value",
+          allowed: ["meta description with string value"]
+        }
+      };
+    }
+    if (meta.description.length > MAX_META_DESCRIPTION_LENGTH) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `meta description with ${meta.description.length} characters`,
+          allowed: [`meta description with max ${MAX_META_DESCRIPTION_LENGTH} characters`]
+        }
+      };
+    }
+  }
+  if (meta.author !== void 0) {
+    if (typeof meta.author !== "string") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "meta author with non-string value",
+          allowed: ["meta author with string value"]
+        }
+      };
+    }
+    if (meta.author.length > MAX_META_AUTHOR_LENGTH) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `meta author with ${meta.author.length} characters`,
+          allowed: [`meta author with max ${MAX_META_AUTHOR_LENGTH} characters`]
+        }
+      };
+    }
+  }
+  return { valid: true };
+}
 function validateIcons(icons) {
   const available = getAvailableIconIds();
   for (let i = 0; i < icons.length; i++) {
@@ -360,6 +414,7 @@ function flatten(input) {
   const breakdown = {
     base: 0,
     title: 0,
+    meta: 0,
     css: 0,
     navigation: 0,
     footer: 0,
@@ -379,8 +434,22 @@ function flatten(input) {
     cssHtml = `<style>${input.css.rules}</style>`;
     breakdown.css = measureBytes(cssHtml);
   }
+  let metaHtml = "";
+  if (input.meta !== null) {
+    const metaParts = [];
+    if (input.meta.description) {
+      metaParts.push(`<meta name="description" content="${escapeHtml(input.meta.description)}">`);
+    }
+    if (input.meta.author) {
+      metaParts.push(`<meta name="author" content="${escapeHtml(input.meta.author)}">`);
+    }
+    if (metaParts.length > 0) {
+      metaHtml = metaParts.join("\n");
+      breakdown.meta = measureBytes(metaHtml);
+    }
+  }
   const headContent = `<meta charset="utf-8">
-${titleHtml}${cssHtml ? "\n" + cssHtml : ""}`;
+${titleHtml}${metaHtml ? "\n" + metaHtml : ""}${cssHtml ? "\n" + cssHtml : ""}`;
   const head = `<head>
 ${headContent}
 </head>`;
@@ -414,7 +483,8 @@ ${navItems}
   const bodyOpen = "<body>";
   const bodyClose = "</body>";
   const htmlClose = "</html>";
-  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (cssHtml ? measureBytes("\n") : 0) + // newline between title and css
+  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (metaHtml ? measureBytes("\n") : 0) + // newline between title and meta
+  (cssHtml ? measureBytes("\n") : 0) + // newline between meta/title and css
   measureBytes("\n</head>");
   breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + headStructureBytes + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);
   if (navigation)
@@ -842,6 +912,7 @@ function formatBreakdown(breakdown) {
   const items = [
     ["Base", breakdown.base],
     ["Title", breakdown.title],
+    ["Meta", breakdown.meta],
     ["CSS", breakdown.css],
     ["Navigation", breakdown.navigation],
     ["Footer", breakdown.footer],
