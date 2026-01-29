@@ -183,6 +183,16 @@ const App = (function() {
       }
     }
 
+    // Meta: use global if input has none
+    if (!input.meta && settings.meta) {
+      const meta = {};
+      if (settings.meta.description) meta.description = settings.meta.description;
+      if (settings.meta.author) meta.author = settings.meta.author;
+      if (Object.keys(meta).length > 0) {
+        mergedInput.meta = meta;
+      }
+    }
+
     return mergedInput;
   }
 
@@ -250,6 +260,14 @@ const App = (function() {
   async function previewOverhead(settings) {
     const actualCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
 
+    // Build meta object if any meta fields are set
+    let meta = null;
+    if (settings.meta?.description || settings.meta?.author) {
+      meta = {};
+      if (settings.meta.description) meta.description = settings.meta.description;
+      if (settings.meta.author) meta.author = settings.meta.author;
+    }
+
     const testInput = {
       slug: 'overhead-test',
       title: 'Test',
@@ -263,6 +281,7 @@ const App = (function() {
       css: actualCss
         ? { rules: actualCss }
         : null,
+      meta: meta,
       icons: [],
       allowPagination: false,
       buildId: 'overhead-test',
@@ -296,6 +315,7 @@ const App = (function() {
       navigation: null,
       footer: null,
       css: null,
+      meta: null,
       icons: [],
       allowPagination: false,
       buildId: 'base-test',
