@@ -120,7 +120,34 @@
         <span id="title-bytes">0 B</span>
       </div>
 
-      <!-- Header-Override -->
+      <!-- Meta-Override -->
+      <div class="override-section">
+        <div class="override-section-header">
+          <label class="override-toggle">
+            <input type="checkbox" id="meta-enabled">
+            <span>Override Meta</span>
+          </label>
+          <p id="meta-global-hint" class="override-hint">✓ Using global meta</p>
+        </div>
+        <div id="meta-editor" class="override-editor hidden">
+          <div class="meta-row">
+            <div class="form-group">
+              <label for="meta-description">Description</label>
+              <input type="text" id="meta-description" maxlength="160" placeholder="Page description...">
+            </div>
+            <div class="form-group">
+              <label for="meta-author">Author</label>
+              <input type="text" id="meta-author" maxlength="100" placeholder="Author name">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rail-item" id="meta-rail-item">
+        <span>Meta</span>
+        <span id="meta-bytes">0 B</span>
+      </div>
+
+      <!-- Navigation-Override -->
       <div class="override-section">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -279,6 +306,10 @@
             <span id="breakdown-nav">0 B</span>
           </div>
           <div class="breakdown-row">
+            <span>Meta</span>
+            <span id="breakdown-meta">0 B</span>
+          </div>
+          <div class="breakdown-row">
             <span>Footer</span>
             <span id="breakdown-footer">0 B</span>
           </div>
@@ -384,6 +415,11 @@
       const footerEditor = document.getElementById('footer-editor');
       const footerGlobalHint = document.getElementById('footer-global-hint');
       const footerText = document.getElementById('footer-text');
+      const metaEnabled = document.getElementById('meta-enabled');
+      const metaEditor = document.getElementById('meta-editor');
+      const metaGlobalHint = document.getElementById('meta-global-hint');
+      const metaDescription = document.getElementById('meta-description');
+      const metaAuthor = document.getElementById('meta-author');
       const cssEnabled = document.getElementById('css-enabled');
       const cssEditor = document.getElementById('css-editor');
       const cssGlobalHint = document.getElementById('css-global-hint');
@@ -398,12 +434,14 @@
       const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
       const navBytesEl = document.getElementById('nav-bytes');
+      const metaBytesEl = document.getElementById('meta-bytes');
       const footerBytesEl = document.getElementById('footer-bytes');
       const cssBytesEl = document.getElementById('css-bytes');
 
       // Build Card elements
       const breakdownBase = document.getElementById('breakdown-base');
       const breakdownNav = document.getElementById('breakdown-nav');
+      const breakdownMeta = document.getElementById('breakdown-meta');
       const breakdownFooter = document.getElementById('breakdown-footer');
       const breakdownCss = document.getElementById('breakdown-css');
       const breakdownContent = document.getElementById('breakdown-content');
@@ -562,6 +600,24 @@
         footerGlobalHint.classList.toggle('hidden', footerEnabled.checked);
         footerText.disabled = !footerEnabled.checked;
         insertBytesBtn.disabled = !footerEnabled.checked;
+      });
+
+      // ============ META EDITOR ============
+
+      // Load global meta into disabled fields
+      function loadGlobalMeta() {
+        if (window.globalConfig?.meta?.description) {
+          metaDescription.value = window.globalConfig.meta.description;
+        }
+        if (window.globalConfig?.meta?.author) {
+          metaAuthor.value = window.globalConfig.meta.author;
+        }
+      }
+
+      metaEnabled.addEventListener('change', () => {
+        metaGlobalHint.classList.toggle('hidden', metaEnabled.checked);
+        metaDescription.disabled = !metaEnabled.checked;
+        metaAuthor.disabled = !metaEnabled.checked;
       });
 
       insertBytesBtn.addEventListener('click', () => {
@@ -1013,6 +1069,17 @@
           css = { rules: cssRules.value.trim() };
         }
 
+        let meta = null;
+        if (metaEnabled.checked) {
+          const description = metaDescription.value.trim();
+          const author = metaAuthor.value.trim();
+          if (description || author) {
+            meta = {};
+            if (description) meta.description = description;
+            if (author) meta.author = author;
+          }
+        }
+
         return {
           slug: slugInput.value.trim() || 'untitled',
           title: titleInput.value.trim() || 'Untitled',
@@ -1020,7 +1087,7 @@
           navigation,
           footer,
           css,
-          meta: null,
+          meta,
           icons: [],
           posts,
           allowPagination: allowPaginationCheckbox.checked,
@@ -1047,6 +1114,7 @@
         if (breakdown) {
           breakdownBase.textContent = formatBytes(breakdown.base);
           breakdownNav.textContent = formatBytes(breakdown.navigation);
+          breakdownMeta.textContent = formatBytes(breakdown.meta || 0);
           breakdownFooter.textContent = formatBytes(breakdown.footer);
           breakdownCss.textContent = formatBytes(breakdown.css);
           breakdownContent.textContent = formatBytes(breakdown.content);
@@ -1054,6 +1122,7 @@
 
           // Update rail indicators
           navBytesEl.textContent = formatBytes(breakdown.navigation);
+          metaBytesEl.textContent = formatBytes(breakdown.meta || 0);
           footerBytesEl.textContent = formatBytes(breakdown.footer);
           cssBytesEl.textContent = formatBytes(breakdown.css);
         }
@@ -1243,6 +1312,7 @@
       // Load global values into fields
       loadGlobalNavigation();
       loadGlobalFooter();
+      loadGlobalMeta();
       loadGlobalCSS();
       
       // Set initial disabled states (after loading global values)
@@ -1259,7 +1329,11 @@
       footerEditor.classList.remove('hidden');
       footerText.disabled = true;
       insertBytesBtn.disabled = true;
-      
+
+      metaEditor.classList.remove('hidden');
+      metaDescription.disabled = true;
+      metaAuthor.disabled = true;
+
       cssEditor.classList.remove('hidden');
       cssRules.disabled = true;
 
@@ -1308,8 +1382,11 @@
       titleInput.addEventListener('input', debouncedPreview);
       footerText.addEventListener('input', debouncedPreview);
       cssRules.addEventListener('input', debouncedPreview);
+      metaDescription.addEventListener('input', debouncedPreview);
+      metaAuthor.addEventListener('input', debouncedPreview);
       navEnabled.addEventListener('change', debouncedPreview);
       footerEnabled.addEventListener('change', debouncedPreview);
+      metaEnabled.addEventListener('change', debouncedPreview);
       cssEnabled.addEventListener('change', debouncedPreview);
 
       // Update cost rail when blocks change
