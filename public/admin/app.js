@@ -271,9 +271,12 @@ const App = (function() {
       throw new Error(result.error?.code || 'Compilation failed');
     }
 
+    const breakdown = result.measurements?.[0]?.breakdown || {};
+
     return {
       overheadBytes: result.pages[0].bytes,
       measurements: result.measurements,
+      breakdown,
     };
   }
 

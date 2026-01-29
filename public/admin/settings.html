@@ -4,12 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Einstellungen - fourteenkilobytes</title>
-  <link rel="stylesheet" href="/admin/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="header">
     <div class="header-top">
-      <a href="index.html" class="logo">&lt;14kb</a>
+      <a href="index.html" class="logo">
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+          viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet">
+          <g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+            <path d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149
+47 -176 194 -315 374 -353 61 -13 1058 -16 1066 -3 2 4 -22 29 -55 55 -67 54
+-152 157 -220 265 -24 39 -46 71 -49 72 -3 0 -18 -21 -34 -46 -41 -65 -64 -78
+-116 -64 -63 17 -74 3 -65 -82 5 -57 4 -69 -10 -74 -24 -10 -45 15 -45 54 0
+34 -1 34 -19 18 -10 -9 -21 -31 -25 -47 -5 -26 -10 -30 -33 -27 -23 2 -29 8
+-31 35 -3 27 1 35 22 44 26 12 40 35 30 50 -9 16 -22 10 -58 -27 -40 -41 -72
+-40 -82 2 -8 31 5 46 54 59 49 14 52 37 7 54 -19 7 -40 9 -45 6 -29 -18 -54
+47 -28 73 17 17 35 15 66 -8 15 -12 41 -22 57 -23 28 -2 30 0 27 28 -8 85 -7
+89 12 93 24 5 46 -23 46 -58 0 -37 29 -60 75 -60 51 0 69 18 101 106 l27 74
+-19 42 c-26 59 -98 111 -196 143 -68 23 -91 36 -129 75 -58 59 -82 121 -109
+278 -33 194 -24 242 44 242 36 0 242 -68 310 -102 87 -43 125 -102 140 -218 9
+-60 39 -108 79 -125 20 -8 76 -15 138 -16 57 -1 142 -8 188 -15 46 -8 87 -12
+90 -9 9 10 1 84 -14 119 -8 20 -25 41 -37 47 -20 11 -25 8 -55 -27 -27 -33
+-35 -37 -50 -28 -10 6 -19 22 -21 36 -2 20 5 30 33 47 45 26 37 45 -16 38 -44
+-6 -75 18 -65 51 9 29 30 33 70 17 57 -24 63 -18 22 24 -40 41 -44 66 -13 85
+24 15 49 -2 59 -41 4 -17 15 -36 23 -43 21 -18 31 12 17 56 -8 27 -7 37 5 49
+36 37 68 5 59 -58 -5 -32 -3 -47 8 -56 11 -9 18 -6 35 16 40 54 41 54 62 42
+28 -15 22 -60 -11 -76 -57 -28 -65 -87 -25 -201 28 -82 31 -131 10 -171 -16
+-31 -33 -41 -71 -41 -14 0 -34 -5 -45 -11 -26 -13 -15 -27 61 -79 30 -21 91
+-70 135 -109 44 -39 85 -71 92 -71 20 0 18 909 -2 1003 -15 73 -58 162 -106
+221 -40 48 -135 112 -207 139 -55 21 -71 22 -587 23 -305 1 -551 -2 -579 -7z" />
+          </g>
+        </svg>
+        <span>14KB</span>
+      </a>
       <nav class="header-nav">
         <a href="index.html" class="nav-icon" title="Übersicht">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -34,35 +62,6 @@
 
   <div id="message" class="message hidden"></div>
 
-  <!-- Overhead Card -->
-  <div class="editor-card">
-    <div class="card-header">
-      <h2 class="card-title">Overhead</h2>
-    </div>
-    <div class="card-body card-body-with-rail">
-      <div class="card-content">
-        <p class="text-muted">Globale Einstellungen werden in jede Seite eingebettet und verbrauchen Speicherplatz.</p>
-      </div>
-      <div class="card-rail build-rail" style="justify-content: center;">
-        <div class="build-progress">
-          <div class="pie-chart" id="overhead-pie-chart">
-            <span class="pie-percent" id="overhead-percent">0%</span>
-          </div>
-          <div class="pie-legend">
-            <div class="pie-legend-item">
-              <span class="pie-dot pie-dot-overhead"></span>
-              <span id="overhead-bytes">0 B</span>
-            </div>
-            <div class="pie-legend-item">
-              <span class="pie-dot pie-dot-free"></span>
-              <span>Verfügbar</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Settings Card -->
   <div class="editor-card">
     <div class="card-header">
@@ -83,7 +82,14 @@
             <select id="homepage-select" class="homepage-select" style="flex: 1;">
               <option value="">Standard (automatische Postliste)</option>
             </select>
-            <button type="button" id="regenerate-homepage-btn" class="btn-small btn-secondary" style="display: none;">Aktualisieren</button>
+            <button type="button" id="regenerate-homepage-btn" class="btn btn-primary" style="display: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              Aktualisieren
+            </button>
           </div>
         </div>
       </div>
@@ -157,6 +163,57 @@
     </div>
   </div>
 
+  <!-- Overhead Card -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Overhead</h2>
+    </div>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
+        <p class="text-muted">Globale Einstellungen werden in jede Seite eingebettet und verbrauchen Speicherplatz.</p>
+        <div class="breakdown-table">
+          <div class="breakdown-row">
+            <span>Base</span>
+            <span id="overhead-breakdown-base">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Navigation</span>
+            <span id="overhead-breakdown-nav">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Footer</span>
+            <span id="overhead-breakdown-footer">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>CSS</span>
+            <span id="overhead-breakdown-css">0 B</span>
+          </div>
+          <div class="breakdown-row breakdown-row-total">
+            <span>Total</span>
+            <span id="overhead-breakdown-total">0 B / 14.336 B</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-rail build-rail" style="justify-content: center;">
+        <div class="build-progress">
+          <div class="pie-chart" id="overhead-pie-chart">
+            <span class="pie-percent" id="overhead-percent">0%</span>
+          </div>
+          <div class="pie-legend">
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-overhead"></span>
+              <span id="overhead-bytes">0 B</span>
+            </div>
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-free"></span>
+              <span>Verfügbar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Link Edit Popup -->
   <div id="link-popup" class="nav-link-popup hidden">
     <div class="popup-content">
@@ -173,6 +230,15 @@
         <button type="button" id="link-delete" class="btn-danger btn-small hidden">Löschen</button>
         <button type="button" id="link-cancel" class="btn-secondary">Abbrechen</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal System -->
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <div id="modal-actions" class="popup-actions"></div>
     </div>
   </div>
 
@@ -260,7 +326,8 @@
         const slug = homepageSelect.value;
         if (!slug) return;
 
-        if (!confirm(`Startseite "${slug}" mit aktuellen Posts neu generieren?`)) return;
+        const confirmed = await Modal.confirm(`Startseite "${slug}" mit aktuellen Posts neu generieren?`);
+        if (!confirmed) return;
 
         regenerateHomepageBtn.disabled = true;
         regenerateHomepageBtn.textContent = '⏳ Generiere...';
@@ -271,12 +338,12 @@
           showMessage('Startseite erfolgreich aktualisiert!', 'success');
           regenerateHomepageBtn.textContent = '✓ Aktualisiert';
           setTimeout(() => {
-            regenerateHomepageBtn.textContent = '🔄 Aktualisieren';
+            regenerateHomepageBtn.textContent = 'Aktualisieren';
             regenerateHomepageBtn.disabled = false;
           }, 2000);
         } catch (err) {
           showMessage(`Fehler: ${err.message}`, 'error');
-          regenerateHomepageBtn.textContent = '🔄 Aktualisieren';
+          regenerateHomepageBtn.textContent = 'Aktualisieren';
           regenerateHomepageBtn.disabled = false;
         }
       });
@@ -424,10 +491,25 @@
         try {
           const settings = buildSettings();
           const res = await App.previewOverhead(settings);
+          console.log('Overhead preview result:', res);
           const bytes = res.overheadBytes;
+          const breakdown = res.breakdown || {};
           const limit = 14336;
           const percent = Math.min((bytes / limit) * 100, 100);
           const overheadDeg = (percent / 100) * 360;
+
+          // Update breakdown table
+          const breakdownBaseEl = document.getElementById('overhead-breakdown-base');
+          const breakdownNavEl = document.getElementById('overhead-breakdown-nav');
+          const breakdownFooterEl = document.getElementById('overhead-breakdown-footer');
+          const breakdownCssEl = document.getElementById('overhead-breakdown-css');
+          const breakdownTotalEl = document.getElementById('overhead-breakdown-total');
+
+          if (breakdownBaseEl) breakdownBaseEl.textContent = formatBytes(breakdown.base || 0);
+          if (breakdownNavEl) breakdownNavEl.textContent = formatBytes(breakdown.navigation || 0);
+          if (breakdownFooterEl) breakdownFooterEl.textContent = formatBytes(breakdown.footer || 0);
+          if (breakdownCssEl) breakdownCssEl.textContent = formatBytes(breakdown.css || 0);
+          if (breakdownTotalEl) breakdownTotalEl.textContent = `${formatBytes(bytes)} / 14.336 B`;
 
           overheadBytesEl.textContent = formatBytes(bytes);
           byteText.textContent = `Overhead: ${formatBytes(bytes)} / ${formatBytes(limit)}`;
@@ -527,6 +609,64 @@
       function hideMessage() {
         messageEl.classList.add('hidden');
       }
+
+      // ============ MODAL SYSTEM ============
+
+      const Modal = (() => {
+        const backdrop = document.getElementById('modal-backdrop');
+        const modal = document.getElementById('modal');
+        const message = document.getElementById('modal-message');
+        const actions = document.getElementById('modal-actions');
+
+        function hide() {
+          modal.classList.add('hidden');
+          backdrop.classList.add('hidden');
+          modal.className = 'modal hidden';
+          actions.innerHTML = '';
+        }
+
+        function show(text, buttons, type = '') {
+          message.textContent = text;
+          actions.innerHTML = '';
+          modal.className = 'modal' + (type ? ` modal-${type}` : '');
+
+          buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = btn.text;
+            button.className = btn.class || '';
+            button.addEventListener('click', () => {
+              hide();
+              if (btn.action) btn.action();
+            });
+            actions.appendChild(button);
+          });
+
+          backdrop.classList.remove('hidden');
+          modal.classList.remove('hidden');
+        }
+
+        return {
+          confirm(text) {
+            return new Promise(resolve => {
+              show(text, [
+                { text: 'Ja', class: 'btn-primary', action: () => resolve(true) },
+                { text: 'Abbrechen', class: 'btn-secondary', action: () => resolve(false) }
+              ]);
+            });
+          },
+
+          success(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'success');
+          },
+
+          error(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error');
+          },
+
+          hide
+        };
+      })();
 
       // ============ UTILS ============
 

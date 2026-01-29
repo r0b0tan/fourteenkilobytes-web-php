@@ -90,15 +90,38 @@ h2 {
 }
 
 .header .logo {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  color: #5dbdad;
   text-decoration: none;
-  font-family: "Courier New", Courier, monospace;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+}
+
+.header .logo svg {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.header .logo span {
+  font-size:16px;
+  line-height: 1;
+  padding-bottom: 0px;
+  font-family: ui-monospace, "SF Mono", "Consolas", "Menlo", monospace;
+  letter-spacing: 0.05em;
 }
 
 .header .logo:hover {
   color: var(--accent-hover);
+  background: transparent;
 }
 
 /* Header Icon Navigation */
@@ -118,7 +141,9 @@ h2 {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
 .nav-icon svg {
@@ -209,11 +234,8 @@ h2 {
 }
 
 .header-title .logo {
-  font-size: 22px;
-  font-weight: 700;
   color: var(--accent);
   text-decoration: none;
-  font-family: ui-monospace, monospace;
 }
 
 .header-title .logo:hover {
@@ -495,6 +517,12 @@ button:disabled {
 .btn-small {
   padding: 4px 8px;
   font-size: 12px;
+}
+
+.btn svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 
 /* Posts list */
@@ -1331,7 +1359,9 @@ button:disabled {
   font-weight: 500;
   font-size: 13px;
   border-radius: 4px 4px 0 0;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   position: relative;
   margin-right: -1px;
 }
@@ -1470,7 +1500,9 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .pagination button:hover:not(:disabled) {
