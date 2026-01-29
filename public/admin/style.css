@@ -89,9 +89,15 @@ h2 {
   border-bottom: 1px solid var(--border);
 }
 
+.header .logo-container {
+  background-color: rgba(16, 168, 155, 0.12);
+  border-radius: 9px;
+  padding: 1px 7px 1px 2px;
+}
+
 .header .logo {
-  /* Slightly brighter than accent but still subtle */
-  color: #0f9b8e;
+  /* Slightly brighter than accent but still subtle*/
+  color: #14b8a6;
   text-decoration: none;
   display: flex;
   align-items: center; /* Center-align icon and text for clean look */
@@ -102,13 +108,13 @@ h2 {
 }
 
 .header .logo svg {
-  width: 28px; /* Reduced from 32px to feel less prominent */
-  height: 28px;
+  width: 27px; /* Reduced from 32px to feel less prominent */
+  height: 27px;
   flex-shrink: 0;
 }
 
 .header .logo-text {
-  font-size: 14px; /* Reduced from 16px for subtler branding */
+  font-size: 13px; /* Reduced from 16px for subtler branding */
   line-height: 1.1; /* Tighter line-height for compact stacked text */
   font-family: ui-monospace, "SF Mono", "Consolas", "Menlo", monospace;
   font-weight: 600;
@@ -172,6 +178,16 @@ h2 {
 .nav-icon.logout-icon:hover {
   color: #dc2626;
   background: #fef2f2;
+}
+
+/* External link styling (e.g., Blog button) */
+.nav-icon.external-link {
+  color: #14b8a6;
+}
+
+.nav-icon.external-link:hover {
+  color: var(--accent);
+  background: #ccfbf1;
 }
 
 /* Legacy: header-secondary & main-nav kept for compatibility */
