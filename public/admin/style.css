@@ -196,7 +196,28 @@ h2 {
   border-top: 1px solid var(--border);
 }
 
-/* Login */
+/* ============ AUTH PAGES (Login/Setup) ============ */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 128px);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-card .card-body {
+  padding: 24px;
+}
+
+.auth-card .form-group:last-of-type {
+  margin-bottom: 16px;
+}
+
+/* Legacy Login (keep for compatibility) */
 .login-form {
   max-width: 300px;
   margin: 4rem auto;
@@ -1043,6 +1064,38 @@ button:disabled {
   text-align: center;
 }
 
+/* Messages */
+.message {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.message.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.message.success {
+  background: var(--accent-alpha-15);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+/* Settings Header Editor (legacy compatibility) */
+.nav-editor {
+  padding: 12px;
+  background: var(--accent-alpha-15);
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
+.footer-editor {
+  margin-top: 12px;
+}
+
 /* Utility */
 .hidden {
   display: none !important;
@@ -1106,41 +1159,67 @@ button:disabled {
   background: var(--muted);
 }
 
-/* Dashboard & Settings Tabs */
+/* Dashboard & Settings Tabs - Klassische Registerkarten */
 .dashboard-tabs,
 .settings-tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
+  gap: 0;
+  padding: 0;
+  position: relative;
+  bottom: -1px;
 }
 
 .tab-btn {
-  background: none;
-  border: none;
+  background: var(--gray-100);
+  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   color: var(--text-muted);
   padding: 8px 16px;
   cursor: pointer;
-  border-radius: 4px 4px 0 0;
   font-weight: 500;
+  font-size: 13px;
+  border-radius: 4px 4px 0 0;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  margin-right: -1px;
 }
 
 .tab-btn:hover {
+  background: var(--gray-200);
   color: var(--text-primary);
-  background: var(--input-bg);
 }
 
 .tab-btn.active {
+  background: var(--white);
   color: var(--text-primary);
-  background: var(--input-bg);
+  border-bottom-color: var(--white);
+  z-index: 1;
+}
+
+/* Tabs inside card - no card header needed */
+.editor-card:has(.dashboard-tabs),
+.editor-card:has(.settings-tabs) {
+  border: none;
+  background: transparent;
+}
+
+.card-header:has(.dashboard-tabs),
+.card-header:has(.settings-tabs) {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+/* Card body when preceded by tab header */
+.card-header:has(.dashboard-tabs) + .card-body,
+.card-header:has(.settings-tabs) + .card-body {
   border: 1px solid var(--border);
-  border-bottom-color: var(--input-bg);
-  margin-bottom: -1px;
+  border-radius: 0 4px 4px 4px;
+  background: var(--white);
 }
 
 .tab-content {
-  min-height: 200px;
+  min-height: 100px;
 }
 
 .tab-content.hidden {

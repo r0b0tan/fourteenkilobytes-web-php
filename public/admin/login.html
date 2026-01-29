@@ -7,14 +7,20 @@
   <link rel="stylesheet" href="/admin/style.css">
 </head>
 <body>
-  <div class="login-form">
-    <h2>Login</h2>
-    <div class="form-group">
-      <label for="password">Passwort</label>
-      <input type="password" id="password" placeholder="Passwort eingeben">
+  <div class="auth-container">
+    <div class="editor-card auth-card">
+      <div class="card-header">
+        <h2 class="card-title">Login</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" placeholder="Passwort eingeben">
+        </div>
+        <button id="login-btn" class="btn-primary build-publish-btn">Anmelden</button>
+        <p id="login-error" class="message error hidden mt-1"></p>
+      </div>
     </div>
-    <button id="login-btn" style="width: 100%">Anmelden</button>
-    <p id="login-error" class="message error hidden mt-1"></p>
   </div>
 
   <script type="module" src="app.js"></script>

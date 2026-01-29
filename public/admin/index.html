@@ -19,24 +19,38 @@
       </nav>
     </div>
 
-    <!-- Tabs -->
-    <div class="dashboard-tabs">
-      <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
-      <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
-    </div>
+    <!-- Content Card -->
+    <div class="editor-card">
+      <div class="card-header">
+        <div class="dashboard-tabs">
+          <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
+          <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Posts Tab -->
+        <div id="tab-posts" class="tab-content active">
+          <ul id="posts-list" class="posts-list">
+            <li class="empty">Lade...</li>
+          </ul>
+        </div>
 
-    <!-- Posts Tab -->
-    <div id="tab-posts" class="tab-content active">
-      <ul id="posts-list" class="posts-list">
-        <li class="empty">Lade...</li>
-      </ul>
+        <!-- Pages Tab -->
+        <div id="tab-pages" class="tab-content hidden">
+          <ul id="pages-list" class="posts-list">
+            <li class="empty">Lade...</li>
+          </ul>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Pages Tab -->
-    <div id="tab-pages" class="tab-content hidden">
-      <ul id="pages-list" class="posts-list">
-        <li class="empty">Lade...</li>
-      </ul>
+  <!-- Modal System -->
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <div id="modal-actions" class="popup-actions"></div>
     </div>
   </div>
 
@@ -79,6 +93,60 @@
         await App.logout();
         window.location.href = '/admin/login.html';
       });
+
+      // ============ MODAL SYSTEM ============
+
+      const Modal = (() => {
+        const backdrop = document.getElementById('modal-backdrop');
+        const modal = document.getElementById('modal');
+        const message = document.getElementById('modal-message');
+        const actions = document.getElementById('modal-actions');
+
+        function hide() {
+          modal.classList.add('hidden');
+          backdrop.classList.add('hidden');
+          modal.className = 'modal hidden';
+          actions.innerHTML = '';
+        }
+
+        function show(text, buttons, type = '') {
+          message.textContent = text;
+          actions.innerHTML = '';
+          modal.className = 'modal' + (type ? ` modal-${type}` : '');
+
+          buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = btn.text;
+            button.className = btn.class || '';
+            button.addEventListener('click', () => {
+              hide();
+              if (btn.action) btn.action();
+            });
+            actions.appendChild(button);
+          });
+
+          backdrop.classList.remove('hidden');
+          modal.classList.remove('hidden');
+        }
+
+        return {
+          confirm(text) {
+            return new Promise(resolve => {
+              show(text, [
+                { text: 'Ja', class: 'btn-danger', action: () => resolve(true) },
+                { text: 'Abbrechen', class: 'btn-secondary', action: () => resolve(false) }
+              ]);
+            });
+          },
+
+          error(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error');
+          },
+
+          hide
+        };
+      })();
 
       // ============ TABS ============
 
@@ -143,15 +211,14 @@
 
       // Global delete handler
       window.deletePost = async function(slug) {
-        if (!confirm(`"${slug}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
-          return;
-        }
+        const confirmed = await Modal.confirm(`"${slug}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`);
+        if (!confirmed) return;
 
         try {
           await App.deletePost(slug);
           loadAllContent();
         } catch (err) {
-          alert('Fehler beim Löschen: ' + err.message);
+          Modal.error('Fehler beim Löschen: ' + err.message);
         }
       };
     })();
