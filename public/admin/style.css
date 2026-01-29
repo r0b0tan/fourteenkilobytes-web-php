@@ -615,6 +615,15 @@ button:disabled {
   padding-top: 0;
 }
 
+.override-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .override-section-header {
   display: flex;
   align-items: center;
