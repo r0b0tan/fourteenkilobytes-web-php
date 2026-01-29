@@ -193,6 +193,11 @@ const App = (function() {
       }
     }
 
+    // Favicon: always use global favicon if set
+    if (settings.favicon) {
+      mergedInput.favicon = settings.favicon;
+    }
+
     return mergedInput;
   }
 
@@ -282,6 +287,7 @@ const App = (function() {
         ? { rules: actualCss }
         : null,
       meta: meta,
+      favicon: settings.favicon || null,
       icons: [],
       allowPagination: false,
       buildId: 'overhead-test',
