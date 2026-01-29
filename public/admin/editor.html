@@ -342,10 +342,6 @@
             <span id="breakdown-total">0 B / 14.336 B</span>
           </div>
         </div>
-        <label id="pagination-option" class="pagination-checkbox hidden">
-          <input type="checkbox" id="allow-pagination">
-          <span>Automatically split into multiple pages</span>
-        </label>
       </div>
       <div class="card-rail build-rail">
         <div class="build-progress">
@@ -445,8 +441,6 @@
       const cssRules = document.getElementById('css-rules');
       const liveCSS = document.getElementById('live-css');
       const publishBtn = document.getElementById('publish-btn');
-      const paginationOption = document.getElementById('pagination-option');
-      const allowPaginationCheckbox = document.getElementById('allow-pagination');
 
       // Byte display elements
       const costContentTotal = document.getElementById('cost-content-total');
@@ -493,7 +487,6 @@
             metaAuthor: metaAuthor.value,
             cssEnabled: cssEnabled.checked,
             css: cssEnabled.checked ? cssRules.value : null,
-            allowPagination: allowPaginationCheckbox.checked,
             timestamp: Date.now()
           };
 
@@ -536,7 +529,6 @@
           titleInput.value = data.title || '';
           slugInput.value = data.slug || '';
           pageTypeSelect.value = data.pageType || 'post';
-          allowPaginationCheckbox.checked = data.allowPagination || false;
 
           // Restore blocks
           if (data.blocks && data.blocks.length > 0) {
@@ -1174,7 +1166,7 @@
       }
 
 
-      async function buildInput() {
+      async function buildInput(allowPagination = false) {
         const content = getContentFromBlocks();
 
         // For preview with empty content, use minimal placeholder
@@ -1233,7 +1225,7 @@
           meta,
           icons: [],
           posts,
-          allowPagination: allowPaginationCheckbox.checked,
+          allowPagination,
           buildId: crypto.randomUUID(),
           pageType: pageTypeSelect.value,
         };
@@ -1283,13 +1275,9 @@
         if (totalPercent >= 100) {
           contentColor = '#dc2626';
           pieContentDot.classList.add('danger');
-          paginationOption.classList.remove('hidden');
         } else if (totalPercent >= 80) {
           contentColor = '#f59e0b';
           pieContentDot.classList.add('warning');
-          paginationOption.classList.add('hidden');
-        } else {
-          paginationOption.classList.add('hidden');
         }
 
         // Update pie chart with conic-gradient
@@ -1418,33 +1406,30 @@
 
         try {
           // First, check if pagination would be needed
-          const inputPreview = await buildInput();
-          inputPreview.allowPagination = false; // Force single page to check size
+          // Use App.preview() to include global settings (navigation, footer, CSS, etc.)
+          const inputPreview = await buildInput(false);
 
           let shouldPaginate = false;
-          let estimatedPageCount = 1;
 
-          // Try compiling without pagination first
-          const previewResult = await Compiler.compile(inputPreview);
-          
-          // Check if compilation failed due to size limit
-          if (!previewResult.success && previewResult.error?.code === 'SIZE_LIMIT_EXCEEDED') {
+          // Try compiling without pagination first (with global settings applied)
+          const previewResult = await App.preview(inputPreview);
+
+          // Check if size limit exceeded (App.preview returns exceeded: true instead of throwing)
+          if (previewResult.exceeded) {
             // Post is too large, try with pagination
-            const inputWithPagination = await buildInput();
-            inputWithPagination.allowPagination = true;
-            const paginatedResult = await Compiler.compile(inputWithPagination);
-            
-            if (paginatedResult.success && paginatedResult.pages.length > 1) {
-              estimatedPageCount = paginatedResult.pages.length;
-              
+            const inputWithPagination = await buildInput(true);
+            const paginatedResult = await App.preview(inputWithPagination);
+
+            if (!paginatedResult.exceeded && paginatedResult.measurements && paginatedResult.measurements.length > 1) {
+              const estimatedPageCount = paginatedResult.measurements.length;
+
               // Ask user if they want to split
               const splitConfirmed = await Modal.confirm(
-                `Your post exceeds the 14KB limit (${previewResult.error.measured} bytes). Do you want to split it into ${estimatedPageCount} pages?`
+                `Your post exceeds the 14KB limit (${previewResult.bytes} bytes). Do you want to split it into ${estimatedPageCount} pages?`
               );
-              
+
               if (splitConfirmed) {
                 shouldPaginate = true;
-                allowPaginationCheckbox.checked = true;
               } else {
                 // User declined, abort publish
                 Modal.error('Post is too large and cannot be published as a single page.');
@@ -1457,38 +1442,31 @@
               publishBtn.disabled = false;
               return;
             }
-          } else if (previewResult.success && previewResult.pages[0] && previewResult.pages[0].bytes > 14336) {
+          } else if (previewResult.bytes > 14336) {
             // Compiled successfully but over 14KB - offer to split
-            const inputWithPagination = await buildInput();
-            inputWithPagination.allowPagination = true;
-            const paginatedResult = await Compiler.compile(inputWithPagination);
-            
-            if (paginatedResult.success && paginatedResult.pages.length > 1) {
-              estimatedPageCount = paginatedResult.pages.length;
-              
+            const inputWithPagination = await buildInput(true);
+            const paginatedResult = await App.preview(inputWithPagination);
+
+            if (!paginatedResult.exceeded && paginatedResult.measurements && paginatedResult.measurements.length > 1) {
+              const estimatedPageCount = paginatedResult.measurements.length;
+
               // Ask user if they want to split
               const splitConfirmed = await Modal.confirm(
-                `Your post is ${previewResult.pages[0].bytes} bytes and exceeds the 14KB limit. Do you want to split it into ${estimatedPageCount} pages?`
+                `Your post is ${previewResult.bytes} bytes and exceeds the 14KB limit. Do you want to split it into ${estimatedPageCount} pages?`
               );
-              
+
               if (splitConfirmed) {
                 shouldPaginate = true;
-                allowPaginationCheckbox.checked = true;
               } else {
                 // User declined, abort publish
                 publishBtn.disabled = false;
                 return;
               }
             }
-          } else if (!previewResult.success) {
-            // Other compilation error
-            Modal.error(previewResult.error?.code || 'Compilation failed');
-            publishBtn.disabled = false;
-            return;
           }
 
           // Now do the actual publish with the user's choice
-          const input = await buildInput();
+          const input = await buildInput(shouldPaginate);
           const result = await App.publish(input);
 
           if (result.pageCount && result.pageCount > 1) {
@@ -1527,10 +1505,6 @@
           cssEnabled.dispatchEvent(new Event('change'));
           cssRules.value = '';
           liveCSS.textContent = '';
-
-          // Reset pagination
-          allowPaginationCheckbox.checked = false;
-          paginationOption.classList.add('hidden');
 
           // Reset page type
           pageTypeSelect.value = 'post';
@@ -1632,10 +1606,6 @@
         cssEnabled.checked = false;
         cssEnabled.dispatchEvent(new Event('change'));
         loadGlobalCSS();
-
-        // Reset pagination
-        allowPaginationCheckbox.checked = false;
-        paginationOption.classList.add('hidden');
 
         // Reset page type
         pageTypeSelect.value = 'post';
