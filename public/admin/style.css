@@ -635,7 +635,7 @@ button:disabled {
 #nav-editor,
 #footer-editor {
   padding: 12px;
-  background: var(--accent-alpha-15);
+  background: var(--gray-100); /* Light gray background instead of teal */
   border-radius: 6px;
 }
 
