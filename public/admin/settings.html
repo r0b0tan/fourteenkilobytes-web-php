@@ -130,6 +130,31 @@
             </button>
           </div>
         </div>
+
+        <div class="form-group" style="margin-top: 1.5rem;">
+          <h3 class="override-section-title">Favicon</h3>
+          <p class="text-small text-muted mb-1">Kleines Icon das im Browser-Tab angezeigt wird (max. 4KB, wird als Base64 eingebettet)</p>
+          <div class="favicon-editor">
+            <div class="favicon-preview-container">
+              <div id="favicon-preview" class="favicon-preview">
+                <span class="favicon-placeholder">Kein Favicon</span>
+              </div>
+            </div>
+            <div class="favicon-actions">
+              <label class="btn-primary favicon-upload-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Hochladen
+                <input type="file" id="favicon-input" accept="image/png,image/x-icon,image/svg+xml,image/gif" hidden>
+              </label>
+              <button type="button" id="favicon-remove" class="btn-secondary btn-small hidden">Entfernen</button>
+            </div>
+            <input type="hidden" id="favicon-data">
+          </div>
+        </div>
       </div>
 
       <!-- Header Tab -->
@@ -234,6 +259,10 @@
           <div class="breakdown-row">
             <span>Base</span>
             <span id="overhead-breakdown-base">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Favicon</span>
+            <span id="overhead-breakdown-favicon">0 B</span>
           </div>
           <div class="breakdown-row">
             <span>Meta</span>
@@ -360,6 +389,10 @@
       const linkSave = document.getElementById('link-save');
       const linkDelete = document.getElementById('link-delete');
       const linkCancel = document.getElementById('link-cancel');
+      const faviconInput = document.getElementById('favicon-input');
+      const faviconPreview = document.getElementById('favicon-preview');
+      const faviconRemove = document.getElementById('favicon-remove');
+      const faviconData = document.getElementById('favicon-data');
       const saveBtn = document.getElementById('save-btn');
       const messageEl = document.getElementById('message');
       const overheadBytesEl = document.getElementById('overhead-bytes');
@@ -497,6 +530,56 @@
 
       footerContent.addEventListener('input', debounce(updateOverhead, 300));
 
+      // ============ FAVICON EDITOR ============
+
+      const MAX_FAVICON_SIZE = 4096; // 4KB max
+
+      faviconInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > MAX_FAVICON_SIZE) {
+          showMessage(`Favicon zu groß (${formatBytes(file.size)}). Maximum: ${formatBytes(MAX_FAVICON_SIZE)}`, 'error');
+          faviconInput.value = '';
+          return;
+        }
+
+        try {
+          const base64 = await fileToBase64(file);
+          setFaviconPreview(base64);
+          faviconData.value = base64;
+          updateOverhead();
+        } catch (err) {
+          showMessage('Fehler beim Lesen der Datei', 'error');
+        }
+        faviconInput.value = '';
+      });
+
+      faviconRemove.addEventListener('click', () => {
+        clearFaviconPreview();
+        faviconData.value = '';
+        updateOverhead();
+      });
+
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function setFaviconPreview(dataUrl) {
+        faviconPreview.innerHTML = `<img src="${dataUrl}" alt="Favicon">`;
+        faviconRemove.classList.remove('hidden');
+      }
+
+      function clearFaviconPreview() {
+        faviconPreview.innerHTML = '<span class="favicon-placeholder">Kein Favicon</span>';
+        faviconRemove.classList.add('hidden');
+      }
+
       // ============ CSS EDITOR ============
 
       async function updateCssModeUI() {
@@ -536,6 +619,7 @@
         return {
           version: 1,
           homepageSlug: homepageSelect.value || null,
+          favicon: faviconData.value || null,
           cssMode: cssMode.value,
           globalCss: globalCss.value.trim(),
           header: {
@@ -574,6 +658,7 @@
 
           // Update breakdown table
           const breakdownBaseEl = document.getElementById('overhead-breakdown-base');
+          const breakdownFaviconEl = document.getElementById('overhead-breakdown-favicon');
           const breakdownMetaEl = document.getElementById('overhead-breakdown-meta');
           const breakdownNavEl = document.getElementById('overhead-breakdown-nav');
           const breakdownFooterEl = document.getElementById('overhead-breakdown-footer');
@@ -581,6 +666,7 @@
           const breakdownTotalEl = document.getElementById('overhead-breakdown-total');
 
           if (breakdownBaseEl) breakdownBaseEl.textContent = formatBytes(breakdown.base || 0);
+          if (breakdownFaviconEl) breakdownFaviconEl.textContent = formatBytes(breakdown.favicon || 0);
           if (breakdownMetaEl) breakdownMetaEl.textContent = formatBytes(breakdown.meta || 0);
           if (breakdownNavEl) breakdownNavEl.textContent = formatBytes(breakdown.navigation || 0);
           if (breakdownFooterEl) breakdownFooterEl.textContent = formatBytes(breakdown.footer || 0);
@@ -654,6 +740,15 @@
           // Meta
           metaDescription.value = settings.meta?.description || '';
           metaAuthor.value = settings.meta?.author || '';
+
+          // Favicon
+          if (settings.favicon) {
+            setFaviconPreview(settings.favicon);
+            faviconData.value = settings.favicon;
+          } else {
+            clearFaviconPreview();
+            faviconData.value = '';
+          }
 
           await updateOverhead();
         } catch (e) {

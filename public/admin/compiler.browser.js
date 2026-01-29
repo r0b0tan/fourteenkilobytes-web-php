@@ -420,7 +420,8 @@ function flatten(input) {
     footer: 0,
     pagination: 0,
     icons: 0,
-    content: 0
+    content: 0,
+    favicon: 0
   };
   let iconBytes = 0;
   for (const iconRef of input.icons) {
@@ -448,8 +449,13 @@ function flatten(input) {
       breakdown.meta = measureBytes(metaHtml);
     }
   }
+  let faviconHtml = "";
+  if (input.favicon) {
+    faviconHtml = `<link rel="icon" href="${input.favicon}">`;
+    breakdown.favicon = measureBytes(faviconHtml);
+  }
   const headContent = `<meta charset="utf-8">
-${titleHtml}${metaHtml ? "\n" + metaHtml : ""}${cssHtml ? "\n" + cssHtml : ""}`;
+${titleHtml}${faviconHtml ? "\n" + faviconHtml : ""}${metaHtml ? "\n" + metaHtml : ""}${cssHtml ? "\n" + cssHtml : ""}`;
   const head = `<head>
 ${headContent}
 </head>`;
@@ -483,7 +489,8 @@ ${navItems}
   const bodyOpen = "<body>";
   const bodyClose = "</body>";
   const htmlClose = "</html>";
-  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (metaHtml ? measureBytes("\n") : 0) + // newline between title and meta
+  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (faviconHtml ? measureBytes("\n") : 0) + // newline between title and favicon
+  (metaHtml ? measureBytes("\n") : 0) + // newline between favicon/title and meta
   (cssHtml ? measureBytes("\n") : 0) + // newline between meta/title and css
   measureBytes("\n</head>");
   breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + headStructureBytes + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);

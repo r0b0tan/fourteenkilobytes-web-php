@@ -1764,3 +1764,56 @@ button:disabled {
     padding: 12px 32px;
   }
 }
+
+/* Favicon Editor */
+.favicon-editor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.favicon-preview-container {
+  flex-shrink: 0;
+}
+
+.favicon-preview {
+  width: 48px;
+  height: 48px;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-100);
+  overflow: hidden;
+}
+
+.favicon-preview img {
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+}
+
+.favicon-placeholder {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.favicon-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.favicon-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.favicon-upload-btn svg {
+  flex-shrink: 0;
+}
