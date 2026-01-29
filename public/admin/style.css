@@ -1612,6 +1612,10 @@ button:disabled {
 
 .homepage-select {
   max-width: 400px;
+  height: 34px;
+  padding: 0 8px;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
 /* Overhead Indicator in Byte Bar */
@@ -1767,9 +1771,12 @@ button:disabled {
 
 /* Favicon Editor */
 .favicon-editor {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 16px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
 }
 
 .favicon-preview-container {
@@ -1777,14 +1784,14 @@ button:disabled {
 }
 
 .favicon-preview {
-  width: 48px;
-  height: 48px;
-  border: 2px dashed var(--border);
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gray-100);
+  background: var(--white);
   overflow: hidden;
 }
 
@@ -1795,7 +1802,7 @@ button:disabled {
 }
 
 .favicon-placeholder {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
   text-align: center;
   line-height: 1.2;
@@ -1805,15 +1812,28 @@ button:disabled {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin-left: auto;
 }
 
-.favicon-upload-btn {
+.favicon-actions .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  cursor: pointer;
+  height: 34px;
+  padding: 0 12px;
+  line-height: 1;
+  box-sizing: border-box;
+  vertical-align: top;
 }
 
-.favicon-upload-btn svg {
+.favicon-actions .btn svg {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.favicon-actions label.btn {
+  margin: 0;
+  cursor: pointer;
 }
