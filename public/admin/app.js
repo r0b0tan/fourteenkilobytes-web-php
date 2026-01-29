@@ -248,6 +248,8 @@ const App = (function() {
    * Preview overhead from settings - CLIENT-SIDE
    */
   async function previewOverhead(settings) {
+    const actualCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
+
     const testInput = {
       slug: 'overhead-test',
       title: 'Test',
@@ -258,8 +260,8 @@ const App = (function() {
       footer: settings.footer?.enabled && settings.footer.content
         ? { content: settings.footer.content }
         : null,
-      css: settings.globalCss
-        ? { rules: settings.globalCss }
+      css: actualCss
+        ? { rules: actualCss }
         : null,
       icons: [],
       allowPagination: false,
