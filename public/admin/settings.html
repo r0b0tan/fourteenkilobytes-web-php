@@ -17,96 +17,125 @@
 
   <div id="message" class="message hidden"></div>
 
-  <!-- Overhead Display -->
-  <div class="overhead-display">
-    <div class="overhead-info">
-      <span class="overhead-label">Globaler Overhead:</span>
-      <span id="overhead-bytes">0 Bytes</span>
-      <span class="overhead-hint">(wird in jede Seite eingebettet)</span>
+  <!-- Overhead Card -->
+  <div class="editor-card">
+    <div class="card-header">
+      <h2 class="card-title">Overhead</h2>
     </div>
-    <div class="byte-bar">
-      <div id="overhead-fill" class="byte-fill overhead" style="width: 0%"></div>
-    </div>
-  </div>
-
-  <!-- Tabs -->
-  <div class="settings-tabs">
-    <button type="button" class="tab-btn active" data-tab="general">Allgemein</button>
-    <button type="button" class="tab-btn" data-tab="header">Header</button>
-    <button type="button" class="tab-btn" data-tab="footer">Footer</button>
-    <button type="button" class="tab-btn" data-tab="css">CSS</button>
-  </div>
-
-  <!-- General Tab -->
-  <div id="tab-general" class="tab-content active">
-    <div class="editor-row">
-      <label for="homepage-select">Startseite</label>
-      <p class="text-small text-muted mb-1">Wähle eine Seite, die als Startseite (/) angezeigt werden soll</p>
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <select id="homepage-select" class="homepage-select" style="flex: 1;">
-          <option value="">Standard (automatische Postliste)</option>
-        </select>
-        <button type="button" id="regenerate-homepage-btn" class="btn-small btn-secondary" style="display: none;">🔄 Aktualisieren</button>
+    <div class="card-body card-body-with-rail">
+      <div class="card-content">
+        <p class="text-muted">Globale Einstellungen werden in jede Seite eingebettet und verbrauchen Speicherplatz.</p>
       </div>
-      <p class="text-small text-muted" style="margin-top: 0.5rem;">💡 Nach neuen Posts auf "Aktualisieren" klicken</p>
-    </div>
-  </div>
-
-  <!-- Header Tab -->
-  <div id="tab-header" class="tab-content hidden">
-    <div class="editor-row">
-      <label class="row-toggle">
-        <input type="checkbox" id="header-enabled">
-        <span>Header aktivieren</span>
-      </label>
-      <div id="header-editor" class="nav-editor hidden">
-        <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
-        <div id="header-links" class="nav-links"></div>
-        <button type="button" id="add-header-link" class="btn-small btn-secondary">+ Link</button>
+      <div class="card-rail build-rail" style="justify-content: center;">
+        <div class="build-progress">
+          <div class="pie-chart" id="overhead-pie-chart">
+            <span class="pie-percent" id="overhead-percent">0%</span>
+          </div>
+          <div class="pie-legend">
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-overhead"></span>
+              <span id="overhead-bytes">0 B</span>
+            </div>
+            <div class="pie-legend-item">
+              <span class="pie-dot pie-dot-free"></span>
+              <span>Verfügbar</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Footer Tab -->
-  <div id="tab-footer" class="tab-content hidden">
-    <div class="editor-row">
-      <label class="row-toggle">
-        <input type="checkbox" id="footer-enabled">
-        <span>Footer aktivieren</span>
-      </label>
-      <div id="footer-editor" class="footer-editor hidden">
-        <p class="text-small text-muted mb-1">Footer-Text (HTML erlaubt, <code>{{bytes}}</code> für Byte-Anzeige)</p>
-        <input type="text" id="footer-content" placeholder="© 2026 | {{bytes}}/14336 bytes">
+  <!-- Settings Card -->
+  <div class="editor-card">
+    <div class="card-header">
+      <div class="settings-tabs">
+        <button type="button" class="tab-btn active" data-tab="general">Allgemein</button>
+        <button type="button" class="tab-btn" data-tab="header">Header</button>
+        <button type="button" class="tab-btn" data-tab="footer">Footer</button>
+        <button type="button" class="tab-btn" data-tab="css">CSS</button>
       </div>
     </div>
-  </div>
-
-  <!-- CSS Tab -->
-  <div id="tab-css" class="tab-content hidden">
-    <div class="editor-row">
-      <label for="css-mode">CSS-Vorlage</label>
-      <p class="text-small text-muted mb-1">Wähle eine Vorlage oder verwende eigenes CSS</p>
-      <select id="css-mode" style="margin-bottom: 1rem;">
-        <option value="default">Default (System-Fonts, neutral)</option>
-        <option value="light">Light (Serif, hell)</option>
-        <option value="dark">Dark (Dunkelmodus)</option>
-        <option value="custom">Eigenes CSS</option>
-      </select>
-
-      <!-- Preview for presets -->
-      <div id="css-preset-preview" class="css-preview">
-        <p class="text-small text-muted mb-1">Vorschau (nur lesen)</p>
-        <pre id="css-preview-content" class="css-preview-code"></pre>
+    <div class="card-body">
+      <!-- General Tab -->
+      <div id="tab-general" class="tab-content active">
+        <div class="form-group">
+          <label for="homepage-select">Startseite</label>
+          <p class="text-small text-muted mb-1">Wähle eine Seite, die als Startseite (/) angezeigt werden soll</p>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="homepage-select" class="homepage-select" style="flex: 1;">
+              <option value="">Standard (automatische Postliste)</option>
+            </select>
+            <button type="button" id="regenerate-homepage-btn" class="btn-small btn-secondary" style="display: none;">Aktualisieren</button>
+          </div>
+        </div>
       </div>
 
-      <!-- Custom CSS editor -->
-      <div id="css-custom-editor" class="hidden">
-        <p class="text-small text-muted mb-1">Eigene CSS-Regeln (werden in jede Seite eingebettet)</p>
-        <textarea id="global-css" rows="12" placeholder="body {
+      <!-- Header Tab -->
+      <div id="tab-header" class="tab-content hidden">
+        <div class="override-section override-section-first">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="header-enabled">
+              <span>Header aktivieren</span>
+            </label>
+          </div>
+          <div id="header-editor" class="override-editor hidden">
+            <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
+            <div class="nav-editor-row">
+              <div id="header-links" class="nav-links"></div>
+              <button type="button" id="add-header-link" class="btn-primary">+ Link</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Tab -->
+      <div id="tab-footer" class="tab-content hidden">
+        <div class="override-section override-section-first">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="footer-enabled">
+              <span>Footer aktivieren</span>
+            </label>
+          </div>
+          <div id="footer-editor" class="override-editor hidden">
+            <p class="text-small text-muted mb-1">Footer-Text (HTML erlaubt, <code>{{bytes}}</code> für Byte-Anzeige)</p>
+            <div class="footer-editor-row">
+              <input type="text" id="footer-content" placeholder="© 2026 | {{bytes}}/14336 bytes">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSS Tab -->
+      <div id="tab-css" class="tab-content hidden">
+        <div class="form-group">
+          <label for="css-mode">CSS-Vorlage</label>
+          <p class="text-small text-muted mb-1">Wähle eine Vorlage oder verwende eigenes CSS</p>
+          <select id="css-mode">
+            <option value="default">Default (System-Fonts, neutral)</option>
+            <option value="light">Light (Serif, hell)</option>
+            <option value="dark">Dark (Dunkelmodus)</option>
+            <option value="custom">Eigenes CSS</option>
+          </select>
+        </div>
+
+        <!-- Preview for presets -->
+        <div id="css-preset-preview" class="css-preview">
+          <p class="text-small text-muted mb-1">Vorschau (nur lesen)</p>
+          <pre id="css-preview-content" class="css-preview-code"></pre>
+        </div>
+
+        <!-- Custom CSS editor -->
+        <div id="css-custom-editor" class="hidden">
+          <p class="text-small text-muted mb-1">Eigene CSS-Regeln (werden in jede Seite eingebettet)</p>
+          <textarea id="global-css" rows="12" placeholder="body {
   font-family: Georgia, serif;
   max-width: 600px;
   margin: 0 auto;
 }"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -130,12 +159,12 @@
     </div>
   </div>
 
-  <!-- Save Row -->
-  <div class="publish-row">
-    <div class="byte-counter">
-      <span id="byte-text">Overhead: 0 / 14.336 Bytes</span>
+  <!-- Save Card -->
+  <div class="editor-card">
+    <div class="card-body" style="display: flex; justify-content: flex-end; gap: 16px; align-items: center;">
+      <span id="byte-text" class="text-muted text-small">Overhead: 0 / 14.336 Bytes</span>
+      <button id="save-btn" class="btn-primary build-publish-btn" style="width: auto;">Speichern</button>
     </div>
-    <button id="save-btn">Speichern</button>
   </div>
 
   <script type="module" src="app.js"></script>
@@ -178,8 +207,9 @@
       const linkCancel = document.getElementById('link-cancel');
       const saveBtn = document.getElementById('save-btn');
       const messageEl = document.getElementById('message');
-      const overheadBytes = document.getElementById('overhead-bytes');
-      const overheadFill = document.getElementById('overhead-fill');
+      const overheadBytesEl = document.getElementById('overhead-bytes');
+      const overheadPieChart = document.getElementById('overhead-pie-chart');
+      const overheadPercent = document.getElementById('overhead-percent');
       const byteText = document.getElementById('byte-text');
 
       // Tab elements
@@ -360,6 +390,12 @@
 
       // ============ OVERHEAD CALCULATION ============
 
+      function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        if (bytes < 1000) return bytes + ' B';
+        return (bytes / 1024).toFixed(1) + ' KB';
+      }
+
       async function updateOverhead() {
         try {
           const settings = buildSettings();
@@ -367,18 +403,24 @@
           const bytes = res.overheadBytes;
           const limit = 14336;
           const percent = Math.min((bytes / limit) * 100, 100);
+          const overheadDeg = (percent / 100) * 360;
 
-          overheadBytes.textContent = `${bytes.toLocaleString('de-DE')} Bytes`;
-          byteText.textContent = `Overhead: ${bytes.toLocaleString('de-DE')} / ${limit.toLocaleString('de-DE')} Bytes`;
+          overheadBytesEl.textContent = formatBytes(bytes);
+          byteText.textContent = `Overhead: ${formatBytes(bytes)} / ${formatBytes(limit)}`;
+          overheadPercent.textContent = `${Math.round(percent)}%`;
 
-          overheadFill.style.width = `${percent}%`;
-          overheadFill.classList.remove('warning', 'danger');
-          if (percent >= 50) {
-            overheadFill.classList.add('warning');
-          }
+          // Determine color based on usage
+          let overheadColor = 'var(--gray-400)';
           if (percent >= 75) {
-            overheadFill.classList.add('danger');
+            overheadColor = '#dc2626';
+          } else if (percent >= 50) {
+            overheadColor = '#f59e0b';
           }
+
+          overheadPieChart.style.background = `conic-gradient(
+            ${overheadColor} 0deg ${overheadDeg}deg,
+            var(--gray-200) ${overheadDeg}deg 360deg
+          )`;
         } catch (e) {
           console.error('Overhead calculation failed:', e);
         }

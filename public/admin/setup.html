@@ -7,23 +7,29 @@
   <link rel="stylesheet" href="/admin/style.css">
 </head>
 <body>
-  <div class="login-form">
-    <h2>Setup</h2>
-    <p class="text-muted text-small mb-2">Lege ein Admin-Passwort fest. Es gibt keine Wiederherstellung.</p>
+  <div class="auth-container">
+    <div class="editor-card auth-card">
+      <div class="card-header">
+        <h2 class="card-title">Setup</h2>
+      </div>
+      <div class="card-body">
+        <p class="text-muted text-small mb-2">Lege ein Admin-Passwort fest. Es gibt keine Wiederherstellung.</p>
 
-    <div class="form-group">
-      <label for="password">Passwort</label>
-      <input type="password" id="password" placeholder="Mindestens 8 Zeichen">
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" placeholder="Mindestens 8 Zeichen">
+        </div>
+
+        <div class="form-group">
+          <label for="password-confirm">Passwort wiederholen</label>
+          <input type="password" id="password-confirm" placeholder="Passwort bestätigen">
+        </div>
+
+        <button id="setup-btn" class="btn-primary build-publish-btn">Einrichten</button>
+        <p id="setup-error" class="message error hidden mt-1"></p>
+        <p class="text-muted text-small mt-2" style="text-align: center;">Bei Passwortverlust: <code>data/instance.json</code> löschen</p>
+      </div>
     </div>
-
-    <div class="form-group">
-      <label for="password-confirm">Passwort wiederholen</label>
-      <input type="password" id="password-confirm" placeholder="Passwort bestätigen">
-    </div>
-
-    <button id="setup-btn" style="width: 100%">Einrichten</button>
-    <p id="setup-error" class="message error hidden mt-1"></p>
-    <p class="text-muted text-small mt-2" style="text-align: center;">Bei Passwortverlust: <code>data/instance.json</code> löschen</p>
   </div>
 
   <script type="module" src="app.js"></script>
