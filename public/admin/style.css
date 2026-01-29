@@ -31,6 +31,10 @@
   --text-muted: var(--gray-500);
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
