@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - fourteenkilobytes</title>
   <link rel="stylesheet" href="/admin/style.css">
 </head>
+
 <body>
   <!-- Dashboard -->
   <div id="dashboard-view" class="hidden">
@@ -31,6 +33,21 @@
           <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
           <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
         </div>
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="search-input" placeholder="Suche...">
+        </div>
+        <div class="page-size-selector">
+          <label for="page-size">Anzeigen:</label>
+          <select id="page-size">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="all">Alle</option>
+          </select>
+        </div>
       </div>
       <div class="card-body">
         <!-- Posts Tab -->
@@ -38,6 +55,7 @@
           <ul id="posts-list" class="posts-list">
             <li class="empty">Lade...</li>
           </ul>
+          <div id="posts-pagination" class="pagination hidden"></div>
         </div>
 
         <!-- Pages Tab -->
@@ -45,6 +63,7 @@
           <ul id="pages-list" class="posts-list">
             <li class="empty">Lade...</li>
           </ul>
+          <div id="pages-pagination" class="pagination hidden"></div>
         </div>
       </div>
     </div>
@@ -61,13 +80,34 @@
 
   <script type="module" src="app.js"></script>
   <script type="module">
-    (async function() {
+    (async function () {
       const dashboardView = document.getElementById('dashboard-view');
       const logoutBtn = document.getElementById('logout-btn');
       const postsList = document.getElementById('posts-list');
       const pagesList = document.getElementById('pages-list');
+      const postsPagination = document.getElementById('posts-pagination');
+      const pagesPagination = document.getElementById('pages-pagination');
+      const pageSizeSelect = document.getElementById('page-size');
+      const searchInput = document.getElementById('search-input');
       const tabBtns = document.querySelectorAll('.tab-btn');
       const tabContents = document.querySelectorAll('.tab-content');
+
+      // Pagination & Search State
+      let allPosts = [];
+      let allPages = [];
+      let pageSize = 10;
+      let postsPage = 1;
+      let pagesPage = 1;
+      let searchQuery = '';
+
+      // Debounce helper
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn(...args), delay);
+        };
+      }
 
       // Check if setup is complete
       const status = await App.getSetupStatus();
@@ -91,6 +131,22 @@
       // Show dashboard
       dashboardView.classList.remove('hidden');
       loadAllContent();
+
+      // Page size change handler
+      pageSizeSelect.addEventListener('change', () => {
+        pageSize = pageSizeSelect.value === 'all' ? Infinity : parseInt(pageSizeSelect.value, 10);
+        postsPage = 1;
+        pagesPage = 1;
+        renderCurrentView();
+      });
+
+      // Search handler with debounce
+      searchInput.addEventListener('input', debounce(() => {
+        searchQuery = searchInput.value.trim().toLowerCase();
+        postsPage = 1;
+        pagesPage = 1;
+        renderCurrentView();
+      }, 200));
 
       // Logout handler
       logoutBtn.addEventListener('click', async (e) => {
@@ -168,15 +224,16 @@
         try {
           const allContent = await App.getPosts();
 
-          // Split into posts and pages
-          const posts = allContent.filter(item => item.pageType !== 'page');
-          const pages = allContent.filter(item => item.pageType === 'page');
+          // Split into posts and pages, sort by date
+          allPosts = allContent
+            .filter(item => item.pageType !== 'page')
+            .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
-          // Render posts
-          renderList(postsList, posts, 'Post', 'Noch keine Posts.');
+          allPages = allContent
+            .filter(item => item.pageType === 'page')
+            .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
-          // Render pages
-          renderList(pagesList, pages, 'Seite', 'Noch keine Seiten.');
+          renderCurrentView();
         } catch (err) {
           postsList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
           pagesList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
@@ -184,16 +241,37 @@
         }
       }
 
-      function renderList(listEl, items, typeName, emptyText) {
+      function filterItems(items) {
+        if (!searchQuery) return items;
+        return items.filter(item =>
+          item.title.toLowerCase().includes(searchQuery) ||
+          item.slug.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      function renderCurrentView() {
+        const filteredPosts = filterItems(allPosts);
+        const filteredPages = filterItems(allPages);
+        renderPaginatedList(postsList, postsPagination, filteredPosts, postsPage, 'Post', 'Noch keine Posts.', (p) => { postsPage = p; renderCurrentView(); });
+        renderPaginatedList(pagesList, pagesPagination, filteredPages, pagesPage, 'Seite', 'Noch keine Seiten.', (p) => { pagesPage = p; renderCurrentView(); });
+      }
+
+      function renderPaginatedList(listEl, paginationEl, items, currentPage, typeName, emptyText, onPageChange) {
         if (items.length === 0) {
           listEl.innerHTML = `<li class="empty">${emptyText} <a href="editor.html">Erstelle deine erste ${typeName}</a></li>`;
+          paginationEl.classList.add('hidden');
           return;
         }
 
-        // Sort by date, newest first
-        items.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+        const totalItems = items.length;
+        const effectivePageSize = pageSize === Infinity ? totalItems : pageSize;
+        const totalPages = Math.ceil(totalItems / effectivePageSize);
+        const safeCurrentPage = Math.min(currentPage, totalPages);
+        const startIndex = (safeCurrentPage - 1) * effectivePageSize;
+        const endIndex = Math.min(startIndex + effectivePageSize, totalItems);
+        const pageItems = items.slice(startIndex, endIndex);
 
-        listEl.innerHTML = items.map(item => `
+        listEl.innerHTML = pageItems.map(item => `
           <li>
             <div class="post-info">
               <div class="post-title ${item.status === 'tombstone' ? 'status-tombstone' : ''}">
@@ -212,10 +290,75 @@
             </div>
           </li>
         `).join('');
+
+        // Render pagination
+        if (totalPages <= 1) {
+          paginationEl.classList.add('hidden');
+          return;
+        }
+
+        paginationEl.classList.remove('hidden');
+        paginationEl.innerHTML = '';
+
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '‹';
+        prevBtn.disabled = safeCurrentPage === 1;
+        prevBtn.addEventListener('click', () => onPageChange(safeCurrentPage - 1));
+        paginationEl.appendChild(prevBtn);
+
+        // Page numbers
+        const maxButtons = 5;
+        let startPage = Math.max(1, safeCurrentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage < maxButtons - 1) {
+          startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        if (startPage > 1) {
+          const firstBtn = document.createElement('button');
+          firstBtn.textContent = '1';
+          firstBtn.addEventListener('click', () => onPageChange(1));
+          paginationEl.appendChild(firstBtn);
+          if (startPage > 2) {
+            const dots = document.createElement('span');
+            dots.className = 'pagination-info';
+            dots.textContent = '…';
+            paginationEl.appendChild(dots);
+          }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+          const btn = document.createElement('button');
+          btn.textContent = i;
+          btn.className = i === safeCurrentPage ? 'active' : '';
+          btn.addEventListener('click', () => onPageChange(i));
+          paginationEl.appendChild(btn);
+        }
+
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) {
+            const dots = document.createElement('span');
+            dots.className = 'pagination-info';
+            dots.textContent = '…';
+            paginationEl.appendChild(dots);
+          }
+          const lastBtn = document.createElement('button');
+          lastBtn.textContent = totalPages;
+          lastBtn.addEventListener('click', () => onPageChange(totalPages));
+          paginationEl.appendChild(lastBtn);
+        }
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '›';
+        nextBtn.disabled = safeCurrentPage === totalPages;
+        nextBtn.addEventListener('click', () => onPageChange(safeCurrentPage + 1));
+        paginationEl.appendChild(nextBtn);
       }
 
       // Global delete handler
-      window.deletePost = async function(slug) {
+      window.deletePost = async function (slug) {
         const confirmed = await Modal.confirm(`"${slug}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`);
         if (!confirmed) return;
 
@@ -229,4 +372,5 @@
     })();
   </script>
 </body>
+
 </html>
