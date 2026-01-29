@@ -17,7 +17,7 @@ function normalizeLineEndings(str) {
   return str.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 function createPageMeasurement(slug, breakdown) {
-  const overhead = breakdown.base + breakdown.title + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons;
+  const overhead = breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons;
   const content = breakdown.content;
   const total = overhead + content;
   return {
@@ -34,7 +34,7 @@ function createPageMeasurement(slug, breakdown) {
   };
 }
 function totalFromBreakdown(breakdown) {
-  return breakdown.base + breakdown.title + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
+  return breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
 }
 
 // src/icons.ts
@@ -611,7 +611,7 @@ function calculatePaginationBytes(baseSlug, currentPage, totalPages) {
   return measureBytes(html);
 }
 function calculateFixedOverhead(breakdown) {
-  return breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons;
+  return breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons;
 }
 function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination) {
   const fixedOverhead = calculateFixedOverhead(baseBreakdown);
@@ -776,7 +776,7 @@ function compile(input) {
   const totalBytes = totalFromBreakdown(breakdown);
   if (totalBytes > SIZE_LIMIT) {
     if (!input.allowPagination) {
-      const fixedOverhead = breakdown.base + breakdown.title + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons + breakdown.pagination;
+      const fixedOverhead = breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons + breakdown.pagination;
       const availableBudget = SIZE_LIMIT - fixedOverhead;
       let oversizedBlock;
       for (const block of contentBlocks) {
@@ -834,7 +834,7 @@ function compile(input) {
     const hash = computeHash(html);
     if (bytes > SIZE_LIMIT) {
       const pageBreakdown = paginatedPage.breakdown;
-      const pageFixedOverhead = pageBreakdown.base + pageBreakdown.title + pageBreakdown.css + pageBreakdown.navigation + pageBreakdown.footer + pageBreakdown.icons + pageBreakdown.pagination;
+      const pageFixedOverhead = pageBreakdown.base + pageBreakdown.title + pageBreakdown.favicon + pageBreakdown.meta + pageBreakdown.css + pageBreakdown.navigation + pageBreakdown.footer + pageBreakdown.icons + pageBreakdown.pagination;
       const pageAvailableBudget = SIZE_LIMIT - pageFixedOverhead;
       let oversizedBlock;
       for (const block of paginatedPage.contentBlocks) {

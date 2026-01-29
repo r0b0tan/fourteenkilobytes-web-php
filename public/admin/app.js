@@ -213,7 +213,17 @@ const App = (function() {
 
     // Handle size limit exceeded - still return measurements for the byte counter
     if (!result.wouldSucceed) {
-      if (result.error?.code === 'SIZE_LIMIT_EXCEEDED' && result.partialMeasurements) {
+      const errorCode = result.error?.code;
+
+      const sizeErrors = [
+        'SIZE_LIMIT_EXCEEDED',
+        'PAGINATION_DISABLED',
+        'PAGINATION_BLOCK_TOO_LARGE',
+        'PAGINATION_NO_CONVERGENCE'
+      ];
+      const isExceeded = sizeErrors.includes(errorCode);
+
+      if (isExceeded && result.partialMeasurements) {
         const { total, overhead, content } = result.partialMeasurements.measurements;
         const breakdown = result.partialMeasurements.breakdown;
 
@@ -236,6 +246,20 @@ const App = (function() {
           measurements: null,
           exceeded: true,
           blockTooLarge,
+        };
+      }
+
+      // Handle exceeded without partialMeasurements (fallback)
+      if (isExceeded) {
+        return {
+          html: '',
+          bytes: result.error?.measured || 0,
+          overheadBytes: 0,
+          contentBytes: 0,
+          breakdown: null,
+          measurements: null,
+          exceeded: true,
+          blockTooLarge: null,
         };
       }
 
