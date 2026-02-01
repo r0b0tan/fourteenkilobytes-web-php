@@ -1254,38 +1254,62 @@
           return;
         }
 
+        const articleCount = importData.articles?.length || 0;
         const confirmed = await Modal.confirm(
-          `Import durchführen? ${doSettings ? 'Einstellungen' : ''}${doSettings && doArticles ? ' und ' : ''}${doArticles ? 'Artikel' : ''} werden überschrieben.`
+          `Import durchführen? ${doSettings ? 'Einstellungen' : ''}${doSettings && doArticles ? ' und ' : ''}${doArticles ? `${articleCount} Artikel` : ''} werden importiert.`
         );
         if (!confirmed) return;
 
         importBtn.disabled = true;
+        importBtn.innerHTML = '<span class="spinner"></span> Importiere...';
+
         try {
           const result = await App.importData(importData, {
             settings: doSettings,
             articles: doArticles,
           });
 
-          let message = 'Import erfolgreich: ';
-          if (result.imported.includes('settings')) {
-            message += 'Einstellungen';
-          }
-          if (result.imported.includes('articles')) {
-            message += (result.imported.includes('settings') ? ' + ' : '') +
-              `${result.articleSlugs?.length || 0} Artikel`;
-          }
-
-          Toast.success(message);
-          resetImportUI();
-
-          // Reload settings if they were imported
-          if (doSettings) {
+          // Reload settings first if they were imported
+          if (doSettings && result.imported.includes('settings')) {
             await loadSettings();
           }
+
+          // Rebuild all imported articles
+          if (doArticles && result.articleSlugs?.length > 0) {
+            const slugs = result.articleSlugs;
+            let built = 0;
+            let failed = 0;
+
+            for (const slug of slugs) {
+              importBtn.innerHTML = `<span class="spinner"></span> Baue ${built + 1}/${slugs.length}...`;
+              try {
+                await App.republishPost(slug);
+                built++;
+              } catch (err) {
+                console.error(`Failed to rebuild ${slug}:`, err);
+                failed++;
+              }
+            }
+
+            if (failed > 0) {
+              Toast.error(`${built} Artikel gebaut, ${failed} fehlgeschlagen`);
+            } else {
+              Toast.success(`Import erfolgreich: ${built} Artikel importiert und gebaut`);
+            }
+          } else if (doSettings) {
+            Toast.success('Einstellungen importiert');
+          }
+
+          resetImportUI();
         } catch (err) {
           Toast.error(`Import fehlgeschlagen: ${err.message}`);
         } finally {
           importBtn.disabled = false;
+          importBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg> Importieren`;
         }
       });
 
