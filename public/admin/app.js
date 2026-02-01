@@ -173,13 +173,15 @@ const App = (function() {
       mergedInput.footer = { content: settings.footer.content };
     }
 
-    // CSS: get preset or custom CSS, then merge with page-specific CSS
-    const globalCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
-    if (globalCss) {
-      if (input.css?.rules) {
-        mergedInput.css = { rules: globalCss + '\n' + input.css.rules };
-      } else {
-        mergedInput.css = { rules: globalCss };
+    // CSS: get preset or custom CSS, then merge with page-specific CSS (if enabled)
+    if (settings.cssEnabled !== false) {
+      const globalCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
+      if (globalCss) {
+        if (input.css?.rules) {
+          mergedInput.css = { rules: globalCss + '\n' + input.css.rules };
+        } else {
+          mergedInput.css = { rules: globalCss };
+        }
       }
     }
 
@@ -287,7 +289,10 @@ const App = (function() {
    * Preview overhead from settings - CLIENT-SIDE
    */
   async function previewOverhead(settings) {
-    const actualCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
+    // If CSS is disabled (cssEnabled is false), don't include any CSS
+    const actualCss = settings.cssEnabled === false
+      ? null
+      : await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
 
     // Build meta object if any meta fields are set
     let meta = null;

@@ -438,6 +438,15 @@ select {
   color: var(--text-primary);
 }
 
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
@@ -1603,9 +1612,31 @@ button:disabled {
   font-size: 13px;
 }
 
+/* CSS Select Box */
+.css-select-box {
+  display: inline-block;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.css-select-box .css-template-select {
+  width: 100%;
+}
+
+#css-preview-filename {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.css-preview {
+  margin-top: 16px;
+}
+
 /* CSS Preset Preview */
 .css-preview-code {
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px;

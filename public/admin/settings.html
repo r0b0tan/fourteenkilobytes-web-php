@@ -239,31 +239,43 @@
 
       <!-- CSS Tab -->
       <div id="tab-css" class="tab-content hidden">
-        <div class="form-group">
-          <h3 class="override-section-title">CSS-Vorlage</h3>
-          <p class="text-small text-muted mb-1">Wähle eine Vorlage oder verwende eigenes CSS</p>
-          <select id="css-mode">
-            <option value="default">Default (System-Fonts, neutral)</option>
-            <option value="light">Light (Serif, hell)</option>
-            <option value="dark">Dark (Dunkelmodus)</option>
-            <option value="custom">Eigenes CSS</option>
-          </select>
-        </div>
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title">CSS Vorlagen</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="css-enabled">
+              <span>Globales CSS verwenden</span>
+            </label>
+          </div>
+          <div id="css-editor" class="hidden">
+            <div class="css-select-box">
+              <p class="text-small text-muted mb-1">Wähle eine Vorlage oder verwende eigenes CSS</p>
+              <select id="css-mode" class="css-template-select">
+                <option value="default">Standard</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="custom">Eigenes CSS</option>
+              </select>
+            </div>
 
-        <!-- Preview for presets -->
-        <div id="css-preset-preview" class="css-preview">
-          <p class="text-small text-muted mb-1">Vorschau (nur lesen)</p>
-          <pre id="css-preview-content" class="css-preview-code"></pre>
-        </div>
+            <!-- Preview for presets -->
+            <div id="css-preset-preview" class="css-preview">
+              <p class="text-small text-muted mb-1">
+                Vorschau für <span id="css-preview-filename">fourteenkilobytes-default.css</span> <span class="text-muted">(Nur lesen)</span>
+              </p>
+              <pre id="css-preview-content" class="css-preview-code"></pre>
+            </div>
 
-        <!-- Custom CSS editor -->
-        <div id="css-custom-editor" class="hidden">
-          <p class="text-small text-muted mb-1">Eigene CSS-Regeln (werden in jede Seite eingebettet)</p>
-          <textarea id="global-css" rows="12" placeholder="body {
+            <!-- Custom CSS editor -->
+            <div id="css-custom-editor" class="hidden">
+              <p class="text-small text-muted mb-1">Eigene CSS-Regeln (werden in jede Seite eingebettet)</p>
+              <textarea id="global-css" rows="12" placeholder="body {
   font-family: Georgia, serif;
   max-width: 600px;
   margin: 0 auto;
 }"></textarea>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -390,9 +402,12 @@
       const footerEnabled = document.getElementById('footer-enabled');
       const footerEditor = document.getElementById('footer-editor');
       const footerContent = document.getElementById('footer-content');
+      const cssEnabled = document.getElementById('css-enabled');
+      const cssEditor = document.getElementById('css-editor');
       const cssMode = document.getElementById('css-mode');
       const cssPresetPreview = document.getElementById('css-preset-preview');
       const cssPreviewContent = document.getElementById('css-preview-content');
+      const cssPreviewFilename = document.getElementById('css-preview-filename');
       const cssCustomEditor = document.getElementById('css-custom-editor');
       const globalCss = document.getElementById('global-css');
       const metaEnabled = document.getElementById('meta-enabled');
@@ -605,6 +620,11 @@
 
       // ============ CSS EDITOR ============
 
+      cssEnabled.addEventListener('change', () => {
+        cssEditor.classList.toggle('hidden', !cssEnabled.checked);
+        updateOverhead();
+      });
+
       async function updateCssModeUI() {
         const mode = cssMode.value;
         const isCustom = mode === 'custom';
@@ -612,7 +632,9 @@
         cssPresetPreview.classList.toggle('hidden', isCustom);
         cssCustomEditor.classList.toggle('hidden', !isCustom);
 
+        // Update filename in preview title
         if (!isCustom) {
+          cssPreviewFilename.textContent = `fourteenkilobytes-${mode}.css`;
           // Show preset CSS in preview
           const presets = await App.loadCssPresets();
           cssPreviewContent.textContent = presets[mode] || '';
@@ -648,6 +670,7 @@
           version: 1,
           homepageSlug: homepageSelect.value || null,
           favicon: faviconData.value || null,
+          cssEnabled: cssEnabled.checked,
           cssMode: cssMode.value,
           globalCss: globalCss.value.trim(),
           header: {
@@ -760,7 +783,9 @@
           footerEditor.classList.toggle('hidden', !settings.footer.enabled);
           footerContent.value = settings.footer.content;
 
-          // CSS
+          // CSS (default: enabled)
+          cssEnabled.checked = settings.cssEnabled !== false;
+          cssEditor.classList.toggle('hidden', !cssEnabled.checked);
           cssMode.value = settings.cssMode || 'default';
           globalCss.value = settings.globalCss || '';
           updateCssModeUI();
