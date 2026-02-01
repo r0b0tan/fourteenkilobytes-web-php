@@ -323,6 +323,10 @@
             <span id="overhead-breakdown-base">0 B</span>
           </div>
           <div class="breakdown-row">
+            <span>Title</span>
+            <span id="overhead-breakdown-title">0 B</span>
+          </div>
+          <div class="breakdown-row">
             <span>Favicon</span>
             <span id="overhead-breakdown-favicon">0 B</span>
           </div>
@@ -356,7 +360,7 @@
           <div class="pie-legend">
             <div class="pie-legend-item">
               <span class="pie-dot pie-dot-overhead"></span>
-              <span id="overhead-bytes">0 B</span>
+              <span>Overhead</span>
             </div>
             <div class="pie-legend-item">
               <span class="pie-dot pie-dot-free"></span>
@@ -458,7 +462,6 @@
       const faviconData = document.getElementById('favicon-data');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
-      const overheadBytesEl = document.getElementById('overhead-bytes');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
       const overheadPercent = document.getElementById('overhead-percent');
 
@@ -782,9 +785,7 @@
       // ============ OVERHEAD CALCULATION ============
 
       function formatBytes(bytes) {
-        if (bytes === 0) return '0 B';
-        if (bytes < 1000) return bytes + ' B';
-        return (bytes / 1024).toFixed(1) + ' KB';
+        return bytes.toLocaleString('de-DE') + ' B';
       }
 
       async function updateOverhead() {
@@ -800,6 +801,7 @@
 
           // Update breakdown table
           const breakdownBaseEl = document.getElementById('overhead-breakdown-base');
+          const breakdownTitleEl = document.getElementById('overhead-breakdown-title');
           const breakdownFaviconEl = document.getElementById('overhead-breakdown-favicon');
           const breakdownMetaEl = document.getElementById('overhead-breakdown-meta');
           const breakdownNavEl = document.getElementById('overhead-breakdown-nav');
@@ -808,6 +810,7 @@
           const breakdownTotalEl = document.getElementById('overhead-breakdown-total');
 
           if (breakdownBaseEl) breakdownBaseEl.textContent = formatBytes(breakdown.base || 0);
+          if (breakdownTitleEl) breakdownTitleEl.textContent = formatBytes(breakdown.title || 0);
           if (breakdownFaviconEl) breakdownFaviconEl.textContent = formatBytes(breakdown.favicon || 0);
           if (breakdownMetaEl) breakdownMetaEl.textContent = formatBytes(breakdown.meta || 0);
           if (breakdownNavEl) breakdownNavEl.textContent = formatBytes(breakdown.navigation || 0);
@@ -815,7 +818,6 @@
           if (breakdownCssEl) breakdownCssEl.textContent = formatBytes(breakdown.css || 0);
           if (breakdownTotalEl) breakdownTotalEl.textContent = `${formatBytes(bytes)} / 14.336 B`;
 
-          overheadBytesEl.textContent = formatBytes(bytes);
           overheadPercent.textContent = `${Math.round(percent)}%`;
 
           // Determine color based on usage
