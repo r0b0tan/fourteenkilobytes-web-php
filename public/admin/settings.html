@@ -108,14 +108,25 @@
         <button type="button" class="tab-btn" data-tab="footer">Footer</button>
         <button type="button" class="tab-btn" data-tab="css">CSS</button>
       </div>
-      <button id="save-btn" class="btn btn-primary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-          <polyline points="17 21 17 13 7 13 7 21"></polyline>
-          <polyline points="7 3 7 8 15 8"></polyline>
-        </svg>
-        Speichern
-      </button>
+      <div class="settings-actions">
+        <button id="discard-btn" class="btn btn-secondary hidden">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          Verwerfen
+        </button>
+        <button id="save-btn" class="btn btn-primary" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Speichern
+        </button>
+      </div>
     </div>
     <div class="card-body">
       <!-- General Tab -->
@@ -426,6 +437,7 @@
       const faviconRemove = document.getElementById('favicon-remove');
       const faviconData = document.getElementById('favicon-data');
       const saveBtn = document.getElementById('save-btn');
+      const discardBtn = document.getElementById('discard-btn');
       const overheadBytesEl = document.getElementById('overhead-bytes');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
       const overheadPercent = document.getElementById('overhead-percent');
@@ -436,6 +448,25 @@
 
       // State
       let editingLink = null;
+      let hasUnsavedChanges = false;
+      let initialSettings = null;
+
+      // Update save button appearance based on changes
+      function updateSaveButton() {
+        if (hasUnsavedChanges) {
+          saveBtn.disabled = false;
+          discardBtn.classList.remove('hidden');
+        } else {
+          saveBtn.disabled = true;
+          discardBtn.classList.add('hidden');
+        }
+      }
+
+      // Mark as changed
+      function markAsChanged() {
+        hasUnsavedChanges = true;
+        updateSaveButton();
+      }
 
       // ============ HOMEPAGE ============
 
@@ -448,7 +479,10 @@
         }
       }
 
-      homepageSelect.addEventListener('change', updateRegenerateButton);
+      homepageSelect.addEventListener('change', () => {
+        updateRegenerateButton();
+        markAsChanged();
+      });
 
       regenerateHomepageBtn.addEventListener('click', async () => {
         const slug = homepageSelect.value;
@@ -489,6 +523,7 @@
 
       headerEnabled.addEventListener('change', () => {
         headerEditor.classList.toggle('hidden', !headerEnabled.checked);
+        markAsChanged();
         updateOverhead();
       });
 
@@ -532,6 +567,7 @@
         }
         linkPopup.classList.add('hidden');
         editingLink = null;
+        markAsChanged();
         updateOverhead();
       });
 
@@ -541,6 +577,7 @@
         }
         linkPopup.classList.add('hidden');
         editingLink = null;
+        markAsChanged();
         updateOverhead();
       });
 
@@ -553,10 +590,14 @@
 
       footerEnabled.addEventListener('change', () => {
         footerEditor.classList.toggle('hidden', !footerEnabled.checked);
+        markAsChanged();
         updateOverhead();
       });
 
-      footerContent.addEventListener('input', debounce(updateOverhead, 300));
+      footerContent.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
 
       document.getElementById('insert-bytes-btn').addEventListener('click', () => {
         const input = footerContent;
@@ -587,6 +628,7 @@
           const base64 = await fileToBase64(file);
           setFaviconPreview(base64);
           faviconData.value = base64;
+          markAsChanged();
           updateOverhead();
         } catch (err) {
           Toast.error('Fehler beim Lesen der Datei');
@@ -597,6 +639,7 @@
       faviconRemove.addEventListener('click', () => {
         clearFaviconPreview();
         faviconData.value = '';
+        markAsChanged();
         updateOverhead();
       });
 
@@ -623,6 +666,7 @@
 
       cssEnabled.addEventListener('change', () => {
         cssEditor.classList.toggle('hidden', !cssEnabled.checked);
+        markAsChanged();
         updateOverhead();
       });
 
@@ -643,18 +687,31 @@
         updateOverhead();
       }
 
-      cssMode.addEventListener('change', () => updateCssModeUI());
-      globalCss.addEventListener('input', debounce(updateOverhead, 300));
+      cssMode.addEventListener('change', () => {
+        updateCssModeUI();
+        markAsChanged();
+      });
+      globalCss.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
 
       // ============ META EDITOR ============
 
       metaEnabled.addEventListener('change', () => {
         metaEditor.classList.toggle('hidden', !metaEnabled.checked);
+        markAsChanged();
         updateOverhead();
       });
 
-      metaDescription.addEventListener('input', debounce(updateOverhead, 300));
-      metaAuthor.addEventListener('input', debounce(updateOverhead, 300));
+      metaDescription.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
+      metaAuthor.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
 
       // ============ BUILD SETTINGS ============
 
@@ -807,6 +864,11 @@
           }
 
           await updateOverhead();
+
+          // Store initial settings for comparison
+          initialSettings = JSON.stringify(buildSettings());
+          hasUnsavedChanges = false;
+          updateSaveButton();
         } catch (e) {
           console.error('Failed to load settings:', e);
         }
@@ -814,18 +876,47 @@
 
       // ============ SAVE SETTINGS ============
 
+      discardBtn.addEventListener('click', async () => {
+        const confirmed = await Modal.confirm('Alle nicht gespeicherten Änderungen verwerfen?');
+        if (!confirmed) return;
+        
+        await loadSettings();
+      });
+
       saveBtn.addEventListener('click', async () => {
         saveBtn.disabled = true;
 
         try {
           const settings = buildSettings();
           await App.saveSettings(settings);
+          
+          // Update initial settings and reset change tracking
+          initialSettings = JSON.stringify(settings);
+          hasUnsavedChanges = false;
+          updateSaveButton();
+          
           Toast.success('Einstellungen gespeichert');
         } catch (err) {
           Toast.error(err.message);
         } finally {
           saveBtn.disabled = false;
         }
+      });
+
+      // ============ WARN BEFORE LEAVING WITH UNSAVED CHANGES ============
+
+      // Intercept navigation links
+      document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
+        link.addEventListener('click', async (e) => {
+          if (hasUnsavedChanges && !link.id.includes('logout')) {
+            e.preventDefault();
+            const confirmed = await Modal.confirm('Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?');
+            if (confirmed) {
+              hasUnsavedChanges = false; // Reset flag to allow navigation
+              window.location.href = link.href;
+            }
+          }
+        });
       });
 
       // ============ TOAST NOTIFICATIONS ============
