@@ -192,17 +192,25 @@
         <!-- Meta Section -->
         <div class="override-section">
           <h3 class="override-section-title">Meta</h3>
-          <p class="text-small text-muted mb-1">Globale SEO-Tags die im &lt;head&gt; jeder Seite eingebettet werden
-            (können pro Seite überschrieben werden)</p>
-          <div class="meta-row">
-            <div class="form-group">
-              <label for="meta-description">Beschreibung</label>
-              <input type="text" id="meta-description" maxlength="160"
-                placeholder="Eine kurze Beschreibung deines Blogs...">
-            </div>
-            <div class="form-group">
-              <label for="meta-author">Autor</label>
-              <input type="text" id="meta-author" maxlength="100" placeholder="Max Mustermann">
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="meta-enabled">
+              <span>Meta aktivieren</span>
+            </label>
+          </div>
+          <div id="meta-editor" class="override-editor hidden">
+            <p class="text-small text-muted mb-1">Globale SEO-Tags die im &lt;head&gt; jeder Seite eingebettet werden
+              (können pro Seite überschrieben werden)</p>
+            <div class="meta-row">
+              <div class="form-group">
+                <label for="meta-description">Beschreibung</label>
+                <input type="text" id="meta-description" maxlength="160"
+                  placeholder="Eine kurze Beschreibung deines Blogs...">
+              </div>
+              <div class="form-group">
+                <label for="meta-author">Autor</label>
+                <input type="text" id="meta-author" maxlength="100" placeholder="Max Mustermann">
+              </div>
             </div>
           </div>
         </div>
@@ -223,6 +231,7 @@
             </p>
             <div class="footer-editor-row">
               <input type="text" id="footer-content" placeholder="© 2026 | {{bytes}}/14336 bytes">
+              <button type="button" id="insert-bytes-btn" class="btn btn-secondary">{{bytes}}</button>
             </div>
           </div>
         </div>
@@ -386,6 +395,8 @@
       const cssPreviewContent = document.getElementById('css-preview-content');
       const cssCustomEditor = document.getElementById('css-custom-editor');
       const globalCss = document.getElementById('global-css');
+      const metaEnabled = document.getElementById('meta-enabled');
+      const metaEditor = document.getElementById('meta-editor');
       const metaDescription = document.getElementById('meta-description');
       const metaAuthor = document.getElementById('meta-author');
       const linkPopup = document.getElementById('link-popup');
@@ -531,6 +542,17 @@
 
       footerContent.addEventListener('input', debounce(updateOverhead, 300));
 
+      document.getElementById('insert-bytes-btn').addEventListener('click', () => {
+        const input = footerContent;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = '{{bytes}}';
+        input.value = input.value.substring(0, start) + text + input.value.substring(end);
+        input.selectionStart = input.selectionEnd = start + text.length;
+        input.focus();
+        updateOverhead();
+      });
+
       // ============ FAVICON EDITOR ============
 
       const MAX_FAVICON_SIZE = 4096; // 4KB max
@@ -603,6 +625,11 @@
 
       // ============ META EDITOR ============
 
+      metaEnabled.addEventListener('change', () => {
+        metaEditor.classList.toggle('hidden', !metaEnabled.checked);
+        updateOverhead();
+      });
+
       metaDescription.addEventListener('input', debounce(updateOverhead, 300));
       metaAuthor.addEventListener('input', debounce(updateOverhead, 300));
 
@@ -632,6 +659,7 @@
             content: footerContent.value.trim(),
           },
           meta: {
+            enabled: metaEnabled.checked,
             description: metaDescription.value.trim() || undefined,
             author: metaAuthor.value.trim() || undefined,
           },
@@ -737,7 +765,9 @@
           globalCss.value = settings.globalCss || '';
           updateCssModeUI();
 
-          // Meta
+          // Meta (default: enabled)
+          metaEnabled.checked = settings.meta?.enabled !== false;
+          metaEditor.classList.toggle('hidden', !metaEnabled.checked);
           metaDescription.value = settings.meta?.description || '';
           metaAuthor.value = settings.meta?.author || '';
 
