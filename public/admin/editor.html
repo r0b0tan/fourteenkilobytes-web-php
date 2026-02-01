@@ -221,12 +221,9 @@
           <button type="button" id="add-block-btn" class="btn btn-secondary">+ Add Block</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
             <button type="button" data-type="paragraph">Paragraph</button>
-            <button type="button" data-type="heading" data-level="1">Heading 1</button>
-            <button type="button" data-type="heading" data-level="2">Heading 2</button>
-            <button type="button" data-type="heading" data-level="3">Heading 3</button>
-            <button type="button" data-type="heading" data-level="4">Heading 4</button>
-            <button type="button" data-type="heading" data-level="5">Heading 5</button>
-            <button type="button" data-type="heading" data-level="6">Heading 6</button>
+            <button type="button" data-type="heading" data-level="2">Heading</button>
+            <button type="button" data-type="list" data-list-type="unordered">List</button>
+            <button type="button" data-type="divider">Divider</button>
             <button type="button" data-type="bloglist">Bloglist</button>
           </div>
         </div>
@@ -305,12 +302,16 @@
     </div>
   </div>
 
-  <!-- Floating Format Toolbar (hidden by default) -->
+  <!-- Floating Format Toolbar (disabled - using inline buttons in block header)
   <div id="format-toolbar" class="format-toolbar hidden">
     <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
     <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+    <button type="button" data-cmd="strikethrough" title="Strikethrough"><s>S</s></button>
+    <button type="button" data-cmd="code" title="Code"><code>&lt;&gt;</code></button>
     <button type="button" data-cmd="link" title="Link">🔗</button>
   </div>
+  -->
 
   <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
@@ -913,47 +914,176 @@
 
       // ============ BLOCK EDITOR ============
 
-      function createBlockElement(type, level, initialHtml = '') {
+      function setupListKeyHandlers(listEl) {
+        listEl.addEventListener('keydown', (e) => {
+          const li = e.target.closest('li');
+          if (!li) return;
+
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const newLi = document.createElement('li');
+            newLi.contentEditable = 'true';
+            newLi.dataset.placeholder = 'List item...';
+            li.after(newLi);
+            newLi.focus();
+            triggerAutoSave();
+          } else if (e.key === 'Backspace' && li.innerHTML === '' && listEl.children.length > 1) {
+            e.preventDefault();
+            const prevLi = li.previousElementSibling;
+            li.remove();
+            if (prevLi) {
+              prevLi.focus();
+              // Move cursor to end
+              const range = document.createRange();
+              const sel = window.getSelection();
+              range.selectNodeContents(prevLi);
+              range.collapse(false);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+            triggerAutoSave();
+          }
+        });
+      }
+
+      function createBlockElement(type, level, initialHtml = '', listType = null) {
         const block = document.createElement('div');
         block.className = 'block-item';
         block.dataset.type = type;
         if (level) block.dataset.level = level;
+        if (listType) block.dataset.listType = listType;
 
         // Block header with type selector and actions
         const header = document.createElement('div');
         header.className = 'block-header';
 
-        // Type selector (nur wenn nicht bloglist)
-        if (type !== 'bloglist') {
+        // Type selector
+        if (type === 'paragraph' || type === 'blockquote' || type === 'codeblock') {
           const typeSelect = document.createElement('select');
           typeSelect.className = 'block-type-select';
           typeSelect.innerHTML = `
             <option value="paragraph">Paragraph</option>
-            <option value="heading-1">H1</option>
-            <option value="heading-2">H2</option>
-            <option value="heading-3">H3</option>
-            <option value="heading-4">H4</option>
-            <option value="heading-5">H5</option>
-            <option value="heading-6">H6</option>
+            <option value="blockquote">Blockquote</option>
+            <option value="codeblock">Code Block</option>
           `;
-          typeSelect.value = type === 'heading' ? `heading-${level}` : 'paragraph';
+          typeSelect.value = type;
           typeSelect.addEventListener('change', () => {
-            const val = typeSelect.value;
-            if (val === 'paragraph') {
-              block.dataset.type = 'paragraph';
-              delete block.dataset.level;
+            const newType = typeSelect.value;
+            const oldType = block.dataset.type;
+            block.dataset.type = newType;
+
+            // Handle content conversion
+            const content = block.querySelector('.block-content');
+            if (oldType === 'codeblock' && newType !== 'codeblock') {
+              // From codeblock to rich text - convert plain text
+              content.contentEditable = 'true';
+              content.classList.remove('block-codeblock');
+              content.dataset.placeholder = newType === 'blockquote' ? 'Quote...' : 'Enter text...';
+              // Show format buttons
+              const formatBtns = block.querySelector('.block-format-buttons');
+              if (formatBtns) formatBtns.style.display = '';
+            } else if (oldType !== 'codeblock' && newType === 'codeblock') {
+              // From rich text to codeblock - strip HTML
+              content.textContent = content.textContent;
+              content.contentEditable = 'true';
+              content.classList.add('block-codeblock');
+              content.dataset.placeholder = 'Code...';
+              // Hide format buttons
+              const formatBtns = block.querySelector('.block-format-buttons');
+              if (formatBtns) formatBtns.style.display = 'none';
             } else {
-              block.dataset.type = 'heading';
-              block.dataset.level = val.split('-')[1];
+              // Just update placeholder
+              content.dataset.placeholder = newType === 'blockquote' ? 'Quote...' : newType === 'codeblock' ? 'Code...' : 'Enter text...';
             }
+
             updateBlockStyling(block);
+            triggerAutoSave();
+          });
+          header.appendChild(typeSelect);
+        } else if (type === 'heading') {
+          const typeSelect = document.createElement('select');
+          typeSelect.className = 'block-type-select';
+          typeSelect.innerHTML = `
+            <option value="1">H1</option>
+            <option value="2">H2</option>
+            <option value="3">H3</option>
+            <option value="4">H4</option>
+            <option value="5">H5</option>
+            <option value="6">H6</option>
+          `;
+          typeSelect.value = level || '2';
+          typeSelect.addEventListener('change', () => {
+            block.dataset.level = typeSelect.value;
+            updateBlockStyling(block);
+            triggerAutoSave();
+          });
+          header.appendChild(typeSelect);
+        } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
+          // Normalize type for new blocks - use passed listType or derive from legacy type
+          const effectiveListType = listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
+          block.dataset.type = 'list';
+          block.dataset.listType = effectiveListType;
+
+          const typeSelect = document.createElement('select');
+          typeSelect.className = 'block-type-select';
+          typeSelect.innerHTML = `
+            <option value="unordered">Unordered List</option>
+            <option value="ordered">Ordered List</option>
+          `;
+          typeSelect.value = effectiveListType;
+          typeSelect.addEventListener('change', () => {
+            const newListType = typeSelect.value;
+            block.dataset.listType = newListType;
+            // Update list element tag
+            const oldList = block.querySelector('.editable-list');
+            if (oldList) {
+              const newTag = newListType === 'ordered' ? 'ol' : 'ul';
+              const newList = document.createElement(newTag);
+              newList.className = 'editable-list';
+              // Move all children
+              while (oldList.firstChild) {
+                newList.appendChild(oldList.firstChild);
+              }
+              // Copy event listeners by replacing
+              oldList.replaceWith(newList);
+              setupListKeyHandlers(newList);
+            }
+            triggerAutoSave();
           });
           header.appendChild(typeSelect);
         } else {
+          // Bloglist or Divider - just a label
           const label = document.createElement('span');
           label.className = 'block-type-label';
-          label.textContent = 'Bloglist';
+          label.textContent = type === 'divider' ? 'Divider' : 'Bloglist';
           header.appendChild(label);
+        }
+
+        // Format buttons (nur für rich-text Blöcke, nicht für bloglist, divider, codeblock)
+        if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock') {
+          const formatBtns = document.createElement('div');
+          formatBtns.className = 'block-format-buttons';
+
+          const formats = [
+            { cmd: 'bold', label: 'B', title: 'Bold', style: 'font-weight:bold' },
+            { cmd: 'italic', label: 'I', title: 'Italic', style: 'font-style:italic' },
+            { cmd: 'underline', label: 'U', title: 'Underline', style: 'text-decoration:underline' },
+            { cmd: 'strikethrough', label: 'S', title: 'Strikethrough', style: 'text-decoration:line-through' },
+            { cmd: 'code', label: '<>', title: 'Code', style: 'font-family:monospace;font-size:11px' },
+            { cmd: 'link', label: '🔗', title: 'Link', style: '' }
+          ];
+
+          formats.forEach(fmt => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerHTML = `<span style="${fmt.style}">${fmt.label}</span>`;
+            btn.title = fmt.title;
+            btn.dataset.cmd = fmt.cmd;
+            btn.addEventListener('click', () => handleFormatClick(fmt.cmd, block));
+            formatBtns.appendChild(btn);
+          });
+
+          header.appendChild(formatBtns);
         }
 
         const actions = document.createElement('div');
@@ -997,6 +1127,60 @@
           content.contentEditable = 'false';
           content.className = 'block-content block-bloglist';
           content.innerHTML = '<em style="color: #999;">All blog posts will be listed here automatically</em>';
+        } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
+          content.className = 'block-content block-list';
+          // Determine list tag from listType or legacy type
+          const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
+          const listEl = document.createElement(listType === 'ordered' ? 'ol' : 'ul');
+          listEl.className = 'editable-list';
+
+          // Check if initialHtml contains a list (for restoring saved data)
+          if (initialHtml && (initialHtml.includes('<li>') || initialHtml.includes('<li '))) {
+            // Parse the saved HTML to extract list items
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = initialHtml;
+            const existingList = tempDiv.querySelector('ul, ol');
+            const existingItems = existingList ? existingList.querySelectorAll('li') : tempDiv.querySelectorAll('li');
+
+            if (existingItems.length > 0) {
+              existingItems.forEach(existingLi => {
+                const li = document.createElement('li');
+                li.contentEditable = 'true';
+                li.dataset.placeholder = 'List item...';
+                li.innerHTML = existingLi.innerHTML;
+                listEl.appendChild(li);
+              });
+            } else {
+              // Fallback: create empty item
+              const li = document.createElement('li');
+              li.contentEditable = 'true';
+              li.dataset.placeholder = 'List item...';
+              listEl.appendChild(li);
+            }
+          } else {
+            // New list: create single empty item
+            const li = document.createElement('li');
+            li.contentEditable = 'true';
+            li.dataset.placeholder = 'List item...';
+            li.innerHTML = initialHtml || '';
+            listEl.appendChild(li);
+          }
+
+          setupListKeyHandlers(listEl);
+          content.appendChild(listEl);
+        } else if (type === 'divider') {
+          content.contentEditable = 'false';
+          content.className = 'block-content block-divider';
+          content.innerHTML = '<hr>';
+        } else if (type === 'codeblock') {
+          content.contentEditable = 'true';
+          content.className = 'block-content block-codeblock';
+          content.dataset.placeholder = 'Code...';
+          content.textContent = initialHtml || '';
+        } else if (type === 'blockquote') {
+          content.contentEditable = 'true';
+          content.dataset.placeholder = 'Quote...';
+          content.innerHTML = initialHtml;
         } else {
           content.contentEditable = 'true';
           content.dataset.placeholder = type === 'heading' ? 'Heading...' : 'Enter text...';
@@ -1016,13 +1200,23 @@
         // Reset styles
         content.style.fontSize = '';
         content.style.fontWeight = '';
+        content.style.fontStyle = '';
+        content.style.borderLeft = '';
+        content.style.paddingLeft = '';
 
         if (type === 'heading') {
           content.style.fontWeight = 'bold';
           const sizes = { 1: '2rem', 2: '1.5rem', 3: '1.25rem', 4: '1.1rem', 5: '1rem', 6: '0.875rem' };
           content.style.fontSize = sizes[level] || '1rem';
           content.dataset.placeholder = 'Heading...';
-        } else {
+        } else if (type === 'blockquote') {
+          content.style.fontStyle = 'italic';
+          content.style.borderLeft = '3px solid var(--border)';
+          content.style.paddingLeft = '12px';
+          content.dataset.placeholder = 'Quote...';
+        } else if (type === 'codeblock') {
+          content.dataset.placeholder = 'Code...';
+        } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list') {
           content.dataset.placeholder = 'Enter text...';
         }
       }
@@ -1040,8 +1234,54 @@
         }
       }
 
-      // ============ FLOATING FORMAT TOOLBAR ============
+      // ============ FORMAT BUTTONS ============
 
+      function handleFormatClick(cmd, block) {
+        // Save selection BEFORE anything else (clicking button may lose it)
+        const sel = window.getSelection();
+        const hasSelection = sel.rangeCount > 0 && !sel.isCollapsed;
+        const currentRange = hasSelection ? sel.getRangeAt(0).cloneRange() : null;
+
+        // For link command, we need a selection
+        if (cmd === 'link') {
+          if (!hasSelection) {
+            alert('Bitte erst Text markieren');
+            return;
+          }
+          savedSelection = currentRange;
+          showLinkPopup();
+          return;
+        }
+
+        // Focus the block content if not already focused
+        const content = block.querySelector('.block-content');
+        const listItem = block.querySelector('li[contenteditable="true"]');
+        const editableEl = listItem || content;
+
+        // Restore selection if we have one
+        if (currentRange) {
+          sel.removeAllRanges();
+          sel.addRange(currentRange);
+        } else if (!editableEl.contains(document.activeElement) && editableEl !== document.activeElement) {
+          editableEl.focus();
+        }
+
+        if (cmd === 'bold') {
+          document.execCommand('bold', false, null);
+        } else if (cmd === 'italic') {
+          document.execCommand('italic', false, null);
+        } else if (cmd === 'underline') {
+          document.execCommand('underline', false, null);
+        } else if (cmd === 'strikethrough') {
+          document.execCommand('strikeThrough', false, null);
+        } else if (cmd === 'code') {
+          wrapSelectionWithTag('code');
+        }
+        triggerAutoSave();
+      }
+
+      // ============ FLOATING FORMAT TOOLBAR (disabled - using inline buttons) ============
+      /*
       document.addEventListener('selectionchange', () => {
         const sel = window.getSelection();
         if (!sel.rangeCount || sel.isCollapsed) {
@@ -1077,20 +1317,54 @@
           document.execCommand('bold', false, null);
         } else if (cmd === 'italic') {
           document.execCommand('italic', false, null);
+        } else if (cmd === 'underline') {
+          document.execCommand('underline', false, null);
+        } else if (cmd === 'strikethrough') {
+          document.execCommand('strikeThrough', false, null);
+        } else if (cmd === 'code') {
+          wrapSelectionWithTag('code');
         } else if (cmd === 'link') {
           showLinkPopup();
         }
       });
+      */
+
+      function wrapSelectionWithTag(tagName) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount || sel.isCollapsed) return;
+
+        const range = sel.getRangeAt(0);
+        const selectedText = range.toString();
+
+        // Check if already wrapped in this tag
+        const parentTag = sel.anchorNode.parentElement.closest(tagName);
+        if (parentTag) {
+          // Unwrap: replace tag with its contents
+          const parent = parentTag.parentNode;
+          while (parentTag.firstChild) {
+            parent.insertBefore(parentTag.firstChild, parentTag);
+          }
+          parent.removeChild(parentTag);
+        } else {
+          // Wrap selection
+          const wrapper = document.createElement(tagName);
+          range.surroundContents(wrapper);
+        }
+
+        triggerAutoSave();
+      }
 
       // ============ LINK POPUP ============
 
       function showLinkPopup() {
+        // savedSelection should already be set by handleFormatClick
+        if (!savedSelection) return;
+
+        // Check if selection is inside a link
         const sel = window.getSelection();
-        if (!sel.rangeCount || sel.isCollapsed) return;
-
-        savedSelection = sel.getRangeAt(0).cloneRange();
-
-        const parentLink = sel.anchorNode.parentElement.closest('a');
+        sel.removeAllRanges();
+        sel.addRange(savedSelection);
+        const parentLink = sel.anchorNode?.parentElement?.closest('a');
         linkHrefInput.value = parentLink ? parentLink.getAttribute('href') : '';
 
         const rect = savedSelection.getBoundingClientRect();
@@ -1134,9 +1408,12 @@
 
         const type = btn.dataset.type;
         const level = btn.dataset.level;
-        const block = createBlockElement(type, level);
+        const listType = btn.dataset.listType;
+        const block = createBlockElement(type, level, '', listType);
         blockEditor.appendChild(block);
-        block.querySelector('.block-content').focus();
+        // Focus on first editable element
+        const focusTarget = block.querySelector('li[contenteditable="true"]') || block.querySelector('.block-content');
+        if (focusTarget) focusTarget.focus();
         addBlockDropdown.classList.add('hidden');
       });
 
@@ -1173,6 +1450,12 @@
               targetArray.push({ type: 'bold', children });
             } else if (tag === 'i' || tag === 'em') {
               targetArray.push({ type: 'italic', children });
+            } else if (tag === 'u') {
+              targetArray.push({ type: 'underline', children });
+            } else if (tag === 's' || tag === 'strike') {
+              targetArray.push({ type: 'strikethrough', children });
+            } else if (tag === 'code') {
+              targetArray.push({ type: 'code', children });
             } else if (tag === 'a') {
               const href = node.getAttribute('href') || '';
               targetArray.push({ type: 'link', href, children });
@@ -1204,6 +1487,30 @@
             content.push({
               type: 'bloglist'
             });
+          } else if (type === 'divider') {
+            content.push({
+              type: 'divider'
+            });
+          } else if (type === 'codeblock') {
+            const contentEl = block.querySelector('.block-content');
+            content.push({
+              type: 'codeblock',
+              content: contentEl.textContent || ''
+            });
+          } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
+            const listEl = block.querySelector('.editable-list');
+            const items = [];
+            for (const li of listEl.querySelectorAll('li')) {
+              items.push({
+                children: parseInlineNodes(li)
+              });
+            }
+            // Convert to compiler format: unordered-list or ordered-list
+            const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
+            content.push({
+              type: listType === 'ordered' ? 'ordered-list' : 'unordered-list',
+              items
+            });
           } else {
             const contentEl = block.querySelector('.block-content');
             const children = parseInlineNodes(contentEl);
@@ -1212,6 +1519,11 @@
               content.push({
                 type: 'heading',
                 level: parseInt(block.dataset.level, 10),
+                children
+              });
+            } else if (type === 'blockquote') {
+              content.push({
+                type: 'blockquote',
                 children
               });
             } else {

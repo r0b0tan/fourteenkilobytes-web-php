@@ -952,7 +952,7 @@ button:disabled {
 }
 
 .block-type-select {
-  width: auto;
+  width: 120px;
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 4px;
@@ -1027,6 +1027,22 @@ button:disabled {
   text-decoration: underline;
 }
 
+.block-content u {
+  text-decoration: underline;
+}
+
+.block-content s {
+  text-decoration: line-through;
+}
+
+.block-content code {
+  font-family: monospace;
+  background: var(--gray-200);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
 .block-content h1,
 .block-content h2,
 .block-content h3,
@@ -1038,6 +1054,35 @@ button:disabled {
   font-weight: 500;
 }
 
+/* Block format buttons - only visible when block is focused */
+.block-format-buttons {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.block-item:focus-within .block-format-buttons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.block-format-buttons button {
+  padding: 2px 6px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  min-width: 24px;
+  color: var(--text-primary);
+}
+
+.block-format-buttons button:hover {
+  background: var(--gray-200);
+}
+
 /* Bloglist block */
 .block-bloglist {
   background: var(--gray-200);
@@ -1045,6 +1090,55 @@ button:disabled {
   text-align: center;
   border: 1px dashed var(--gray-400);
   cursor: not-allowed;
+}
+
+/* Editable list blocks */
+.block-list {
+  padding: 0;
+}
+
+.editable-list {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.editable-list li {
+  padding: 4px 0;
+  min-height: 1.5em;
+  outline: none;
+}
+
+.editable-list li:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.editable-list li:focus {
+  background: var(--gray-100);
+  border-radius: 2px;
+}
+
+/* Divider block */
+.block-divider {
+  padding: 8px 0;
+}
+
+.block-divider hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* Code block */
+.block-codeblock {
+  font-family: monospace;
+  font-size: 13px;
+  background: var(--gray-200);
+  padding: 12px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .block-type-label {
@@ -1088,6 +1182,11 @@ button:disabled {
 
 .format-toolbar button:hover {
   background: var(--gray-200);
+}
+
+.format-toolbar button code {
+  font-family: monospace;
+  font-size: 11px;
 }
 
 /* Link Popup */
