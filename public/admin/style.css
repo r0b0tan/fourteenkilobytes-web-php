@@ -1467,8 +1467,13 @@ button:disabled {
   align-items: flex-end;
 }
 
-.card-header:has(.settings-tabs) > .btn {
+.settings-actions {
+  display: flex;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.settings-actions .btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
