@@ -112,6 +112,30 @@
             </svg>
             <input type="text" id="search-input" placeholder="Suche...">
           </div>
+          <div class="date-range-picker">
+            <div class="date-range-trigger" id="date-range-trigger">
+              <svg class="calendar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span id="date-range-label">Datum</span>
+            </div>
+            <div class="date-range-dropdown hidden" id="date-range-dropdown">
+              <div class="date-range-inputs">
+                <div class="date-input-group">
+                  <label for="date-from">Von</label>
+                  <input type="date" id="date-from" placeholder="TT.MM.JJJJ">
+                </div>
+                <div class="date-input-group">
+                  <label for="date-to">Bis</label>
+                  <input type="date" id="date-to" placeholder="TT.MM.JJJJ">
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary" id="clear-dates">Zurücksetzen</button>
+            </div>
+          </div>
           <div class="page-size-selector">
             <label for="page-size">Anzeigen:</label>
             <select id="page-size">
@@ -173,6 +197,12 @@
       const archivePagination = document.getElementById('archive-pagination');
       const pageSizeSelect = document.getElementById('page-size');
       const searchInput = document.getElementById('search-input');
+      const dateFromInput = document.getElementById('date-from');
+      const dateToInput = document.getElementById('date-to');
+      const dateRangeTrigger = document.getElementById('date-range-trigger');
+      const dateRangeDropdown = document.getElementById('date-range-dropdown');
+      const dateRangeLabel = document.getElementById('date-range-label');
+      const clearDatesBtn = document.getElementById('clear-dates');
       const tabBtns = document.querySelectorAll('.tab-btn');
       const tabContents = document.querySelectorAll('.tab-content');
 
@@ -185,6 +215,8 @@
       let pagesPage = 1;
       let archivePage = 1;
       let searchQuery = '';
+      let dateFrom = null;
+      let dateTo = null;
 
       // Debounce helper
       function debounce(fn, delay) {
@@ -218,6 +250,53 @@
       dashboardView.classList.remove('hidden');
       loadAllContent();
 
+      // Date range picker dropdown
+      dateRangeTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dateRangeDropdown.classList.toggle('hidden');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!dateRangeTrigger.contains(e.target) && !dateRangeDropdown.contains(e.target)) {
+          dateRangeDropdown.classList.add('hidden');
+        }
+      });
+
+      // Update date range label
+      function updateDateRangeLabel() {
+        if (dateFrom && dateTo) {
+          const fromFormatted = new Date(dateFrom).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const toFormatted = new Date(dateTo).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = `${fromFormatted} - ${toFormatted}`;
+          dateRangeTrigger.classList.add('active');
+        } else if (dateFrom) {
+          const fromFormatted = new Date(dateFrom).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = `Ab ${fromFormatted}`;
+          dateRangeTrigger.classList.add('active');
+        } else if (dateTo) {
+          const toFormatted = new Date(dateTo).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = `Bis ${toFormatted}`;
+          dateRangeTrigger.classList.add('active');
+        } else {
+          dateRangeLabel.textContent = 'Datum';
+          dateRangeTrigger.classList.remove('active');
+        }
+      }
+
+      // Clear dates button
+      clearDatesBtn.addEventListener('click', () => {
+        dateFromInput.value = '';
+        dateToInput.value = '';
+        dateFrom = null;
+        dateTo = null;
+        postsPage = 1;
+        pagesPage = 1;
+        archivePage = 1;
+        updateDateRangeLabel();
+        renderCurrentView();
+      });
+
       // Page size change handler
       pageSizeSelect.addEventListener('change', () => {
         pageSize = pageSizeSelect.value === 'all' ? Infinity : parseInt(pageSizeSelect.value, 10);
@@ -231,8 +310,28 @@
         searchQuery = searchInput.value.trim().toLowerCase();
         postsPage = 1;
         pagesPage = 1;
+        archivePage = 1;
         renderCurrentView();
       }, 200));
+
+      // Date range handlers
+      dateFromInput.addEventListener('change', () => {
+        dateFrom = dateFromInput.value;
+        postsPage = 1;
+        pagesPage = 1;
+        archivePage = 1;
+        updateDateRangeLabel();
+        renderCurrentView();
+      });
+
+      dateToInput.addEventListener('change', () => {
+        dateTo = dateToInput.value;
+        postsPage = 1;
+        pagesPage = 1;
+        archivePage = 1;
+        updateDateRangeLabel();
+        renderCurrentView();
+      });
 
       // Logout handler
       logoutBtn.addEventListener('click', async (e) => {
@@ -333,11 +432,37 @@
       }
 
       function filterItems(items) {
-        if (!searchQuery) return items;
-        return items.filter(item =>
-          item.title.toLowerCase().includes(searchQuery) ||
-          item.slug.toLowerCase().includes(searchQuery)
-        );
+        return items.filter(item => {
+          // Text search filter (title and slug)
+          if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const matchesText = item.title.toLowerCase().includes(query) || 
+                                item.slug.toLowerCase().includes(query);
+            if (!matchesText) return false;
+          }
+          
+          // Date range filter
+          if (dateFrom || dateTo) {
+            if (!item.publishedAt) return false;
+            
+            const itemDate = new Date(item.publishedAt);
+            itemDate.setHours(0, 0, 0, 0); // Normalize to midnight for comparison
+            
+            if (dateFrom) {
+              const fromDate = new Date(dateFrom);
+              fromDate.setHours(0, 0, 0, 0);
+              if (itemDate < fromDate) return false;
+            }
+            
+            if (dateTo) {
+              const toDate = new Date(dateTo);
+              toDate.setHours(23, 59, 59, 999); // End of day
+              if (itemDate > toDate) return false;
+            }
+          }
+          
+          return true;
+        });
       }
 
       function renderCurrentView() {

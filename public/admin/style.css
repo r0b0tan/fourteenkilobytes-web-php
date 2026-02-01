@@ -1535,6 +1535,114 @@ button:disabled {
   color: var(--gray-400);
 }
 
+/* Date Range Picker */
+.date-range-picker {
+  position: relative;
+}
+
+.date-range-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s;
+}
+
+.date-range-trigger:hover {
+  border-color: var(--accent);
+}
+
+.date-range-trigger.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.date-range-trigger .calendar-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.date-range-trigger.active .calendar-icon {
+  color: var(--accent);
+}
+
+.date-range-trigger span {
+  white-space: nowrap;
+}
+
+.date-range-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  min-width: 280px;
+}
+
+.date-range-dropdown.hidden {
+  display: none;
+}
+
+.date-range-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-input-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.date-input-group input[type="date"] {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.date-input-group input[type="date"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Style placeholder text for empty date inputs */
+.date-input-group input[type="date"]::-webkit-datetime-edit {
+  color: var(--gray-400);
+}
+
+.date-input-group input[type="date"]:focus::-webkit-datetime-edit {
+  color: var(--text-primary);
+}
+
+.date-range-dropdown .btn {
+  width: auto;
+  margin: 0 auto;
+  display: block;
+}
+
 /* Page Size Selector */
 .page-size-selector {
   display: flex;
