@@ -335,6 +335,7 @@ h2 {
   align-self: start;
 }
 
+#title-rail-item,
 #meta-rail-item,
 #nav-rail-item {
   padding-top: 43px;
@@ -672,7 +673,8 @@ button:disabled {
 }
 
 #header-editor,
-#footer-editor {
+#footer-editor,
+#nav-editor {
   display: inline-flex;
   flex-direction: column;
   gap: 8px;
@@ -682,6 +684,13 @@ button:disabled {
 }
 
 #meta-editor {
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  max-width: 70%;
+}
+
+#title-override-editor {
   padding: 12px;
   background: var(--gray-100);
   border-radius: 6px;
@@ -729,7 +738,8 @@ button:disabled {
 }
 
 .meta-row .form-group,
-#site-title-editor .form-group {
+#site-title-editor .form-group,
+#title-override-editor .form-group {
   margin-bottom: 0;
 }
 
@@ -744,9 +754,14 @@ button:disabled {
 
 .footer-editor-row input[type="text"]:disabled,
 .footer-editor-row button:disabled,
-.meta-row input[type="text"]:disabled {
+.meta-row input[type="text"]:disabled,
+#title-override-editor input[type="text"]:disabled {
   opacity: 0.6;
   pointer-events: none;
+}
+
+#title-override-editor input[type="text"] {
+  max-width: none;
 }
 
 .override-editor .nav-links {
