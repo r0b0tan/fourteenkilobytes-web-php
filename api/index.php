@@ -675,5 +675,171 @@ if ($method === 'GET' && $path === '/icons') {
     sendJson(200, ['icons' => []]);
 }
 
+// Route: GET /export (protected)
+if ($method === 'GET' && $path === '/export') {
+    requireAuth();
+
+    $type = $_GET['type'] ?? 'all';
+    $export = [
+        'version' => 1,
+        'exportedAt' => date('c'),
+    ];
+
+    // Export settings
+    if ($type === 'all' || $type === 'settings') {
+        $export['settings'] = loadSettings();
+    }
+
+    // Export articles with sourceData
+    if ($type === 'all' || $type === 'articles') {
+        $manifest = loadManifest();
+        $pageTypes = loadPageTypes();
+        $articles = [];
+
+        foreach ($manifest['entries'] ?? [] as $entry) {
+            if ($entry['status'] === 'tombstone') {
+                continue; // Skip deleted posts
+            }
+
+            $slug = $entry['slug'];
+            $sourceData = loadSourceData($slug);
+
+            $articles[] = [
+                'slug' => $slug,
+                'title' => $entry['title'],
+                'publishedAt' => $entry['publishedAt'],
+                'pageType' => $pageTypes['types'][$slug] ?? 'post',
+                'pageCount' => $entry['pageCount'] ?? 1,
+                'sourceData' => $sourceData,
+            ];
+        }
+
+        $export['articles'] = $articles;
+    }
+
+    // Set download headers
+    $filename = 'fourteenkilobytes-backup-' . date('Y-m-d-His') . '.json';
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+    sendJson(200, $export);
+}
+
+// Route: POST /import (protected)
+if ($method === 'POST' && $path === '/import') {
+    requireAuth();
+
+    $body = readJsonBody();
+
+    if (($body['version'] ?? 0) !== 1) {
+        sendJson(400, ['error' => 'Invalid or unsupported backup version']);
+    }
+
+    $importSettings = $_GET['settings'] ?? 'true';
+    $importArticles = $_GET['articles'] ?? 'true';
+    $result = ['imported' => []];
+
+    // Import settings
+    if ($importSettings === 'true' && isset($body['settings'])) {
+        saveSettings($body['settings']);
+        $result['imported'][] = 'settings';
+    }
+
+    // Import articles (sourceData only - client will republish)
+    if ($importArticles === 'true' && isset($body['articles'])) {
+        $imported = [];
+        foreach ($body['articles'] as $article) {
+            if (empty($article['slug']) || empty($article['sourceData'])) {
+                continue;
+            }
+            saveSourceData($article['slug'], $article['sourceData']);
+            $imported[] = $article['slug'];
+        }
+        $result['imported'][] = 'articles';
+        $result['articleSlugs'] = $imported;
+    }
+
+    sendJson(200, $result);
+}
+
+// Route: DELETE /posts (protected) - Delete all posts
+if ($method === 'DELETE' && $path === '/posts') {
+    requireAuth();
+
+    $manifest = loadManifest();
+    $deletedCount = 0;
+
+    // Tombstone all entries and delete HTML files
+    foreach ($manifest['entries'] as &$entry) {
+        if ($entry['status'] !== 'tombstone') {
+            $entry['status'] = 'tombstone';
+            $entry['tombstonedAt'] = date('c');
+            $deletedCount++;
+
+            // Replace HTML with tombstone
+            $tombstoneHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
+            $htmlPath = POSTS_DIR . "/{$entry['slug']}.html";
+            if (file_exists($htmlPath)) {
+                file_put_contents($htmlPath, $tombstoneHtml);
+            }
+
+            // Handle paginated posts
+            if (isset($entry['pageCount']) && $entry['pageCount'] > 1) {
+                for ($i = 2; $i <= $entry['pageCount']; $i++) {
+                    $pagePath = POSTS_DIR . "/{$entry['slug']}-{$i}.html";
+                    if (file_exists($pagePath)) {
+                        file_put_contents($pagePath, $tombstoneHtml);
+                    }
+                }
+            }
+        }
+    }
+
+    saveManifest($manifest);
+
+    sendJson(200, ['deleted' => $deletedCount]);
+}
+
+// Route: POST /reset (protected) - Factory reset
+if ($method === 'POST' && $path === '/reset') {
+    requireAuth();
+
+    $body = readJsonBody();
+    $confirmPhrase = $body['confirm'] ?? '';
+
+    // Require confirmation phrase for safety
+    if ($confirmPhrase !== 'RESET') {
+        sendJson(400, ['error' => 'Confirmation required. Send {"confirm": "RESET"}']);
+    }
+
+    // Clear manifest (keep structure)
+    saveManifest(['version' => 1, 'entries' => []]);
+
+    // Reset settings to defaults
+    saveSettings([
+        'version' => 1,
+        'cssMode' => 'default',
+        'globalCss' => '',
+        'header' => ['enabled' => false, 'links' => []],
+        'footer' => ['enabled' => false, 'content' => ''],
+    ]);
+
+    // Clear page types
+    savePageTypes(['version' => 1, 'types' => []]);
+
+    // Delete all HTML files
+    $htmlFiles = glob(POSTS_DIR . '/*.html');
+    foreach ($htmlFiles as $file) {
+        @unlink($file);
+    }
+
+    // Delete all source files
+    $sourceFiles = glob(SOURCES_DIR . '/*.json');
+    foreach ($sourceFiles as $file) {
+        @unlink($file);
+    }
+
+    sendJson(200, ['reset' => true]);
+}
+
 // 404 for unknown routes
 sendJson(404, ['error' => 'Not found']);

@@ -2079,3 +2079,102 @@ button:disabled {
     transform: translateY(16px);
   }
 }
+
+/* Data Tab - Export/Import/Reset */
+.export-options,
+.import-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.radio-option,
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.radio-option input,
+.checkbox-option input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.radio-option input:disabled + span,
+.checkbox-option input:disabled + span {
+  opacity: 0.5;
+}
+
+.import-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 0.75rem;
+  transition: all 0.2s ease;
+  background: var(--gray-100);
+}
+
+.import-dropzone:hover,
+.import-dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-alpha-15);
+}
+
+.import-dropzone svg {
+  color: var(--gray-400);
+  margin-bottom: 0.5rem;
+}
+
+.import-dropzone p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.import-browse {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.import-browse:hover {
+  color: var(--accent-hover);
+}
+
+.import-filename {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--accent-alpha-15);
+  color: var(--accent);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.danger-title {
+  color: #dc2626 !important;
+}
+
+.danger-zone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 8px;
+}
+
+.danger-zone .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
