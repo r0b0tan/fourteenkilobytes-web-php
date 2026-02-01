@@ -183,8 +183,25 @@
 
       <!-- Header Tab -->
       <div id="tab-header" class="tab-content hidden">
-        <!-- Navigation Section -->
+        <!-- Site Title Section -->
         <div class="override-section override-section-first">
+          <h3 class="override-section-title">Seitentitel</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="site-title-enabled">
+              <span>Seitentitel aktivieren</span>
+            </label>
+          </div>
+          <div id="site-title-editor" class="override-editor hidden">
+            <p class="text-small text-muted mb-1">Globaler Titel der im Browser-Tab angezeigt wird (Format: Titel | Seitentitel)</p>
+            <div class="form-group">
+              <input type="text" id="site-title" maxlength="60" placeholder="fourteenkilobytes">
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Section -->
+        <div class="override-section">
           <h3 class="override-section-title">Navigation</h3>
           <div class="override-section-header">
             <label class="override-toggle">
@@ -424,6 +441,9 @@
       const globalCss = document.getElementById('global-css');
       const metaEnabled = document.getElementById('meta-enabled');
       const metaEditor = document.getElementById('meta-editor');
+      const siteTitleEnabled = document.getElementById('site-title-enabled');
+      const siteTitleEditor = document.getElementById('site-title-editor');
+      const siteTitle = document.getElementById('site-title');
       const metaDescription = document.getElementById('meta-description');
       const metaAuthor = document.getElementById('meta-author');
       const linkPopup = document.getElementById('link-popup');
@@ -704,6 +724,16 @@
         updateOverhead();
       });
 
+      siteTitleEnabled.addEventListener('change', () => {
+        siteTitleEditor.classList.toggle('hidden', !siteTitleEnabled.checked);
+        markAsChanged();
+        updateOverhead();
+      });
+
+      siteTitle.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
       metaDescription.addEventListener('input', debounce(() => {
         updateOverhead();
         markAsChanged();
@@ -728,6 +758,8 @@
           version: 1,
           homepageSlug: homepageSelect.value || null,
           favicon: faviconData.value || null,
+          siteTitleEnabled: siteTitleEnabled.checked,
+          siteTitle: siteTitle.value.trim() || null,
           cssEnabled: cssEnabled.checked,
           cssMode: cssMode.value,
           globalCss: globalCss.value.trim(),
@@ -827,6 +859,12 @@
 
           // Update regenerate button visibility
           updateRegenerateButton();
+
+          // Site Title (default: enabled)
+          const siteTitleDisabled = settings.siteTitleEnabled === false;
+          siteTitleEnabled.checked = !siteTitleDisabled;
+          siteTitleEditor.classList.toggle('hidden', siteTitleDisabled);
+          siteTitle.value = settings.siteTitle || '';
 
           // Header
           headerEnabled.checked = settings.header.enabled;

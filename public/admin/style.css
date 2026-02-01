@@ -688,6 +688,15 @@ button:disabled {
   max-width: 70%;
 }
 
+#site-title-editor {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+}
+
 .nav-editor-row,
 .footer-editor-row {
   display: flex;
@@ -719,7 +728,8 @@ button:disabled {
   gap: 16px;
 }
 
-.meta-row .form-group {
+.meta-row .form-group,
+#site-title-editor .form-group {
   margin-bottom: 0;
 }
 

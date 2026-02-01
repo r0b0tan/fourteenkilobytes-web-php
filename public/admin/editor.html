@@ -137,6 +137,26 @@
         <span id="title-bytes">0 B</span>
       </div>
 
+      <!-- Title Override -->
+      <div class="override-section">
+        <div class="override-section-header">
+          <label class="override-toggle">
+            <input type="checkbox" id="title-override-enabled">
+            <span>Override Title</span>
+          </label>
+          <p id="title-override-hint" class="override-hint">✓ Using: Title | Site</p>
+        </div>
+        <div id="title-override-editor" class="override-editor hidden">
+          <div class="form-group">
+            <input type="text" id="title-override" maxlength="100" placeholder="Custom browser tab title...">
+          </div>
+        </div>
+      </div>
+      <div class="rail-item" id="title-override-rail-item">
+        <span>Title Override</span>
+        <span id="title-override-bytes">0 B</span>
+      </div>
+
       <!-- Meta-Override -->
       <div class="override-section">
         <div class="override-section-header">
@@ -431,6 +451,10 @@
       const footerEditor = document.getElementById('footer-editor');
       const footerGlobalHint = document.getElementById('footer-global-hint');
       const footerText = document.getElementById('footer-text');
+      const titleOverrideEnabled = document.getElementById('title-override-enabled');
+      const titleOverrideEditor = document.getElementById('title-override-editor');
+      const titleOverrideHint = document.getElementById('title-override-hint');
+      const titleOverrideInput = document.getElementById('title-override');
       const metaEnabled = document.getElementById('meta-enabled');
       const metaEditor = document.getElementById('meta-editor');
       const metaGlobalHint = document.getElementById('meta-global-hint');
@@ -479,6 +503,8 @@
             slug: slugInput.value,
             pageType: pageTypeSelect.value,
             blocks: [],
+            titleOverrideEnabled: titleOverrideEnabled.checked,
+            titleOverride: titleOverrideEnabled.checked ? titleOverrideInput.value : null,
             navEnabled: navEnabled.checked,
             navigation: navEnabled.checked ? getNavigationItems() : null,
             footerEnabled: footerEnabled.checked,
@@ -539,6 +565,13 @@
               const blockElement = createBlockElement(block.type, level, block.html || '');
               blockEditor.appendChild(blockElement);
             });
+          }
+
+          // Restore title override
+          if (data.titleOverrideEnabled) {
+            titleOverrideEnabled.checked = true;
+            titleOverrideEnabled.dispatchEvent(new Event('change'));
+            titleOverrideInput.value = data.titleOverride || '';
           }
 
           // Restore navigation
@@ -754,6 +787,24 @@
         metaGlobalHint.classList.toggle('hidden', metaEnabled.checked);
         metaDescription.disabled = !metaEnabled.checked;
         metaAuthor.disabled = !metaEnabled.checked;
+      });
+
+      // ============ TITLE OVERRIDE EDITOR ============
+
+      function updateTitleOverrideHint() {
+        const siteTitleEnabled = window.globalConfig?.siteTitleEnabled !== false;
+        const siteTitleText = window.globalConfig?.siteTitle;
+        if (siteTitleEnabled && siteTitleText) {
+          titleOverrideHint.textContent = `✓ Using: Title | ${siteTitleText}`;
+        } else {
+          titleOverrideHint.textContent = '✓ Using title only';
+        }
+      }
+
+      titleOverrideEnabled.addEventListener('change', () => {
+        titleOverrideHint.classList.toggle('hidden', titleOverrideEnabled.checked);
+        titleOverrideEditor.classList.toggle('hidden', !titleOverrideEnabled.checked);
+        titleOverrideInput.disabled = !titleOverrideEnabled.checked;
       });
 
       insertBytesBtn.addEventListener('click', () => {
@@ -1216,9 +1267,17 @@
           }
         }
 
+        // Title override
+        let titleOverride = null;
+        if (titleOverrideEnabled.checked && titleOverrideInput.value.trim()) {
+          titleOverride = titleOverrideInput.value.trim();
+        }
+
         return {
           slug: slugInput.value.trim() || 'untitled',
           title: titleInput.value.trim() || 'Untitled',
+          siteTitle: (window.globalConfig?.siteTitleEnabled !== false) ? (window.globalConfig?.siteTitle || null) : null,
+          titleOverride,
           content: finalContent,
           navigation,
           footer,
@@ -1485,6 +1544,11 @@
           const emptyBlock = createBlockElement('paragraph');
           blockEditor.appendChild(emptyBlock);
 
+          // Reset title override
+          titleOverrideEnabled.checked = false;
+          titleOverrideEnabled.dispatchEvent(new Event('change'));
+          titleOverrideInput.value = '';
+
           // Reset navigation
           navEnabled.checked = false;
           navEnabled.dispatchEvent(new Event('change'));
@@ -1556,6 +1620,10 @@
       metaDescription.disabled = true;
       metaAuthor.disabled = true;
 
+      // Title override - disabled by default
+      titleOverrideInput.disabled = true;
+      updateTitleOverrideHint();
+
       cssEditor.classList.remove('hidden');
       cssRules.disabled = true;
 
@@ -1587,6 +1655,11 @@
         // Add one empty paragraph block
         const emptyBlock = createBlockElement('paragraph');
         blockEditor.appendChild(emptyBlock);
+
+        // Reset title override (disabled)
+        titleOverrideEnabled.checked = false;
+        titleOverrideEnabled.dispatchEvent(new Event('change'));
+        titleOverrideInput.value = '';
 
         // Reset navigation to global (disabled)
         navEnabled.checked = false;
@@ -1657,6 +1730,8 @@
         updateCostRail();
       });
       titleInput.addEventListener('input', debouncedPreview);
+      titleOverrideInput.addEventListener('input', debouncedPreview);
+      titleOverrideEnabled.addEventListener('change', debouncedPreview);
       footerText.addEventListener('input', debouncedPreview);
       cssRules.addEventListener('input', debouncedPreview);
       metaDescription.addEventListener('input', debouncedPreview);
