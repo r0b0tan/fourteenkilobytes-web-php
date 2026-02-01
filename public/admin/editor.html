@@ -133,7 +133,7 @@
         </div>
       </div>
       <div class="rail-item">
-        <span>Title</span>
+        <span>Blog Title</span>
         <span id="title-bytes">0 B</span>
       </div>
 
@@ -146,15 +146,16 @@
           </label>
           <p id="title-override-hint" class="override-hint">✓ Using: Title | Site</p>
         </div>
-        <div id="title-override-editor" class="override-editor hidden">
+        <div id="title-override-editor" class="override-editor">
           <div class="form-group">
-            <input type="text" id="title-override" maxlength="100" placeholder="Custom browser tab title...">
+            <label for="title-override">Browser Tab Title</label>
+            <input type="text" id="title-override" maxlength="100" placeholder="Custom browser tab title..." disabled>
           </div>
         </div>
       </div>
-      <div class="rail-item" id="title-override-rail-item">
-        <span>Title Override</span>
-        <span id="title-override-bytes">0 B</span>
+      <div class="rail-item" id="title-rail-item">
+        <span>Page Title</span>
+        <span id="browser-title-bytes">0 B</span>
       </div>
 
       <!-- Meta-Override -->
@@ -194,6 +195,7 @@
           <p id="nav-global-hint" class="override-hint">✓ Using global navigation</p>
         </div>
         <div id="nav-editor" class="override-editor hidden">
+          <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
           <div class="nav-editor-row">
             <div id="nav-links" class="nav-links"></div>
             <button type="button" id="add-nav-link" class="btn btn-secondary">+ Link</button>
@@ -471,6 +473,7 @@
       const costContentTotal = document.getElementById('cost-content-total');
       const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
+      const browserTitleBytesEl = document.getElementById('browser-title-bytes');
       const navBytesEl = document.getElementById('nav-bytes');
       const metaBytesEl = document.getElementById('meta-bytes');
       const footerBytesEl = document.getElementById('footer-bytes');
@@ -803,8 +806,12 @@
 
       titleOverrideEnabled.addEventListener('change', () => {
         titleOverrideHint.classList.toggle('hidden', titleOverrideEnabled.checked);
-        titleOverrideEditor.classList.toggle('hidden', !titleOverrideEnabled.checked);
         titleOverrideInput.disabled = !titleOverrideEnabled.checked;
+        updateTitleBytes();
+      });
+
+      titleOverrideInput.addEventListener('input', () => {
+        updateTitleBytes();
       });
 
       insertBytesBtn.addEventListener('click', () => {
@@ -1385,10 +1392,28 @@
       }
 
       function updateTitleBytes() {
-        const title = titleInput.value.trim() || 'Untitled';
+        const pageTitle = titleInput.value.trim() || 'Untitled';
+        const titleOverrideValue = titleOverrideInput.value.trim();
+        const siteTitleEnabled = window.globalConfig?.siteTitleEnabled !== false;
+        const siteTitleText = window.globalConfig?.siteTitle;
+
+        // Page Title: just the title input value
+        const pageTitleBytes = new TextEncoder().encode(pageTitle).length;
+        titleBytesEl.textContent = formatBytes(pageTitleBytes);
+
+        // Browser Title: final <title> tag content
+        let browserTitle;
+        if (titleOverrideEnabled.checked && titleOverrideValue) {
+          browserTitle = titleOverrideValue;
+        } else if (siteTitleEnabled && siteTitleText) {
+          browserTitle = `${pageTitle} | ${siteTitleText}`;
+        } else {
+          browserTitle = pageTitle;
+        }
+
         // <title>TITEL</title> = 15 bytes markup + title bytes
-        const titleBytes = new TextEncoder().encode(title).length + 15;
-        titleBytesEl.textContent = formatBytes(titleBytes);
+        const browserTitleBytes = new TextEncoder().encode(browserTitle).length + 15;
+        browserTitleBytesEl.textContent = formatBytes(browserTitleBytes);
       }
 
       // ============ MODAL SYSTEM ============
