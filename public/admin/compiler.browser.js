@@ -547,7 +547,7 @@ function renderBloglist(posts) {
       month: "long",
       day: "numeric"
     });
-    return `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a><time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
+    return `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
   }).join("\n");
   return `<ul class="posts">
 ${items}
