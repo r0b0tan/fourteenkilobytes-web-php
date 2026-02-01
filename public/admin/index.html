@@ -101,6 +101,7 @@
         <div class="dashboard-tabs">
           <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
           <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
+          <button type="button" class="tab-btn" data-tab="archive">Archiv</button>
         </div>
         <div class="list-controls">
           <div class="search-box">
@@ -138,6 +139,14 @@
           </ul>
           <div id="pages-pagination" class="pagination hidden"></div>
         </div>
+
+        <!-- Archive Tab -->
+        <div id="tab-archive" class="tab-content hidden">
+          <ul id="archive-list" class="posts-list">
+            <li class="empty">Lade...</li>
+          </ul>
+          <div id="archive-pagination" class="pagination hidden"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -158,8 +167,10 @@
       const logoutBtn = document.getElementById('logout-btn');
       const postsList = document.getElementById('posts-list');
       const pagesList = document.getElementById('pages-list');
+      const archiveList = document.getElementById('archive-list');
       const postsPagination = document.getElementById('posts-pagination');
       const pagesPagination = document.getElementById('pages-pagination');
+      const archivePagination = document.getElementById('archive-pagination');
       const pageSizeSelect = document.getElementById('page-size');
       const searchInput = document.getElementById('search-input');
       const tabBtns = document.querySelectorAll('.tab-btn');
@@ -168,9 +179,11 @@
       // Pagination & Search State
       let allPosts = [];
       let allPages = [];
+      let allArchive = [];
       let pageSize = 10;
       let postsPage = 1;
       let pagesPage = 1;
+      let archivePage = 1;
       let searchQuery = '';
 
       // Debounce helper
@@ -297,19 +310,24 @@
         try {
           const allContent = await App.getPosts();
 
-          // Split into posts and pages, sort by date
+          // Split into posts, pages, and archive (tombstones), sort by date
           allPosts = allContent
-            .filter(item => item.pageType !== 'page')
+            .filter(item => item.pageType !== 'page' && item.status !== 'tombstone')
             .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
           allPages = allContent
-            .filter(item => item.pageType === 'page')
+            .filter(item => item.pageType === 'page' && item.status !== 'tombstone')
+            .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+          allArchive = allContent
+            .filter(item => item.status === 'tombstone')
             .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 
           renderCurrentView();
         } catch (err) {
           postsList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
           pagesList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
+          archiveList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
           console.error(err);
         }
       }
@@ -325,8 +343,10 @@
       function renderCurrentView() {
         const filteredPosts = filterItems(allPosts);
         const filteredPages = filterItems(allPages);
+        const filteredArchive = filterItems(allArchive);
         renderPaginatedList(postsList, postsPagination, filteredPosts, postsPage, 'Post', 'Noch keine Posts.', (p) => { postsPage = p; renderCurrentView(); });
         renderPaginatedList(pagesList, pagesPagination, filteredPages, pagesPage, 'Seite', 'Noch keine Seiten.', (p) => { pagesPage = p; renderCurrentView(); });
+        renderPaginatedList(archiveList, archivePagination, filteredArchive, archivePage, '', 'Keine gelöschten Artikel.', (p) => { archivePage = p; renderCurrentView(); });
       }
 
       function renderPaginatedList(listEl, paginationEl, items, currentPage, typeName, emptyText, onPageChange) {
