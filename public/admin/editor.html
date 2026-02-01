@@ -341,6 +341,14 @@
             <span id="breakdown-base">0 B</span>
           </div>
           <div class="breakdown-row">
+            <span>Title</span>
+            <span id="breakdown-title">0 B</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Favicon</span>
+            <span id="breakdown-favicon">0 B</span>
+          </div>
+          <div class="breakdown-row">
             <span>Navigation</span>
             <span id="breakdown-nav">0 B</span>
           </div>
@@ -481,6 +489,8 @@
 
       // Build Card elements
       const breakdownBase = document.getElementById('breakdown-base');
+      const breakdownTitle = document.getElementById('breakdown-title');
+      const breakdownFavicon = document.getElementById('breakdown-favicon');
       const breakdownNav = document.getElementById('breakdown-nav');
       const breakdownMeta = document.getElementById('breakdown-meta');
       const breakdownFooter = document.getElementById('breakdown-footer');
@@ -1301,9 +1311,7 @@
       // ============ BYTE COUNTER & COST RAIL ============
 
       function formatBytes(bytes) {
-        if (bytes === 0) return '0 B';
-        if (bytes < 1000) return bytes + ' B';
-        return (bytes / 1024).toFixed(1) + ' KB';
+        return bytes.toLocaleString('de-DE') + ' B';
       }
 
       function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
@@ -1315,6 +1323,8 @@
         // Update Build Summary breakdown
         if (breakdown) {
           breakdownBase.textContent = formatBytes(breakdown.base);
+          breakdownTitle.textContent = formatBytes(breakdown.title || 0);
+          breakdownFavicon.textContent = formatBytes(breakdown.favicon || 0);
           breakdownNav.textContent = formatBytes(breakdown.navigation);
           breakdownMeta.textContent = formatBytes(breakdown.meta || 0);
           breakdownFooter.textContent = formatBytes(breakdown.footer);
