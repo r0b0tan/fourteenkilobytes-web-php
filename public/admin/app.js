@@ -510,6 +510,70 @@ const App = (function() {
   }
 
   /**
+   * Delete all posts
+   */
+  async function deleteAllPosts() {
+    return apiFetch('/api/posts', {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Export data (triggers download)
+   * @param {string} type - 'all', 'articles', or 'settings'
+   */
+  async function exportData(type = 'all') {
+    const res = await fetch(`/api/export?type=${type}`, {
+      credentials: 'same-origin',
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const filename = `fourteenkilobytes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    return data;
+  }
+
+  /**
+   * Import data from backup
+   * @param {object} data - Parsed backup JSON
+   * @param {object} options - { settings: boolean, articles: boolean }
+   */
+  async function importData(data, options = { settings: true, articles: true }) {
+    const params = new URLSearchParams({
+      settings: options.settings ? 'true' : 'false',
+      articles: options.articles ? 'true' : 'false',
+    });
+
+    return apiFetch(`/api/import?${params}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Factory reset - deletes all data
+   */
+  async function factoryReset() {
+    return apiFetch('/api/reset', {
+      method: 'POST',
+      body: JSON.stringify({ confirm: 'RESET' }),
+    });
+  }
+
+  /**
    * Republish post with current posts (regenerate bloglist)
    */
   async function republishPost(slug) {
@@ -591,11 +655,15 @@ const App = (function() {
     preview,
     publish,
     deletePost,
+    deleteAllPosts,
     republishPost,
     getSettings,
     saveSettings,
     previewOverhead,
     getGlobalSettingsInfo,
+    exportData,
+    importData,
+    factoryReset,
     escapeHtml,
     formatDate,
     slugify,

@@ -107,6 +107,7 @@
         <button type="button" class="tab-btn" data-tab="header">Header</button>
         <button type="button" class="tab-btn" data-tab="footer">Footer</button>
         <button type="button" class="tab-btn" data-tab="css">CSS</button>
+        <button type="button" class="tab-btn" data-tab="data">Daten</button>
       </div>
       <div class="settings-actions">
         <button id="discard-btn" class="btn btn-secondary hidden">
@@ -304,6 +305,94 @@
   margin: 0 auto;
 }"></textarea>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Tab -->
+      <div id="tab-data" class="tab-content hidden">
+        <!-- Export Section -->
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title">Export</h3>
+          <p class="text-small text-muted mb-1">Erstelle ein Backup deiner Daten als JSON-Datei</p>
+          <div class="export-options">
+            <label class="radio-option">
+              <input type="radio" name="export-type" value="all" checked>
+              <span>Alles (Einstellungen + Artikel)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="export-type" value="articles">
+              <span>Nur Artikel</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="export-type" value="settings">
+              <span>Nur Einstellungen</span>
+            </label>
+          </div>
+          <button type="button" id="export-btn" class="btn btn-secondary" style="margin-top: 1rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Exportieren
+          </button>
+        </div>
+
+        <!-- Import Section -->
+        <div class="override-section">
+          <h3 class="override-section-title">Import</h3>
+          <p class="text-small text-muted mb-1">Importiere ein Backup aus einer JSON-Datei</p>
+          <div class="import-dropzone" id="import-dropzone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p>Datei hierher ziehen oder <label class="import-browse">durchsuchen<input type="file" id="import-file" accept=".json" hidden></label></p>
+            <span id="import-filename" class="import-filename hidden"></span>
+          </div>
+          <div id="import-options" class="import-options hidden">
+            <label class="checkbox-option">
+              <input type="checkbox" id="import-settings" checked>
+              <span>Einstellungen importieren</span>
+            </label>
+            <label class="checkbox-option">
+              <input type="checkbox" id="import-articles" checked>
+              <span>Artikel importieren</span>
+            </label>
+            <p class="text-small text-muted" style="margin-top: 0.5rem;">Bestehende Daten werden überschrieben.</p>
+          </div>
+          <button type="button" id="import-btn" class="btn btn-secondary" style="margin-top: 1rem;" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Importieren
+          </button>
+        </div>
+
+        <!-- Reset Section -->
+        <div class="override-section">
+          <h3 class="override-section-title danger-title">Zurücksetzen</h3>
+          <p class="text-small text-muted mb-1">Vorsicht: Diese Aktionen können nicht rückgängig gemacht werden!</p>
+          <div class="danger-zone">
+            <button type="button" id="delete-all-btn" class="btn btn-danger">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Alle Artikel löschen
+            </button>
+            <button type="button" id="factory-reset-btn" class="btn btn-danger">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Werkseinstellungen
+            </button>
           </div>
         </div>
       </div>
@@ -1055,6 +1144,198 @@
           timeout = setTimeout(() => fn(...args), delay);
         };
       }
+
+      // ============ DATA TAB ============
+
+      const exportBtn = document.getElementById('export-btn');
+      const importDropzone = document.getElementById('import-dropzone');
+      const importFile = document.getElementById('import-file');
+      const importFilename = document.getElementById('import-filename');
+      const importOptions = document.getElementById('import-options');
+      const importSettings = document.getElementById('import-settings');
+      const importArticles = document.getElementById('import-articles');
+      const importBtn = document.getElementById('import-btn');
+      const deleteAllBtn = document.getElementById('delete-all-btn');
+      const factoryResetBtn = document.getElementById('factory-reset-btn');
+
+      let importData = null;
+
+      // Export
+      exportBtn.addEventListener('click', async () => {
+        const type = document.querySelector('input[name="export-type"]:checked').value;
+        exportBtn.disabled = true;
+        try {
+          await App.exportData(type);
+          Toast.success('Export erfolgreich heruntergeladen');
+        } catch (err) {
+          Toast.error(`Export fehlgeschlagen: ${err.message}`);
+        } finally {
+          exportBtn.disabled = false;
+        }
+      });
+
+      // Import - File selection
+      function handleImportFile(file) {
+        if (!file || !file.name.endsWith('.json')) {
+          Toast.error('Bitte eine JSON-Datei auswählen');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            importData = JSON.parse(e.target.result);
+            if (importData.version !== 1) {
+              throw new Error('Ungültiges Backup-Format');
+            }
+
+            importFilename.textContent = file.name;
+            importFilename.classList.remove('hidden');
+            importOptions.classList.remove('hidden');
+            importBtn.disabled = false;
+
+            // Show what's available in the backup
+            const hasSettings = !!importData.settings;
+            const hasArticles = !!importData.articles?.length;
+            importSettings.disabled = !hasSettings;
+            importSettings.checked = hasSettings;
+            importArticles.disabled = !hasArticles;
+            importArticles.checked = hasArticles;
+
+            if (!hasSettings && !hasArticles) {
+              Toast.error('Backup enthält keine Daten');
+              resetImportUI();
+            }
+          } catch (err) {
+            Toast.error(`Ungültige Datei: ${err.message}`);
+            resetImportUI();
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function resetImportUI() {
+        importData = null;
+        importFilename.classList.add('hidden');
+        importOptions.classList.add('hidden');
+        importBtn.disabled = true;
+        importFile.value = '';
+      }
+
+      importFile.addEventListener('change', (e) => {
+        handleImportFile(e.target.files[0]);
+      });
+
+      // Drag & Drop
+      importDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        importDropzone.classList.add('dragover');
+      });
+
+      importDropzone.addEventListener('dragleave', () => {
+        importDropzone.classList.remove('dragover');
+      });
+
+      importDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        importDropzone.classList.remove('dragover');
+        handleImportFile(e.dataTransfer.files[0]);
+      });
+
+      // Import execution
+      importBtn.addEventListener('click', async () => {
+        if (!importData) return;
+
+        const doSettings = importSettings.checked;
+        const doArticles = importArticles.checked;
+
+        if (!doSettings && !doArticles) {
+          Toast.error('Mindestens eine Option auswählen');
+          return;
+        }
+
+        const confirmed = await Modal.confirm(
+          `Import durchführen? ${doSettings ? 'Einstellungen' : ''}${doSettings && doArticles ? ' und ' : ''}${doArticles ? 'Artikel' : ''} werden überschrieben.`
+        );
+        if (!confirmed) return;
+
+        importBtn.disabled = true;
+        try {
+          const result = await App.importData(importData, {
+            settings: doSettings,
+            articles: doArticles,
+          });
+
+          let message = 'Import erfolgreich: ';
+          if (result.imported.includes('settings')) {
+            message += 'Einstellungen';
+          }
+          if (result.imported.includes('articles')) {
+            message += (result.imported.includes('settings') ? ' + ' : '') +
+              `${result.articleSlugs?.length || 0} Artikel`;
+          }
+
+          Toast.success(message);
+          resetImportUI();
+
+          // Reload settings if they were imported
+          if (doSettings) {
+            await loadSettings();
+          }
+        } catch (err) {
+          Toast.error(`Import fehlgeschlagen: ${err.message}`);
+        } finally {
+          importBtn.disabled = false;
+        }
+      });
+
+      // Delete all posts
+      deleteAllBtn.addEventListener('click', async () => {
+        const confirmed = await Modal.confirm(
+          'Wirklich ALLE Artikel unwiderruflich löschen? Diese Aktion kann nicht rückgängig gemacht werden!'
+        );
+        if (!confirmed) return;
+
+        // Double confirmation for safety
+        const doubleConfirmed = await Modal.confirm(
+          'Bist du sicher? Alle Artikel werden gelöscht!'
+        );
+        if (!doubleConfirmed) return;
+
+        deleteAllBtn.disabled = true;
+        try {
+          const result = await App.deleteAllPosts();
+          Toast.success(`${result.deleted} Artikel gelöscht`);
+        } catch (err) {
+          Toast.error(`Fehler: ${err.message}`);
+        } finally {
+          deleteAllBtn.disabled = false;
+        }
+      });
+
+      // Factory reset
+      factoryResetBtn.addEventListener('click', async () => {
+        const confirmed = await Modal.confirm(
+          'Wirklich auf Werkseinstellungen zurücksetzen? ALLE Daten werden gelöscht!'
+        );
+        if (!confirmed) return;
+
+        const doubleConfirmed = await Modal.confirm(
+          'LETZTE WARNUNG: Alle Artikel und Einstellungen werden unwiderruflich gelöscht!'
+        );
+        if (!doubleConfirmed) return;
+
+        factoryResetBtn.disabled = true;
+        try {
+          await App.factoryReset();
+          Toast.success('Zurückgesetzt auf Werkseinstellungen');
+          // Reload page to reflect changes
+          setTimeout(() => window.location.reload(), 1500);
+        } catch (err) {
+          Toast.error(`Fehler: ${err.message}`);
+          factoryResetBtn.disabled = false;
+        }
+      });
 
       // ============ INIT ============
 
