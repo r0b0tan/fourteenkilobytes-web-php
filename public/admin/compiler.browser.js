@@ -428,7 +428,13 @@ function flatten(input) {
     iconBytes += getIconBytes(iconRef.id);
   }
   breakdown.icons = iconBytes;
-  const titleHtml = `<title>${escapeHtml(input.title)}</title>`;
+  let finalTitle = input.title;
+  if (input.titleOverride) {
+    finalTitle = input.titleOverride;
+  } else if (input.siteTitle) {
+    finalTitle = `${input.title} | ${input.siteTitle}`;
+  }
+  const titleHtml = `<title>${escapeHtml(finalTitle)}</title>`;
   breakdown.title = measureBytes(titleHtml);
   let cssHtml = "";
   if (input.css !== null) {
