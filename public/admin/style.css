@@ -318,7 +318,7 @@ h2 {
 
 .card-body-grid > .rail-item {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--accent);
   font-family: ui-monospace, monospace;
   display: flex;
   justify-content: space-between;
@@ -455,6 +455,10 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+input[type="checkbox"] {
+  accent-color: #10a697;
 }
 
 input::placeholder,
@@ -660,7 +664,7 @@ button:disabled {
 
 .override-hint {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--accent);
   margin: 0;
 }
 
@@ -675,7 +679,7 @@ button:disabled {
 #header-editor,
 #footer-editor,
 #nav-editor {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px;
@@ -687,18 +691,16 @@ button:disabled {
   padding: 12px;
   background: var(--gray-100);
   border-radius: 6px;
-  max-width: 70%;
 }
 
 #title-override-editor {
   padding: 12px;
   background: var(--gray-100);
   border-radius: 6px;
-  max-width: 70%;
 }
 
 #site-title-editor {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px;
