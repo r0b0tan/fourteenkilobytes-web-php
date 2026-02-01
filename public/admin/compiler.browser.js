@@ -188,13 +188,14 @@ function validateContent(blocks) {
 }
 function validateContentBlock(block, path) {
   const blockType = block.type;
-  if (blockType !== "heading" && blockType !== "paragraph" && blockType !== "bloglist") {
+  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider"];
+  if (!allowedBlockTypes.includes(blockType)) {
     return {
       valid: false,
       error: {
         code: "CONTENT_INVALID_ELEMENT",
         element: blockType,
-        allowed: ["heading", "paragraph", "bloglist"],
+        allowed: allowedBlockTypes,
         path
       }
     };
@@ -212,18 +213,67 @@ function validateContentBlock(block, path) {
       };
     }
   }
-  if (blockType !== "bloglist") {
-    for (let i = 0; i < block.children.length; i++) {
-      const node = block.children[i];
-      const result = validateInlineNode(node, `${path}.children[${i}]`);
-      if (!result.valid)
-        return result;
+  if (blockType === "unordered-list" || blockType === "ordered-list") {
+    if (!block.items || !Array.isArray(block.items)) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `${blockType} without items array`,
+          allowed: [`${blockType} with items array`],
+          path
+        }
+      };
     }
+    for (let i = 0; i < block.items.length; i++) {
+      const item = block.items[i];
+      if (!item.children || !Array.isArray(item.children)) {
+        return {
+          valid: false,
+          error: {
+            code: "CONTENT_INVALID_ELEMENT",
+            element: "list item without children",
+            allowed: ["list item with children array"],
+            path: `${path}.items[${i}]`
+          }
+        };
+      }
+      for (let j = 0; j < item.children.length; j++) {
+        const node = item.children[j];
+        const result = validateInlineNode(node, `${path}.items[${i}].children[${j}]`);
+        if (!result.valid)
+          return result;
+      }
+    }
+    return { valid: true };
+  }
+  if (blockType === "codeblock") {
+    if (typeof block.content !== "string") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "codeblock without string content",
+          allowed: ["codeblock with string content"],
+          path
+        }
+      };
+    }
+    return { valid: true };
+  }
+  if (blockType === "bloglist" || blockType === "divider") {
+    return { valid: true };
+  }
+  for (let i = 0; i < block.children.length; i++) {
+    const node = block.children[i];
+    const result = validateInlineNode(node, `${path}.children[${i}]`);
+    if (!result.valid)
+      return result;
   }
   return { valid: true };
 }
 function validateInlineNode(node, path) {
-  const allowedTypes = ["text", "linebreak", "bold", "italic", "link"];
+  const allowedTypes = ["text", "linebreak", "bold", "italic", "underline", "strikethrough", "code", "link"];
   if (!allowedTypes.includes(node.type)) {
     return {
       valid: false,
@@ -528,10 +578,29 @@ function flattenContentBlock(block, icons, posts) {
   if (block.type === "bloglist") {
     return renderBloglist(posts || []);
   }
+  if (block.type === "divider") {
+    return "<hr>";
+  }
+  if (block.type === "codeblock") {
+    return `<pre><code>${escapeHtml(block.content)}</code></pre>`;
+  }
+  if (block.type === "unordered-list" || block.type === "ordered-list") {
+    const tag = block.type === "unordered-list" ? "ul" : "ol";
+    const items = block.items.map((item) => {
+      const inlineHtml2 = flattenInlineNodes(item.children, icons, "content");
+      return `<li>${inlineHtml2}</li>`;
+    }).join("\n");
+    return `<${tag}>
+${items}
+</${tag}>`;
+  }
   const inlineHtml = flattenInlineNodes(block.children, icons, "content");
   if (block.type === "heading") {
     const level = block.level ?? 1;
     return `<h${level}>${inlineHtml}</h${level}>`;
+  }
+  if (block.type === "blockquote") {
+    return `<blockquote>${inlineHtml}</blockquote>`;
   }
   return `<p>${inlineHtml}</p>`;
 }
@@ -566,6 +635,12 @@ function flattenInlineNode(node, icons, placement, index) {
       return `<b>${flattenInlineNodes(node.children, icons, placement)}</b>`;
     case "italic":
       return `<i>${flattenInlineNodes(node.children, icons, placement)}</i>`;
+    case "underline":
+      return `<u>${flattenInlineNodes(node.children, icons, placement)}</u>`;
+    case "strikethrough":
+      return `<s>${flattenInlineNodes(node.children, icons, placement)}</s>`;
+    case "code":
+      return `<code>${flattenInlineNodes(node.children, icons, placement)}</code>`;
     case "link": {
       const childHtml = flattenInlineNodes(node.children, icons, placement);
       const icon = icons.find(
