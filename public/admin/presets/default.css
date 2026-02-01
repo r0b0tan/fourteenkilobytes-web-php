@@ -62,11 +62,6 @@ li.post {
   margin-bottom: 1rem;
 }
 
-li.post time::before {
-  content: " - ";
-  color: #6b7280;
-}
-
 pre, code {
   background: #f5f5f5;
   border-radius: 3px;
