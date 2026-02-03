@@ -1,0 +1,46 @@
+{
+    "slug": "",
+    "title": "",
+    "content": [
+        {
+            "type": "heading",
+            "level": 1,
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Page Title"
+                }
+            ]
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "This is a simple static page template."
+                }
+            ]
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Add your content here."
+                }
+            ]
+        }
+    ],
+    "navigation": {
+        "enabled": false,
+        "links": []
+    },
+    "footer": {
+        "enabled": false,
+        "content": ""
+    },
+    "titleOverride": {
+        "enabled": false,
+        "title": ""
+    }
+}
