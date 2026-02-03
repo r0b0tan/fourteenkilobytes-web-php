@@ -2304,15 +2304,59 @@ button:disabled {
   color: var(--accent-hover);
 }
 
-.import-filename {
-  display: inline-block;
-  margin-top: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  background: var(--accent-alpha-15);
-  color: var(--accent);
+.import-progress {
+  margin: 1rem 0;
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--gray-200);
   border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.progress-text {
   font-size: 13px;
-  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0 0;
+  text-align: center;
+}
+
+#import-modal .modal-content {
+  min-width: 320px;
+}
+
+#import-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+#import-modal-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+#import-modal-options label.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#import-modal-options .import-option-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 1.5rem;
 }
 
 .danger-title {

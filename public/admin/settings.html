@@ -350,27 +350,7 @@
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             <p>Datei hierher ziehen oder <label class="import-browse">durchsuchen<input type="file" id="import-file" accept=".json" hidden></label></p>
-            <span id="import-filename" class="import-filename hidden"></span>
           </div>
-          <div id="import-options" class="import-options hidden">
-            <label class="checkbox-option">
-              <input type="checkbox" id="import-settings" checked>
-              <span>Einstellungen importieren</span>
-            </label>
-            <label class="checkbox-option">
-              <input type="checkbox" id="import-articles" checked>
-              <span>Artikel importieren</span>
-            </label>
-            <p class="text-small text-muted" style="margin-top: 0.5rem;">Bestehende Daten werden überschrieben.</p>
-          </div>
-          <button type="button" id="import-btn" class="btn btn-secondary" style="margin-top: 1rem;" disabled>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            Importieren
-          </button>
         </div>
 
         <!-- Reset Section -->
@@ -486,6 +466,21 @@
     <div class="modal-content">
       <p id="modal-message"></p>
       <div id="modal-actions" class="popup-actions"></div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="import-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 style="margin: 0 0 1rem 0;">Backup importieren</h3>
+      <div id="import-modal-options"></div>
+      <div id="import-progress" class="import-progress hidden">
+        <div class="progress-bar">
+          <div class="progress-fill" id="import-progress-fill"></div>
+        </div>
+        <p class="progress-text" id="import-progress-text">Importiere...</p>
+      </div>
+      <div id="import-modal-actions" class="popup-actions"></div>
     </div>
   </div>
 
@@ -1150,15 +1145,19 @@
       const exportBtn = document.getElementById('export-btn');
       const importDropzone = document.getElementById('import-dropzone');
       const importFile = document.getElementById('import-file');
-      const importFilename = document.getElementById('import-filename');
-      const importOptions = document.getElementById('import-options');
-      const importSettings = document.getElementById('import-settings');
-      const importArticles = document.getElementById('import-articles');
-      const importBtn = document.getElementById('import-btn');
       const deleteAllBtn = document.getElementById('delete-all-btn');
       const factoryResetBtn = document.getElementById('factory-reset-btn');
 
-      let importData = null;
+      // Shared backdrop for all modals
+      const backdrop = document.getElementById('modal-backdrop');
+
+      // Import Modal elements
+      const importModal = document.getElementById('import-modal');
+      const importModalOptions = document.getElementById('import-modal-options');
+      const importModalActions = document.getElementById('import-modal-actions');
+      const importProgress = document.getElementById('import-progress');
+      const importProgressFill = document.getElementById('import-progress-fill');
+      const importProgressText = document.getElementById('import-progress-text');
 
       // Export
       exportBtn.addEventListener('click', async () => {
@@ -1174,7 +1173,175 @@
         }
       });
 
-      // Import - File selection
+      // Import - Reset UI
+      function resetImportUI() {
+        importFile.value = '';
+      }
+
+      // Import - Show modal based on backup content
+      function showImportModal(data) {
+        const hasSettings = !!data.settings;
+        const hasArticles = !!data.articles?.length;
+        const articleCount = data.articles?.length || 0;
+
+        // Reset modal state
+        importProgress.classList.add('hidden');
+        importProgressFill.style.width = '0%';
+        importModalOptions.innerHTML = '';
+        importModalActions.innerHTML = '';
+
+        // Build options based on what's in the backup
+        if (hasSettings && hasArticles) {
+          // Both: show checkboxes
+          importModalOptions.innerHTML = `
+            <label>
+              <input type="checkbox" id="import-opt-settings" checked>
+              <span>Einstellungen importieren</span>
+            </label>
+            <label>
+              <input type="checkbox" id="import-opt-articles" checked>
+              <span>${articleCount} Artikel importieren</span>
+            </label>
+            <label id="import-build-option">
+              <input type="checkbox" id="import-opt-build" checked>
+              <span>Artikel nach Import bauen</span>
+            </label>
+            <p class="import-option-note">Bestehende Daten werden überschrieben.</p>
+          `;
+
+          // Toggle build option visibility based on articles checkbox
+          const articlesCheckbox = document.getElementById('import-opt-articles');
+          const buildOption = document.getElementById('import-build-option');
+          articlesCheckbox.addEventListener('change', () => {
+            buildOption.style.display = articlesCheckbox.checked ? '' : 'none';
+          });
+        } else if (hasArticles) {
+          // Only articles
+          importModalOptions.innerHTML = `
+            <p>${articleCount} Artikel importieren?</p>
+            <label>
+              <input type="checkbox" id="import-opt-build" checked>
+              <span>Artikel nach Import bauen</span>
+            </label>
+            <p class="import-option-note">Bestehende Artikel werden überschrieben.</p>
+          `;
+        } else if (hasSettings) {
+          // Only settings
+          importModalOptions.innerHTML = `
+            <p>Einstellungen importieren?</p>
+            <p class="import-option-note">Bestehende Einstellungen werden überschrieben.</p>
+          `;
+        }
+
+        // Create action buttons
+        const importBtn = document.createElement('button');
+        importBtn.type = 'button';
+        importBtn.className = 'btn-primary';
+        importBtn.textContent = 'Importieren';
+        importBtn.addEventListener('click', () => executeImport(data, hasSettings, hasArticles));
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn-secondary';
+        cancelBtn.textContent = 'Abbrechen';
+        cancelBtn.addEventListener('click', hideImportModal);
+
+        importModalActions.appendChild(importBtn);
+        importModalActions.appendChild(cancelBtn);
+
+        // Show modal
+        backdrop.classList.remove('hidden');
+        importModal.classList.remove('hidden');
+      }
+
+      function hideImportModal() {
+        importModal.classList.add('hidden');
+        backdrop.classList.add('hidden');
+        resetImportUI();
+      }
+
+      async function executeImport(data, hasSettings, hasArticles) {
+        const settingsCheckbox = document.getElementById('import-opt-settings');
+        const articlesCheckbox = document.getElementById('import-opt-articles');
+        const buildCheckbox = document.getElementById('import-opt-build');
+
+        // Determine what to import
+        const doSettings = hasSettings && (!settingsCheckbox || settingsCheckbox.checked);
+        const doArticles = hasArticles && (!articlesCheckbox || articlesCheckbox.checked);
+        const doBuild = doArticles && buildCheckbox?.checked;
+
+        if (!doSettings && !doArticles) {
+          Toast.error('Mindestens eine Option auswählen');
+          return;
+        }
+
+        // Disable buttons during import
+        const buttons = importModalActions.querySelectorAll('button');
+        buttons.forEach(btn => btn.disabled = true);
+
+        try {
+          // Show progress for article builds
+          if (doBuild) {
+            importProgress.classList.remove('hidden');
+            importProgressText.textContent = 'Importiere Daten...';
+            importProgressFill.style.width = '5%';
+          }
+
+          const result = await App.importData(data, {
+            settings: doSettings,
+            articles: doArticles,
+          });
+
+          // Reload settings if they were imported
+          if (doSettings && result.imported.includes('settings')) {
+            await loadSettings();
+          }
+
+          // Build articles if requested
+          if (doBuild && result.articleSlugs?.length > 0) {
+            const slugs = result.articleSlugs;
+            let built = 0;
+            let failed = 0;
+
+            for (const slug of slugs) {
+              const progress = Math.round(5 + ((built + 1) / slugs.length) * 95);
+              importProgressFill.style.width = `${progress}%`;
+              importProgressText.textContent = `Baue Artikel ${built + 1} von ${slugs.length}...`;
+
+              try {
+                await App.republishPost(slug);
+                built++;
+              } catch (err) {
+                console.error(`Failed to rebuild ${slug}:`, err);
+                failed++;
+              }
+            }
+
+            hideImportModal();
+
+            if (failed > 0) {
+              Toast.error(`${built} Artikel gebaut, ${failed} fehlgeschlagen`);
+            } else {
+              Toast.success(`Import erfolgreich: ${built} Artikel importiert und gebaut`);
+            }
+          } else if (doArticles && result.articleSlugs?.length > 0) {
+            // Articles imported but not built
+            hideImportModal();
+            Toast.success(`${result.articleSlugs.length} Artikel importiert (nicht gebaut)`);
+          } else if (doSettings) {
+            hideImportModal();
+            Toast.success('Einstellungen importiert');
+          } else {
+            hideImportModal();
+          }
+        } catch (err) {
+          Toast.error(`Import fehlgeschlagen: ${err.message}`);
+          buttons.forEach(btn => btn.disabled = false);
+          importProgress.classList.add('hidden');
+        }
+      }
+
+      // Import - File handling
       function handleImportFile(file) {
         if (!file || !file.name.endsWith('.json')) {
           Toast.error('Bitte eine JSON-Datei auswählen');
@@ -1184,42 +1351,28 @@
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            importData = JSON.parse(e.target.result);
-            if (importData.version !== 1) {
+            const data = JSON.parse(e.target.result);
+            if (data.version !== 1) {
               throw new Error('Ungültiges Backup-Format');
             }
 
-            importFilename.textContent = file.name;
-            importFilename.classList.remove('hidden');
-            importOptions.classList.remove('hidden');
-            importBtn.disabled = false;
-
-            // Show what's available in the backup
-            const hasSettings = !!importData.settings;
-            const hasArticles = !!importData.articles?.length;
-            importSettings.disabled = !hasSettings;
-            importSettings.checked = hasSettings;
-            importArticles.disabled = !hasArticles;
-            importArticles.checked = hasArticles;
+            const hasSettings = !!data.settings;
+            const hasArticles = !!data.articles?.length;
 
             if (!hasSettings && !hasArticles) {
               Toast.error('Backup enthält keine Daten');
               resetImportUI();
+              return;
             }
+
+            // Show import modal immediately
+            showImportModal(data);
           } catch (err) {
             Toast.error(`Ungültige Datei: ${err.message}`);
             resetImportUI();
           }
         };
         reader.readAsText(file);
-      }
-
-      function resetImportUI() {
-        importData = null;
-        importFilename.classList.add('hidden');
-        importOptions.classList.add('hidden');
-        importBtn.disabled = true;
-        importFile.value = '';
       }
 
       importFile.addEventListener('change', (e) => {
@@ -1240,77 +1393,6 @@
         e.preventDefault();
         importDropzone.classList.remove('dragover');
         handleImportFile(e.dataTransfer.files[0]);
-      });
-
-      // Import execution
-      importBtn.addEventListener('click', async () => {
-        if (!importData) return;
-
-        const doSettings = importSettings.checked;
-        const doArticles = importArticles.checked;
-
-        if (!doSettings && !doArticles) {
-          Toast.error('Mindestens eine Option auswählen');
-          return;
-        }
-
-        const articleCount = importData.articles?.length || 0;
-        const confirmed = await Modal.confirm(
-          `Import durchführen? ${doSettings ? 'Einstellungen' : ''}${doSettings && doArticles ? ' und ' : ''}${doArticles ? `${articleCount} Artikel` : ''} werden importiert.`
-        );
-        if (!confirmed) return;
-
-        importBtn.disabled = true;
-        importBtn.innerHTML = '<span class="spinner"></span> Importiere...';
-
-        try {
-          const result = await App.importData(importData, {
-            settings: doSettings,
-            articles: doArticles,
-          });
-
-          // Reload settings first if they were imported
-          if (doSettings && result.imported.includes('settings')) {
-            await loadSettings();
-          }
-
-          // Rebuild all imported articles
-          if (doArticles && result.articleSlugs?.length > 0) {
-            const slugs = result.articleSlugs;
-            let built = 0;
-            let failed = 0;
-
-            for (const slug of slugs) {
-              importBtn.innerHTML = `<span class="spinner"></span> Baue ${built + 1}/${slugs.length}...`;
-              try {
-                await App.republishPost(slug);
-                built++;
-              } catch (err) {
-                console.error(`Failed to rebuild ${slug}:`, err);
-                failed++;
-              }
-            }
-
-            if (failed > 0) {
-              Toast.error(`${built} Artikel gebaut, ${failed} fehlgeschlagen`);
-            } else {
-              Toast.success(`Import erfolgreich: ${built} Artikel importiert und gebaut`);
-            }
-          } else if (doSettings) {
-            Toast.success('Einstellungen importiert');
-          }
-
-          resetImportUI();
-        } catch (err) {
-          Toast.error(`Import fehlgeschlagen: ${err.message}`);
-        } finally {
-          importBtn.disabled = false;
-          importBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg> Importieren`;
-        }
       });
 
       // Delete all posts
