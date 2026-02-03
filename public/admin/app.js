@@ -574,13 +574,21 @@ const App = (function() {
   }
 
   /**
+   * Get source data for a post (for editing)
+   */
+  async function getSourceData(slug) {
+    const { sourceData } = await apiFetch(`/api/posts/${slug}/republish`, {
+      method: 'POST',
+    });
+    return sourceData;
+  }
+
+  /**
    * Republish post with current posts (regenerate bloglist)
    */
   async function republishPost(slug) {
     // Get sourceData from API
-    const { sourceData } = await apiFetch(`/api/posts/${slug}/republish`, {
-      method: 'POST',
-    });
+    const sourceData = await getSourceData(slug);
 
     // Load current posts
     const posts = await getPosts();
@@ -657,6 +665,7 @@ const App = (function() {
     deletePost,
     deleteAllPosts,
     republishPost,
+    getSourceData,
     getSettings,
     saveSettings,
     previewOverhead,

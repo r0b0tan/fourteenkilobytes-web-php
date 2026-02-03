@@ -83,6 +83,11 @@ h2 {
   margin-top: 32px; /* Reduced from 40px to tighten layout */
 }
 
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .header-top {
   display: flex;
   justify-content: space-between;
@@ -557,6 +562,16 @@ button:disabled {
   margin-right: 4px;
 }
 
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-icon svg {
+  margin-right: 0;
+}
+
 /* Posts list */
 .posts-list {
   list-style: none;
@@ -599,6 +614,19 @@ button:disabled {
 .post-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.post-actions .btn {
+  height: 32px;
+  justify-content: center;
+}
+
+.action-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
 }
 
 .status-tombstone {

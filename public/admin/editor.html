@@ -97,7 +97,10 @@
       </nav>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
-      <h1 class="page-title" style="margin: 0;">Editor</h1>
+      <div>
+        <h1 id="page-title" class="page-title" style="margin: 0;">New</h1>
+        <p id="page-subtitle" class="page-subtitle" style="margin: 4px 0 0 0;">Creating source · not yet compiled</p>
+      </div>
       <button type="button" id="clear-all-btn" class="btn btn-secondary"> <svg width="14" height="14" viewBox="0 0 24 24"
           fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10"></polyline>
@@ -521,9 +524,20 @@
 
       const AUTOSAVE_KEY = 'editor-autosave';
 
+      // Get current context from URL
+      function getCurrentContext() {
+        const params = new URLSearchParams(window.location.search);
+        const editSlug = params.get('edit');
+        return editSlug ? { mode: 'edit', slug: editSlug } : { mode: 'new', slug: null };
+      }
+
       function saveToLocalStorage() {
+        const context = getCurrentContext();
         try {
           const data = {
+            // Context for validation on restore
+            context,
+            // Editor state
             title: titleInput.value,
             slug: slugInput.value,
             pageType: pageTypeSelect.value,
@@ -569,6 +583,13 @@
           if (!saved) return false;
 
           const data = JSON.parse(saved);
+          const currentContext = getCurrentContext();
+
+          // Only restore if context matches (same mode and slug)
+          if (data.context?.mode !== currentContext.mode ||
+              data.context?.slug !== currentContext.slug) {
+            return false;
+          }
 
           // Check if data is not too old (older than 7 days)
           const age = Date.now() - (data.timestamp || 0);
@@ -633,6 +654,9 @@
             cssRules.value = data.css || '';
           }
 
+          // Update page title with restored slug (for new mode)
+          updatePageTitleSlug();
+
           return true;
         } catch (err) {
           console.warn('Failed to restore auto-save:', err);
@@ -645,6 +669,161 @@
           localStorage.removeItem(AUTOSAVE_KEY);
         } catch (err) {
           console.warn('Failed to clear auto-save:', err);
+        }
+      }
+
+      // ============ EDIT MODE (Source Editing) ============
+
+      let isEditMode = false;
+      let editingSlug = null;
+
+      // Update page title with current slug (for new mode)
+      function updatePageTitleSlug() {
+        if (isEditMode) return; // Don't update in edit mode
+        const pageTitle = document.getElementById('page-title');
+        const slug = slugInput.value.trim();
+        if (slug) {
+          pageTitle.innerHTML = `New <span style="font-weight: 400; color: var(--text-secondary);">/ ${slug}</span>`;
+        } else {
+          pageTitle.textContent = 'New';
+        }
+      }
+
+      // Convert inline nodes (compiler format) to HTML for editor
+      function inlineNodesToHtml(nodes) {
+        if (!nodes || !Array.isArray(nodes)) return '';
+        return nodes.map(node => {
+          switch (node.type) {
+            case 'text':
+              // Escape HTML entities
+              return node.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            case 'linebreak':
+              return '<br>';
+            case 'bold':
+              return `<b>${inlineNodesToHtml(node.children)}</b>`;
+            case 'italic':
+              return `<i>${inlineNodesToHtml(node.children)}</i>`;
+            case 'underline':
+              return `<u>${inlineNodesToHtml(node.children)}</u>`;
+            case 'strikethrough':
+              return `<s>${inlineNodesToHtml(node.children)}</s>`;
+            case 'code':
+              return `<code>${inlineNodesToHtml(node.children)}</code>`;
+            case 'link':
+              return `<a href="${node.href}">${inlineNodesToHtml(node.children)}</a>`;
+            default:
+              return inlineNodesToHtml(node.children);
+          }
+        }).join('');
+      }
+
+      // Load editor state from source JSON (compiler format)
+      function loadFromSource(sourceData) {
+        // Restore basic fields
+        titleInput.value = sourceData.title || '';
+        slugInput.value = sourceData.slug || '';
+        pageTypeSelect.value = sourceData.pageType || 'post';
+
+        // Restore blocks from content array
+        blockEditor.innerHTML = '';
+        if (sourceData.content && sourceData.content.length > 0) {
+          sourceData.content.forEach(block => {
+            let blockEl;
+            if (block.type === 'bloglist') {
+              blockEl = createBlockElement('bloglist');
+            } else if (block.type === 'divider') {
+              blockEl = createBlockElement('divider');
+            } else if (block.type === 'codeblock') {
+              blockEl = createBlockElement('codeblock', null, block.content || '');
+            } else if (block.type === 'unordered-list' || block.type === 'ordered-list') {
+              const listType = block.type === 'ordered-list' ? 'ordered' : 'unordered';
+              blockEl = createBlockElement('list', null, '', listType);
+              // Populate list items
+              const listEl = blockEl.querySelector('.editable-list');
+              if (listEl && block.items) {
+                listEl.innerHTML = '';
+                block.items.forEach(item => {
+                  const li = document.createElement('li');
+                  li.contentEditable = 'true';
+                  li.innerHTML = inlineNodesToHtml(item.children);
+                  listEl.appendChild(li);
+                });
+                setupListKeyHandlers(listEl);
+              }
+            } else if (block.type === 'heading') {
+              const html = inlineNodesToHtml(block.children);
+              blockEl = createBlockElement('heading', block.level, html);
+            } else if (block.type === 'blockquote') {
+              const html = inlineNodesToHtml(block.children);
+              blockEl = createBlockElement('blockquote', null, html);
+            } else {
+              // paragraph
+              const html = inlineNodesToHtml(block.children);
+              blockEl = createBlockElement('paragraph', null, html);
+            }
+            blockEditor.appendChild(blockEl);
+          });
+        } else {
+          // Add empty paragraph if no content
+          blockEditor.appendChild(createBlockElement('paragraph'));
+        }
+
+        // Restore title override
+        if (sourceData.titleOverride) {
+          titleOverrideEnabled.checked = true;
+          titleOverrideEnabled.dispatchEvent(new Event('change'));
+          titleOverrideInput.value = sourceData.titleOverride;
+        } else {
+          titleOverrideEnabled.checked = false;
+          titleOverrideEnabled.dispatchEvent(new Event('change'));
+        }
+
+        // Restore navigation
+        if (sourceData.navigation && sourceData.navigation.items && sourceData.navigation.items.length > 0) {
+          navEnabled.checked = true;
+          navEnabled.dispatchEvent(new Event('change'));
+          navLinks.innerHTML = '';
+          sourceData.navigation.items.forEach(link => {
+            navLinks.appendChild(createNavChip(link.text, link.href));
+          });
+        } else {
+          navEnabled.checked = false;
+          navEnabled.dispatchEvent(new Event('change'));
+          loadGlobalNavigation();
+        }
+
+        // Restore footer
+        if (sourceData.footer && sourceData.footer.content) {
+          footerEnabled.checked = true;
+          footerEnabled.dispatchEvent(new Event('change'));
+          footerText.value = sourceData.footer.content;
+        } else {
+          footerEnabled.checked = false;
+          footerEnabled.dispatchEvent(new Event('change'));
+          loadGlobalFooter();
+        }
+
+        // Restore meta
+        if (sourceData.meta) {
+          metaEnabled.checked = true;
+          metaEnabled.dispatchEvent(new Event('change'));
+          metaDescription.value = sourceData.meta.description || '';
+          metaAuthor.value = sourceData.meta.author || '';
+        } else {
+          metaEnabled.checked = false;
+          metaEnabled.dispatchEvent(new Event('change'));
+          loadGlobalMeta();
+        }
+
+        // Restore CSS
+        if (sourceData.css && sourceData.css.rules) {
+          cssEnabled.checked = true;
+          cssEnabled.dispatchEvent(new Event('change'));
+          cssRules.value = sourceData.css.rules;
+        } else {
+          cssEnabled.checked = false;
+          cssEnabled.dispatchEvent(new Event('change'));
+          loadGlobalCSS();
         }
       }
 
@@ -915,12 +1094,14 @@
       titleInput.addEventListener('input', () => {
         if (!slugInput.dataset.manual) {
           slugInput.value = App.slugify(titleInput.value);
+          updatePageTitleSlug();
         }
         updateTitleBytes();
       });
 
       slugInput.addEventListener('input', () => {
         slugInput.dataset.manual = 'true';
+        updatePageTitleSlug();
       });
 
       // ============ BLOCK EDITOR ============
@@ -1008,6 +1189,7 @@
             }
 
             updateBlockStyling(block);
+            updateCostRail();
             debouncedPreview();
           });
           header.appendChild(typeSelect);
@@ -1026,6 +1208,7 @@
           typeSelect.addEventListener('change', () => {
             block.dataset.level = typeSelect.value;
             updateBlockStyling(block);
+            updateCostRail();
             debouncedPreview();
           });
           header.appendChild(typeSelect);
@@ -1059,6 +1242,7 @@
               oldList.replaceWith(newList);
               setupListKeyHandlers(newList);
             }
+            updateCostRail();
             debouncedPreview();
           });
           header.appendChild(typeSelect);
@@ -1545,8 +1729,8 @@
               targetArray.push({ type: 'code', children });
             } else if (tag === 'a') {
               const href = node.getAttribute('href') || '';
-              // Only include link if href is valid
-              const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html)$/i;
+              // Only include link if href is valid (same pattern as compiler)
+              const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
               if (href && hrefPattern.test(href)) {
                 targetArray.push({ type: 'link', href, children });
               } else {
@@ -1791,10 +1975,24 @@
 
           // Determine semantic label
           let label = 'Paragraph';
+          const listType = block.dataset.listType;
           if (type === 'heading') {
             label = `H${level}`;
           } else if (type === 'bloglist') {
-            label = 'List';
+            label = 'Bloglist';
+          } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
+            // Handle both old format (unordered-list/ordered-list) and new format (list + listType)
+            if (listType === 'ordered' || type === 'ordered-list') {
+              label = 'OL';
+            } else {
+              label = 'UL';
+            }
+          } else if (type === 'blockquote') {
+            label = 'Quote';
+          } else if (type === 'codeblock') {
+            label = 'Code';
+          } else if (type === 'divider') {
+            label = 'HR';
           }
 
           // Update inline byte indicator
@@ -2084,10 +2282,41 @@
         };
       }
 
-      // Try to restore from auto-save
-      const restored = loadFromLocalStorage();
-      if (restored) {
-        console.log('Restored from auto-save');
+      // Check for edit mode (recompile from source)
+      const urlParams = new URLSearchParams(window.location.search);
+      const editSlug = urlParams.get('edit');
+
+      if (editSlug) {
+        // Edit mode: load from source
+        try {
+          const sourceData = await App.getSourceData(editSlug);
+          if (sourceData) {
+            isEditMode = true;
+            editingSlug = editSlug;
+            loadFromSource(sourceData);
+            // Show edit mode banner
+            showEditModeBanner();
+            console.log('Loaded source for editing:', editSlug);
+          }
+        } catch (err) {
+          console.error('Failed to load source:', err);
+          Modal.error(`Konnte Quelle nicht laden: ${err.message}`);
+        }
+      } else {
+        // New document mode: try to restore from auto-save
+        const restored = loadFromLocalStorage();
+        if (restored) {
+          console.log('Restored from auto-save');
+        }
+      }
+
+      // Show edit mode indicator in title
+      function showEditModeBanner() {
+        const pageTitle = document.getElementById('page-title');
+        const pageSubtitle = document.getElementById('page-subtitle');
+        pageTitle.innerHTML = `Recompile <span style="font-weight: 400; color: var(--text-secondary);">/ ${editingSlug}</span>`;
+        pageSubtitle.textContent = 'Editing source · requires rebuild';
+        pageSubtitle.style.display = 'block';
       }
 
       // ============ CLEAR ALL BUTTON ============
@@ -2149,7 +2378,7 @@
 
       // Auto-update byte counter on content changes
       const debouncedPreview = debounce(async () => {
-        saveToLocalStorage(); // Auto-save on changes
+        saveToLocalStorage(); // Safety backup to localStorage (works in both modes)
         try {
           const input = await buildInput();
           const result = await App.preview(input);
