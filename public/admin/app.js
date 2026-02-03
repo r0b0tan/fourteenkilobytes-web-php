@@ -163,6 +163,11 @@ const App = (function() {
     const settings = await getSettings();
     const mergedInput = { ...input };
 
+    // Site Title: use global if enabled and input has none
+    if (!input.siteTitle && settings.siteTitleEnabled !== false && settings.siteTitle) {
+      mergedInput.siteTitle = settings.siteTitle;
+    }
+
     // Navigation: use global if enabled and input has none
     if (!input.navigation && settings.header?.enabled && settings.header.links?.length > 0) {
       mergedInput.navigation = { items: settings.header.links };
