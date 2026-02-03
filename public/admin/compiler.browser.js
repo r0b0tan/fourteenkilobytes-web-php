@@ -94,7 +94,7 @@ function getIconBytes(id) {
 
 // src/validate.ts
 var SLUG_PATTERN = /^[a-z0-9-]+$/;
-var HREF_PATTERN = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html)$/i;
+var HREF_PATTERN = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
 var MAX_TITLE_LENGTH = 200;
 var MAX_META_DESCRIPTION_LENGTH = 160;
 var MAX_META_AUTHOR_LENGTH = 100;
@@ -310,7 +310,7 @@ function validateHref(href, path) {
       error: {
         code: "INVALID_HREF",
         href,
-        reason: "Must be relative path, fragment, or .html file",
+        reason: "Must be relative path, fragment, URL, or .html file",
         path
       }
     };

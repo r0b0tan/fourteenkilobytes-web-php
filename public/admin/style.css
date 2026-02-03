@@ -1214,6 +1214,36 @@ button:disabled {
   font-size: 12px;
 }
 
+.link-prefix-buttons {
+  display: flex;
+  gap: 2px;
+}
+
+.link-prefix-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.link-prefix-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--accent);
+}
+
+.link-prefix-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 /* Block type dropdown */
 .add-block-dropdown {
   position: absolute;
