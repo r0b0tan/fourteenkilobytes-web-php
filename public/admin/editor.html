@@ -315,6 +315,17 @@
 
   <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
+    <div class="link-prefix-buttons">
+      <button type="button" class="link-prefix-btn" data-prefix="https://" title="URL">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </button>
+      <button type="button" class="link-prefix-btn" data-prefix="mailto:" title="E-Mail">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </button>
+      <button type="button" class="link-prefix-btn" data-prefix="tel:" title="Telefon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </button>
+    </div>
     <input type="text" id="link-href" placeholder="/path or #anchor">
     <button type="button" id="link-apply" class="btn btn-primary">OK</button>
     <button type="button" id="link-cancel" class="btn btn-secondary">×</button>
@@ -1365,7 +1376,29 @@
         sel.removeAllRanges();
         sel.addRange(savedSelection);
         const parentLink = sel.anchorNode?.parentElement?.closest('a');
-        linkHrefInput.value = parentLink ? parentLink.getAttribute('href') : '';
+        const existingHref = parentLink ? parentLink.getAttribute('href') : '';
+        linkHrefInput.value = existingHref;
+
+        // Reset prefix buttons and set active based on existing href
+        linkPopup.querySelectorAll('.link-prefix-btn').forEach(btn => {
+          const prefix = btn.dataset.prefix;
+          if (existingHref.startsWith(prefix)) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        // Update placeholder based on existing prefix
+        if (existingHref.startsWith('https://') || existingHref.startsWith('http://')) {
+          linkHrefInput.placeholder = 'www.example.com';
+        } else if (existingHref.startsWith('mailto:')) {
+          linkHrefInput.placeholder = 'name@example.com';
+        } else if (existingHref.startsWith('tel:')) {
+          linkHrefInput.placeholder = '+49 123 456789';
+        } else {
+          linkHrefInput.placeholder = '/path or #anchor';
+        }
 
         const rect = savedSelection.getBoundingClientRect();
         linkPopup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
@@ -1382,9 +1415,20 @@
         }
 
         // Validate href pattern (same as compiler validation)
-        const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html)$/i;
+        const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
         if (!hrefPattern.test(href)) {
-          alert('Ungültiger Link. Erlaubt sind:\n- Relative Pfade: /path/to/page\n- Anker: #section\n- HTML-Dateien: page.html');
+          // Give specific hint based on what user likely meant
+          let hint;
+          if (/^www\./i.test(href) || /\.(com|de|org|net|io|dev|at|ch)$/i.test(href)) {
+            hint = `URLs müssen mit https:// beginnen: https://${href}`;
+          } else if (/@/.test(href) && !href.startsWith('mailto:')) {
+            hint = `E-Mail-Links müssen mit mailto: beginnen: mailto:${href}`;
+          } else if (/^[\d\s+()-]+$/.test(href)) {
+            hint = `Telefon-Links müssen mit tel: beginnen: tel:${href.replace(/\s/g, '')}`;
+          } else {
+            hint = 'Ungültiges Link-Format';
+          }
+          Modal.info(hint);
           return;
         }
 
@@ -1402,6 +1446,41 @@
       linkCancelBtn.addEventListener('click', () => {
         linkPopup.classList.add('hidden');
         savedSelection = null;
+      });
+
+      // Link prefix buttons
+      const linkPrefixBtns = linkPopup.querySelectorAll('.link-prefix-btn');
+      const prefixPlaceholders = {
+        'https://': 'www.example.com',
+        'mailto:': 'name@example.com',
+        'tel:': '+49 123 456789'
+      };
+
+      linkPrefixBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const prefix = btn.dataset.prefix;
+          const currentValue = linkHrefInput.value;
+
+          // Remove any existing prefix
+          let cleanValue = currentValue
+            .replace(/^https?:\/\//, '')
+            .replace(/^mailto:/, '')
+            .replace(/^tel:/, '');
+
+          // Toggle: if same prefix was active, just clear it
+          if (currentValue.startsWith(prefix)) {
+            linkHrefInput.value = cleanValue;
+            linkHrefInput.placeholder = '/path or #anchor';
+            linkPrefixBtns.forEach(b => b.classList.remove('active'));
+          } else {
+            linkHrefInput.value = prefix + cleanValue;
+            linkHrefInput.placeholder = prefixPlaceholders[prefix];
+            linkPrefixBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          }
+
+          linkHrefInput.focus();
+        });
       });
 
       // ============ ADD BLOCK ============
@@ -1768,8 +1847,12 @@
           actions.innerHTML = '';
         }
 
-        function show(text, buttons, type = '') {
-          message.textContent = text;
+        function show(text, buttons, type = '', html = false) {
+          if (html) {
+            message.innerHTML = text;
+          } else {
+            message.textContent = text;
+          }
           actions.innerHTML = '';
           modal.className = 'modal' + (type ? ` modal-${type}` : '');
 
@@ -1803,8 +1886,12 @@
             show(text, [{ text: 'OK', class: 'btn-primary' }], 'success');
           },
 
-          error(text) {
-            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error');
+          error(text, html = false) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error', html);
+          },
+
+          info(text) {
+            show(text, [{ text: 'OK', class: 'btn-primary' }]);
           },
 
           hide
