@@ -841,5 +841,72 @@ if ($method === 'POST' && $path === '/reset') {
     sendJson(200, ['reset' => true]);
 }
 
+// Route: POST /clone (protected) - Clone a page or seed
+if ($method === 'POST' && $path === '/clone') {
+    requireAuth();
+
+    $body = readJsonBody();
+    $sourceType = $body['sourceType'] ?? 'page'; // 'page' or 'seed'
+    $sourceSlug = $body['sourceSlug'] ?? '';
+
+    if (empty($sourceSlug)) {
+        sendJson(400, ['error' => 'Missing sourceSlug']);
+    }
+
+    $sourceData = null;
+
+    if ($sourceType === 'seed') {
+        // Load from seed file
+        $seedPath = dirname(__DIR__) . "/data/seeds/{$sourceSlug}.json";
+        if (!file_exists($seedPath)) {
+            sendJson(404, ['error' => "Seed '{$sourceSlug}' not found"]);
+        }
+        $seedContent = file_get_contents($seedPath);
+        $sourceData = json_decode($seedContent, true);
+        if ($sourceData === null) {
+            sendJson(500, ['error' => 'Failed to parse seed file']);
+        }
+    } else {
+        // Load from existing page
+        $sourceData = loadSourceData($sourceSlug);
+        if ($sourceData === null) {
+            sendJson(404, ['error' => "Page '{$sourceSlug}' not found or has no source data"]);
+        }
+    }
+
+    // Deep copy and reset identifying fields
+    $clonedData = json_decode(json_encode($sourceData), true);
+    $clonedData['slug'] = '';
+    $clonedData['title'] = '';
+
+    // Return the cloned source data
+    sendJson(200, [
+        'sourceData' => $clonedData,
+        'clonedFrom' => $sourceSlug,
+        'sourceType' => $sourceType,
+    ]);
+}
+
+// Route: GET /seeds (protected) - List available seed templates
+if ($method === 'GET' && $path === '/seeds') {
+    requireAuth();
+
+    $seedsDir = dirname(__DIR__) . '/data/seeds';
+    $seeds = [];
+
+    if (is_dir($seedsDir)) {
+        $files = glob($seedsDir . '/*.json');
+        foreach ($files as $file) {
+            $name = basename($file, '.json');
+            $seeds[] = [
+                'name' => $name,
+                'label' => ucwords(str_replace('-', ' ', $name)),
+            ];
+        }
+    }
+
+    sendJson(200, ['seeds' => $seeds]);
+}
+
 // 404 for unknown routes
 sendJson(404, ['error' => 'Not found']);

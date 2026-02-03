@@ -656,6 +656,24 @@ const App = (function() {
     return Compiler.getIconSvg(id);
   }
 
+  /**
+   * Get available seed templates
+   */
+  async function getSeeds() {
+    const { seeds } = await apiFetch('/api/seeds');
+    return seeds;
+  }
+
+  /**
+   * Clone a page or seed
+   */
+  async function clonePage(sourceSlug, sourceType = 'page') {
+    return apiFetch('/api/clone', {
+      method: 'POST',
+      body: JSON.stringify({ sourceSlug, sourceType }),
+    });
+  }
+
   // Public API
   return {
     getConfig,
@@ -685,6 +703,8 @@ const App = (function() {
     getIconSvg,
     loadCssPresets,
     getPresetCSS,
+    getSeeds,
+    clonePage,
   };
 })();
 

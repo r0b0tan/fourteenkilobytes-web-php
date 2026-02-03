@@ -1,0 +1,56 @@
+{
+    "slug": "",
+    "title": "",
+    "content": [
+        {
+            "type": "heading",
+            "level": 1,
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Your Blog Post Title"
+                }
+            ]
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Start writing your blog post here. This is a minimal seed template for blog posts."
+                }
+            ]
+        },
+        {
+            "type": "heading",
+            "level": 2,
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Section Heading"
+                }
+            ]
+        },
+        {
+            "type": "paragraph",
+            "children": [
+                {
+                    "type": "text",
+                    "text": "Add more content here."
+                }
+            ]
+        }
+    ],
+    "navigation": {
+        "enabled": false,
+        "links": []
+    },
+    "footer": {
+        "enabled": false,
+        "content": ""
+    },
+    "titleOverride": {
+        "enabled": false,
+        "title": ""
+    }
+}

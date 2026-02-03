@@ -96,20 +96,27 @@
         </a>
       </nav>
     </div>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px;">
+    <div style="margin-top: 32px;">
       <div>
         <h1 id="page-title" class="page-title" style="margin: 0;">New</h1>
         <p id="page-subtitle" class="page-subtitle" style="margin: 4px 0 0 0;">Creating source · not yet compiled</p>
       </div>
-      <button type="button" id="clear-all-btn" class="btn btn-secondary"> <svg width="14" height="14" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <polyline points="1 20 1 14 7 14"></polyline>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-        </svg>Zurücksetzen</button>
+      <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 16px;">
+        <div id="template-selector-container" style="display: flex; gap: 12px; align-items: center;">
+          <select id="template-selector" class="page-type-select">
+            <option value="">Templates</option>
+          </select>
+          <span style="color: var(--border-primary);">|</span>
+        </div>
+        <button type="button" id="clear-all-btn" class="btn btn-secondary"> <svg width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>Zurücksetzen</button>
+      </div>
     </div>
   </header>
-
 
   <!-- Card: Head -->
   <div class="editor-card">
@@ -2096,6 +2103,9 @@
         };
       })();
 
+      // Export Modal for inline handlers
+      window.Modal = Modal;
+
       // ============ PUBLISH ============
 
       publishBtn.addEventListener('click', async () => {
@@ -2282,9 +2292,64 @@
         };
       }
 
-      // Check for edit mode (recompile from source)
+      // ============ SEED TEMPLATES ============
+
+      const templateSelector = document.getElementById('template-selector');
+      const templateSelectorContainer = document.getElementById('template-selector-container');
+
+      async function loadSeedTemplates() {
+        try {
+          const seeds = await App.getSeeds();
+          
+          if (seeds && seeds.length > 0) {
+            seeds.forEach(seed => {
+              const option = document.createElement('option');
+              option.value = seed.name;
+              option.textContent = seed.label;
+              templateSelector.appendChild(option);
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load seed templates:', err);
+        }
+      }
+
+      templateSelector.addEventListener('change', async function() {
+        const seedName = this.value;
+        if (!seedName) return;
+        
+        try {
+          const { sourceData } = await App.clonePage(seedName, 'seed');
+          loadFromSource(sourceData);
+          
+          // Update title
+          const pageTitle = document.getElementById('page-title');
+          const pageSubtitle = document.getElementById('page-subtitle');
+          pageTitle.textContent = `New (from ${seedName.replace('-', ' ')})`;
+          pageSubtitle.textContent = 'Set title and slug to create a new page';
+          
+          // Reset dropdown
+          this.value = '';
+        } catch (err) {
+          Modal.error('Fehler beim Laden der Vorlage: ' + err.message);
+          this.value = '';
+        }
+      });
+
+      // Load seed templates on page load (only in new mode)
       const urlParams = new URLSearchParams(window.location.search);
       const editSlug = urlParams.get('edit');
+      const isCloning = urlParams.get('clone') === 'true';
+      
+      if (!editSlug && !isCloning) {
+        loadSeedTemplates();
+      } else {
+        // Hide template selector in edit/clone mode
+        templateSelectorContainer.style.display = 'none';
+      }
+
+      // Check for edit mode (recompile from source)
+
 
       if (editSlug) {
         // Edit mode: load from source
@@ -2301,6 +2366,24 @@
         } catch (err) {
           console.error('Failed to load source:', err);
           Modal.error(`Konnte Quelle nicht laden: ${err.message}`);
+        }
+      } else if (isCloning) {
+        // Clone mode: load from sessionStorage
+        try {
+          const clonedData = sessionStorage.getItem('clonedSource');
+          if (clonedData) {
+            const sourceData = JSON.parse(clonedData);
+            loadFromSource(sourceData);
+            sessionStorage.removeItem('clonedSource');
+            console.log('Loaded cloned source');
+            // Show notification
+            const pageTitle = document.getElementById('page-title');
+            const pageSubtitle = document.getElementById('page-subtitle');
+            pageTitle.textContent = 'New (Cloned)';
+            pageSubtitle.textContent = 'Set title and slug to create a new page';
+          }
+        } catch (err) {
+          console.error('Failed to load cloned source:', err);
         }
       } else {
         // New document mode: try to restore from auto-save
