@@ -600,10 +600,24 @@ button:disabled {
 .post-title a {
   color: var(--fg);
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
 }
 
 .post-title a:hover {
-  text-decoration: underline;
+  color: var(--accent);
+}
+
+.post-title-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.post-title a:hover .post-title-icon {
+  opacity: 1;
 }
 
 .post-meta {
