@@ -18,6 +18,9 @@ RewriteRule ^admin/(.+)$ public/admin/$1 [L]
 RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_URI} -f
 RewriteRule ^ - [L]
 
+# RSS Feed
+RewriteRule ^feed\.xml$ feed.php [L]
+
 # Root -> public/index.html or index.php router
 RewriteRule ^$ index.php [L]
 

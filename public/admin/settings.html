@@ -107,6 +107,7 @@
         <button type="button" class="tab-btn" data-tab="header">Header</button>
         <button type="button" class="tab-btn" data-tab="footer">Footer</button>
         <button type="button" class="tab-btn" data-tab="css">CSS</button>
+        <button type="button" class="tab-btn" data-tab="rss">RSS</button>
         <button type="button" class="tab-btn" data-tab="data">Daten</button>
       </div>
       <div class="settings-actions">
@@ -305,6 +306,86 @@
   margin: 0 auto;
 }"></textarea>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RSS Tab -->
+      <div id="tab-rss" class="tab-content hidden">
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title">RSS Feed</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="rss-enabled">
+              <span>RSS Feed aktivieren</span>
+            </label>
+          </div>
+          <div id="rss-editor" class="override-editor hidden">
+            <!-- Feed URL Preview -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label>Feed URL</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="rss-feed-url-preview" readonly style="flex: 1; background: var(--gray-100); cursor: default;">
+                <button type="button" id="rss-copy-btn" class="btn btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Kopieren
+                </button>
+                <a id="rss-preview-link" href="#" target="_blank" class="btn btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  Öffnen
+                </a>
+              </div>
+            </div>
+
+            <!-- Site URL -->
+            <div class="form-group">
+              <label for="rss-site-url">Website URL *</label>
+              <input type="url" id="rss-site-url" placeholder="https://example.com">
+              <p class="text-small text-muted">Basis-URL deiner Website (ohne abschließenden Slash)</p>
+            </div>
+
+            <!-- Language -->
+            <div class="form-group">
+              <label for="rss-language">Sprache</label>
+              <select id="rss-language">
+                <option value="de-DE">Deutsch (de-DE)</option>
+                <option value="en-US">English (en-US)</option>
+                <option value="en-GB">English UK (en-GB)</option>
+                <option value="fr-FR">Français (fr-FR)</option>
+                <option value="es-ES">Español (es-ES)</option>
+                <option value="it-IT">Italiano (it-IT)</option>
+              </select>
+            </div>
+
+            <!-- Copyright -->
+            <div class="form-group">
+              <label for="rss-copyright">Copyright</label>
+              <input type="text" id="rss-copyright" placeholder="© 2026 Name">
+            </div>
+
+            <!-- Advanced Settings -->
+            <details class="override-section" style="margin-top: 1rem;">
+              <summary style="cursor: pointer; font-weight: 500; margin-bottom: 0.5rem;">Erweiterte Einstellungen</summary>
+              <div style="padding-top: 0.5rem;">
+                <div class="form-group">
+                  <label for="rss-max-items">Maximale Einträge</label>
+                  <input type="number" id="rss-max-items" min="5" max="100" value="20">
+                  <p class="text-small text-muted">Anzahl der Posts im Feed (5-100)</p>
+                </div>
+                <div class="form-group">
+                  <label for="rss-ttl">Cache-Zeit (Minuten)</label>
+                  <input type="number" id="rss-ttl" min="5" max="1440" value="60">
+                  <p class="text-small text-muted">Empfohlene Aktualisierungsrate für Feed-Reader</p>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -544,6 +625,16 @@
       const faviconPreview = document.getElementById('favicon-preview');
       const faviconRemove = document.getElementById('favicon-remove');
       const faviconData = document.getElementById('favicon-data');
+      const rssEnabled = document.getElementById('rss-enabled');
+      const rssEditor = document.getElementById('rss-editor');
+      const rssSiteUrl = document.getElementById('rss-site-url');
+      const rssLanguage = document.getElementById('rss-language');
+      const rssCopyright = document.getElementById('rss-copyright');
+      const rssMaxItems = document.getElementById('rss-max-items');
+      const rssTtl = document.getElementById('rss-ttl');
+      const rssFeedUrlPreview = document.getElementById('rss-feed-url-preview');
+      const rssCopyBtn = document.getElementById('rss-copy-btn');
+      const rssPreviewLink = document.getElementById('rss-preview-link');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
@@ -769,6 +860,42 @@
         faviconRemove.classList.add('hidden');
       }
 
+      // ============ RSS EDITOR ============
+
+      rssEnabled.addEventListener('change', () => {
+        rssEditor.classList.toggle('hidden', !rssEnabled.checked);
+        markAsChanged();
+      });
+
+      rssSiteUrl.addEventListener('input', () => {
+        updateRssFeedUrlPreview();
+        markAsChanged();
+      });
+
+      rssLanguage.addEventListener('change', markAsChanged);
+      rssCopyright.addEventListener('input', markAsChanged);
+      rssMaxItems.addEventListener('input', markAsChanged);
+      rssTtl.addEventListener('input', markAsChanged);
+
+      function updateRssFeedUrlPreview() {
+        const siteUrl = rssSiteUrl.value.replace(/\/+$/, '');
+        const feedUrl = siteUrl ? `${siteUrl}/feed.xml` : '';
+        rssFeedUrlPreview.value = feedUrl;
+        rssPreviewLink.href = feedUrl || '#';
+      }
+
+      rssCopyBtn.addEventListener('click', async () => {
+        const url = rssFeedUrlPreview.value;
+        if (url) {
+          try {
+            await navigator.clipboard.writeText(url);
+            Toast.success('Feed-URL kopiert');
+          } catch (err) {
+            Toast.error('Kopieren fehlgeschlagen');
+          }
+        }
+      });
+
       // ============ CSS EDITOR ============
 
       cssEnabled.addEventListener('change', () => {
@@ -862,6 +989,14 @@
             enabled: metaEnabled.checked,
             description: metaDescription.value.trim() || undefined,
             author: metaAuthor.value.trim() || undefined,
+          },
+          rss: {
+            enabled: rssEnabled.checked,
+            siteUrl: rssSiteUrl.value.replace(/\/+$/, ''),
+            language: rssLanguage.value,
+            copyright: rssCopyright.value.trim(),
+            maxItems: parseInt(rssMaxItems.value) || 20,
+            ttl: parseInt(rssTtl.value) || 60,
           },
         };
       }
@@ -986,6 +1121,17 @@
             clearFaviconPreview();
             faviconData.value = '';
           }
+
+          // RSS
+          const rss = settings.rss || {};
+          rssEnabled.checked = rss.enabled || false;
+          rssEditor.classList.toggle('hidden', !rss.enabled);
+          rssSiteUrl.value = rss.siteUrl || '';
+          rssLanguage.value = rss.language || 'de-DE';
+          rssCopyright.value = rss.copyright || '';
+          rssMaxItems.value = rss.maxItems || 20;
+          rssTtl.value = rss.ttl || 60;
+          updateRssFeedUrlPreview();
 
           await updateOverhead();
 
