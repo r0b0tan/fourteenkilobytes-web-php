@@ -11,6 +11,14 @@
 </head>
 
 <body>
+  <!-- Loading Overlay (shown until editor is loaded) -->
+  <div id="loading-overlay" class="loading-overlay instant">
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <span>Loading...</span>
+    </div>
+  </div>
+
   <!-- Use semantic header element for better document structure -->
   <header class="header">
     <div class="header-top">
@@ -432,9 +440,7 @@
 
     (async function () {
       // Wait for i18n to be ready
-      while (!window.i18n?.loaded) {
-        await new Promise(r => setTimeout(r, 10));
-      }
+      await i18nReady();
 
       // Check if setup is complete
       const status = await App.getSetupStatus();
@@ -453,6 +459,9 @@
       // Load settings with global header/footer/CSS
       const settings = await App.getSettings();
       window.globalConfig = settings;
+
+      // Hide loading overlay
+      document.getElementById('loading-overlay')?.remove();
 
       // Logout handler
       document.getElementById('logout-btn').addEventListener('click', async (e) => {

@@ -26,11 +26,14 @@ const i18n = {
       }
       this.loaded = true;
       this.translatePage();
+      // Dispatch event for listeners waiting on i18n
+      window.dispatchEvent(new Event('i18n:ready'));
       // Update html lang attribute
       document.documentElement.lang = this.locale === 'de' ? 'de' : 'en';
     } catch (err) {
       console.error('i18n: Failed to load translations', err);
       this.loaded = true; // Mark as loaded even on error to prevent blocking
+      window.dispatchEvent(new Event('i18n:ready'));
     }
   },
 
@@ -129,11 +132,48 @@ const i18n = {
 // Global translation function
 window.t = (key, params) => i18n.t(key, params);
 
+// Helper to wait for i18n to be ready (returns immediately if already loaded)
+window.i18nReady = () => new Promise(resolve => {
+  if (i18n.loaded) return resolve();
+  window.addEventListener('i18n:ready', resolve, { once: true });
+});
+
+// Show loading overlay during navigation (smooth page transitions)
+window.showNavigationOverlay = () => {
+  // Avoid duplicate overlays
+  if (document.querySelector('.loading-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div></div>';
+  document.body.appendChild(overlay);
+};
+
+// Auto-attach navigation overlay to internal links (runs after DOM ready)
+function setupNavigationOverlay() {
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+
+    // Skip external links, hash links, and special links
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+    if (link.target === '_blank') return;
+    if (link.id === 'logout-btn') return;
+
+    // Show overlay for internal navigation
+    showNavigationOverlay();
+  });
+}
+
 // Initialize on DOM ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => i18n.init());
+  document.addEventListener('DOMContentLoaded', () => {
+    i18n.init();
+    setupNavigationOverlay();
+  });
 } else {
   i18n.init();
+  setupNavigationOverlay();
 }
 
 // Export for module usage

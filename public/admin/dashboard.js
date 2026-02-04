@@ -7,7 +7,9 @@
 
 // Wait for dependencies
 async function waitForDependencies() {
-  while (!window.i18n?.loaded || !window.App) {
+  await i18nReady();
+  // App is loaded synchronously via module, but wait just in case
+  while (!window.App) {
     await new Promise(r => setTimeout(r, 10));
   }
 }
@@ -96,6 +98,8 @@ export async function init() {
       return;
     }
   } catch (err) {
+    document.getElementById('loading-overlay')?.remove();
+    dashboardView.classList.remove('hidden');
     showError(t('errors.network'));
     return;
   }
@@ -112,11 +116,14 @@ export async function init() {
       }
     }
   } catch (err) {
+    document.getElementById('loading-overlay')?.remove();
+    dashboardView.classList.remove('hidden');
     showError(t('errors.network'));
     return;
   }
 
-  // Show dashboard
+  // Hide loading overlay and show dashboard
+  document.getElementById('loading-overlay')?.remove();
   dashboardView.classList.remove('hidden');
   loadAllContent();
 

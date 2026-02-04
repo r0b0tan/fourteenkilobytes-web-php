@@ -1619,6 +1619,32 @@ button:disabled {
   }
 }
 
+/* Loading Overlay (full page) */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 1000;
+  /* Delay visibility to avoid flicker on fast loads */
+  opacity: 0;
+  animation: fadeInOverlay 0.15s ease-out 0.15s forwards;
+}
+
+/* Instant overlay (no delay) for initial page load */
+.loading-overlay.instant {
+  opacity: 1;
+  animation: none;
+}
+
+@keyframes fadeInOverlay {
+  to {
+    opacity: 1;
+  }
+}
+
 /* Error State */
 .error-state {
   color: #dc2626;

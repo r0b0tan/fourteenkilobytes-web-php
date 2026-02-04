@@ -11,6 +11,14 @@
 </head>
 
 <body>
+  <!-- Loading Overlay (shown until settings are loaded) -->
+  <div id="loading-overlay" class="loading-overlay instant">
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <span>Loading...</span>
+    </div>
+  </div>
+
   <!-- Use semantic header element for better document structure -->
   <header class="header">
     <div class="header-top">
@@ -579,9 +587,7 @@
   <script type="module">
     (async function () {
       // Wait for i18n to be ready
-      while (!window.i18n?.loaded) {
-        await new Promise(r => setTimeout(r, 10));
-      }
+      await i18nReady();
 
       // Check if setup is complete
       const status = await App.getSetupStatus();
@@ -663,6 +669,7 @@
       let editingLink = null;
       let hasUnsavedChanges = false;
       let initialSettings = null;
+      let cssPreviewLoaded = false; // Track if CSS preview has been loaded (lazy-load optimization)
 
       // Update save button appearance based on changes
       function updateSaveButton() {
@@ -684,10 +691,11 @@
       // ============ LANGUAGE ============
 
       // Initialize language selector
-      adminLanguage.value = localStorage.getItem('adminLanguage') || 'en';
+      const initialLanguage = localStorage.getItem('adminLanguage') || 'en';
+      adminLanguage.value = initialLanguage;
 
       adminLanguage.addEventListener('change', () => {
-        i18n.setLocale(adminLanguage.value);
+        markAsChanged();
       });
 
       // ============ HOMEPAGE ============
@@ -738,6 +746,11 @@
           tabBtns.forEach(b => b.classList.toggle('active', b === btn));
           tabContents.forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
           tabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`));
+
+          // Lazy-load CSS preview when CSS tab is first opened
+          if (tab === 'css' && !cssPreviewLoaded && cssMode.value !== 'custom') {
+            loadCssPreview(cssMode.value);
+          }
         });
       });
 
@@ -928,7 +941,7 @@
         updateOverhead();
       });
 
-      async function updateCssModeUI() {
+      function updateCssModeUI() {
         const mode = cssMode.value;
         const isCustom = mode === 'custom';
 
@@ -938,11 +951,25 @@
         // Update filename in preview title
         if (!isCustom) {
           cssPreviewFilename.textContent = `fourteenkilobytes-${mode}.css`;
-          // Show preset CSS in preview
-          const presets = await App.loadCssPresets();
-          cssPreviewContent.textContent = presets[mode] || '';
+          // Only load preview content if CSS tab is visible
+          if (isCssTabActive()) {
+            loadCssPreview(mode);
+          } else {
+            cssPreviewLoaded = false; // Mark as needing reload when tab becomes visible
+          }
         }
         updateOverhead();
+      }
+
+      function isCssTabActive() {
+        return document.getElementById('tab-css')?.classList.contains('active');
+      }
+
+      async function loadCssPreview(mode) {
+        if (!mode || mode === 'custom') return;
+        const presets = await App.loadCssPresets();
+        cssPreviewContent.textContent = presets[mode] || '';
+        cssPreviewLoaded = true;
       }
 
       cssMode.addEventListener('change', () => {
@@ -1031,50 +1058,72 @@
         return bytes.toLocaleString('de-DE') + ' B';
       }
 
+      // Cache for overhead calculation (avoid redundant compiler runs)
+      let overheadCache = { hash: null, result: null };
+
+      function renderOverhead(res) {
+        const bytes = res.overheadBytes;
+        const breakdown = res.breakdown || {};
+        const limit = 14336;
+        const percent = Math.min((bytes / limit) * 100, 100);
+        const overheadDeg = (percent / 100) * 360;
+
+        // Update breakdown table
+        document.getElementById('overhead-breakdown-base').textContent = formatBytes(breakdown.base || 0);
+        document.getElementById('overhead-breakdown-title').textContent = formatBytes(breakdown.title || 0);
+        document.getElementById('overhead-breakdown-favicon').textContent = formatBytes(breakdown.favicon || 0);
+        document.getElementById('overhead-breakdown-meta').textContent = formatBytes(breakdown.meta || 0);
+        document.getElementById('overhead-breakdown-nav').textContent = formatBytes(breakdown.navigation || 0);
+        document.getElementById('overhead-breakdown-footer').textContent = formatBytes(breakdown.footer || 0);
+        document.getElementById('overhead-breakdown-css').textContent = formatBytes(breakdown.css || 0);
+        document.getElementById('overhead-breakdown-total').textContent = `${formatBytes(bytes)} / 14.336 B`;
+
+        overheadPercent.textContent = `${Math.round(percent)}%`;
+
+        // Determine color based on usage
+        let overheadColor = 'var(--gray-400)';
+        if (percent >= 75) {
+          overheadColor = '#dc2626';
+        } else if (percent >= 50) {
+          overheadColor = '#f59e0b';
+        }
+
+        overheadPieChart.style.background = `conic-gradient(
+          ${overheadColor} 0deg ${overheadDeg}deg,
+          var(--gray-200) ${overheadDeg}deg 360deg
+        )`;
+      }
+
+      function getOverheadRelevantSettings(settings) {
+        // Only include settings that affect overhead (excludes RSS, language, etc.)
+        return {
+          siteTitleEnabled: settings.siteTitleEnabled,
+          siteTitle: settings.siteTitle,
+          cssEnabled: settings.cssEnabled,
+          cssMode: settings.cssMode,
+          globalCss: settings.globalCss,
+          header: settings.header,
+          footer: settings.footer,
+          meta: settings.meta,
+          favicon: settings.favicon,
+        };
+      }
+
       async function updateOverhead() {
         try {
           const settings = buildSettings();
-          const res = await App.previewOverhead(settings);
-          console.log('Overhead preview result:', res);
-          const bytes = res.overheadBytes;
-          const breakdown = res.breakdown || {};
-          const limit = 14336;
-          const percent = Math.min((bytes / limit) * 100, 100);
-          const overheadDeg = (percent / 100) * 360;
+          const relevantSettings = getOverheadRelevantSettings(settings);
+          const hash = JSON.stringify(relevantSettings);
 
-          // Update breakdown table
-          const breakdownBaseEl = document.getElementById('overhead-breakdown-base');
-          const breakdownTitleEl = document.getElementById('overhead-breakdown-title');
-          const breakdownFaviconEl = document.getElementById('overhead-breakdown-favicon');
-          const breakdownMetaEl = document.getElementById('overhead-breakdown-meta');
-          const breakdownNavEl = document.getElementById('overhead-breakdown-nav');
-          const breakdownFooterEl = document.getElementById('overhead-breakdown-footer');
-          const breakdownCssEl = document.getElementById('overhead-breakdown-css');
-          const breakdownTotalEl = document.getElementById('overhead-breakdown-total');
-
-          if (breakdownBaseEl) breakdownBaseEl.textContent = formatBytes(breakdown.base || 0);
-          if (breakdownTitleEl) breakdownTitleEl.textContent = formatBytes(breakdown.title || 0);
-          if (breakdownFaviconEl) breakdownFaviconEl.textContent = formatBytes(breakdown.favicon || 0);
-          if (breakdownMetaEl) breakdownMetaEl.textContent = formatBytes(breakdown.meta || 0);
-          if (breakdownNavEl) breakdownNavEl.textContent = formatBytes(breakdown.navigation || 0);
-          if (breakdownFooterEl) breakdownFooterEl.textContent = formatBytes(breakdown.footer || 0);
-          if (breakdownCssEl) breakdownCssEl.textContent = formatBytes(breakdown.css || 0);
-          if (breakdownTotalEl) breakdownTotalEl.textContent = `${formatBytes(bytes)} / 14.336 B`;
-
-          overheadPercent.textContent = `${Math.round(percent)}%`;
-
-          // Determine color based on usage
-          let overheadColor = 'var(--gray-400)';
-          if (percent >= 75) {
-            overheadColor = '#dc2626';
-          } else if (percent >= 50) {
-            overheadColor = '#f59e0b';
+          // Return cached result if settings haven't changed
+          if (hash === overheadCache.hash && overheadCache.result) {
+            renderOverhead(overheadCache.result);
+            return;
           }
 
-          overheadPieChart.style.background = `conic-gradient(
-            ${overheadColor} 0deg ${overheadDeg}deg,
-            var(--gray-200) ${overheadDeg}deg 360deg
-          )`;
+          const res = await App.previewOverhead(settings);
+          overheadCache = { hash, result: res };
+          renderOverhead(res);
         } catch (e) {
           console.error('Overhead calculation failed:', e);
         }
@@ -1163,8 +1212,12 @@
           initialSettings = JSON.stringify(buildSettings());
           hasUnsavedChanges = false;
           updateSaveButton();
+
+          // Hide loading overlay
+          document.getElementById('loading-overlay')?.remove();
         } catch (e) {
           console.error('Failed to load settings:', e);
+          document.getElementById('loading-overlay')?.remove();
         }
       }
 
@@ -1174,39 +1227,55 @@
         const confirmed = await Modal.confirm(t('settings.discardConfirm'));
         if (!confirmed) return;
 
+        // Reset language selector to saved value
+        adminLanguage.value = localStorage.getItem('adminLanguage') || 'en';
+
         await loadSettings();
       });
 
       saveBtn.addEventListener('click', async () => {
+        const originalContent = saveBtn.innerHTML;
         saveBtn.disabled = true;
+        saveBtn.innerHTML = '<div class="loading-spinner" style="width:14px;height:14px;"></div>';
 
         try {
           const settings = buildSettings();
           await App.saveSettings(settings);
-          
+
+          // Apply language change after saving
+          const newLanguage = adminLanguage.value;
+          if (newLanguage !== localStorage.getItem('adminLanguage')) {
+            localStorage.setItem('adminLanguage', newLanguage);
+            i18n.setLocale(newLanguage);
+          }
+
           // Update initial settings and reset change tracking
           initialSettings = JSON.stringify(settings);
           hasUnsavedChanges = false;
           updateSaveButton();
-          
+
           Toast.success(t('settings.saved'));
         } catch (err) {
           Toast.error(err.message);
         } finally {
+          saveBtn.innerHTML = originalContent;
           saveBtn.disabled = false;
         }
       });
 
       // ============ WARN BEFORE LEAVING WITH UNSAVED CHANGES ============
 
-      // Intercept navigation links
+      // Intercept navigation links (overlay is handled globally by i18n.js)
       document.querySelectorAll('a[href]:not([target="_blank"])').forEach(link => {
         link.addEventListener('click', async (e) => {
           if (hasUnsavedChanges && !link.id.includes('logout')) {
             e.preventDefault();
+            // Remove overlay that was added by global handler
+            document.querySelector('.loading-overlay')?.remove();
             const confirmed = await Modal.confirm(t('settings.unsavedChanges'));
             if (confirmed) {
-              hasUnsavedChanges = false; // Reset flag to allow navigation
+              hasUnsavedChanges = false;
+              showNavigationOverlay();
               window.location.href = link.href;
             }
           }
