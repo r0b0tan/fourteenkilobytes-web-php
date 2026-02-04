@@ -776,7 +776,12 @@
         }
 
         // Restore title override
-        if (sourceData.titleOverride) {
+        if (sourceData.titleOverride && typeof sourceData.titleOverride === 'object' && sourceData.titleOverride.enabled) {
+          titleOverrideEnabled.checked = true;
+          titleOverrideEnabled.dispatchEvent(new Event('change'));
+          titleOverrideInput.value = sourceData.titleOverride.title || '';
+        } else if (typeof sourceData.titleOverride === 'string' && sourceData.titleOverride) {
+          // Legacy format - titleOverride is just a string
           titleOverrideEnabled.checked = true;
           titleOverrideEnabled.dispatchEvent(new Event('change'));
           titleOverrideInput.value = sourceData.titleOverride;
@@ -2087,8 +2092,8 @@
             });
           },
 
-          success(text) {
-            show(text, [{ text: 'OK', class: 'btn-primary' }], 'success');
+          success(text, buttons = null, html = false) {
+            show(text, buttons || [{ text: 'OK', class: 'btn-primary' }], 'success', html);
           },
 
           error(text, html = false) {
@@ -2186,11 +2191,18 @@
           const input = await buildInput(shouldPaginate);
           const result = await App.publish(input);
 
-          if (result.pageCount && result.pageCount > 1) {
-            Modal.success(`Build completed: /${result.slug} (${result.pageCount} pages, ${result.totalBytes} bytes)`);
-          } else {
-            Modal.success(`Build completed: /${result.slug} (${result.bytes} bytes)`);
-          }
+          const sizeInfo = result.pageCount && result.pageCount > 1
+            ? `${result.pageCount} pages, ${result.totalBytes} bytes`
+            : `${result.bytes} bytes`;
+
+          Modal.success(
+            `<strong>Build completed</strong><br>/${result.slug} (${sizeInfo})`,
+            [
+              { text: 'OK', class: 'btn-secondary' },
+              { text: 'Ansehen', class: 'btn-primary', action: () => window.open(`/${result.slug}`, '_blank') }
+            ],
+            true
+          );
 
           // Clear all fields after publish
           titleInput.value = '';

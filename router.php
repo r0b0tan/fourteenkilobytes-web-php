@@ -74,6 +74,12 @@ if (is_file($file)) {
     return false; // Let PHP serve the file
 }
 
+// RSS Feed
+if ($uri === '/feed.xml') {
+    require __DIR__ . '/feed.php';
+    return true;
+}
+
 // Blog routes
 if ($uri === '/') {
     require __DIR__ . '/index.php';
