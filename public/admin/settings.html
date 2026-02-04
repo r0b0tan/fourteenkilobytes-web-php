@@ -419,6 +419,11 @@
                 <label for="rss-max-items" data-i18n="settings.rssMaxItems">Maximale Einträge</label>
                 <input type="number" id="rss-max-items" min="5" max="100" value="20">
               </div>
+
+              <div class="form-group">
+                <label for="rss-ttl" data-i18n="settings.rssTtl">TTL (Minuten)</label>
+                <input type="number" id="rss-ttl" min="1" max="1440" value="60">
+              </div>
             </div>
           </div>
         </div>
@@ -669,6 +674,7 @@
       const rssLanguage = document.getElementById('rss-language');
       const rssCopyright = document.getElementById('rss-copyright');
       const rssMaxItems = document.getElementById('rss-max-items');
+      const rssTtl = document.getElementById('rss-ttl');
       const rssFeedUrlPreview = document.getElementById('rss-feed-url-preview');
       const rssUrlSection = document.getElementById('rss-url-section');
       const rssSettingsSection = document.getElementById('rss-settings-section');
@@ -933,6 +939,7 @@
       rssLanguage.addEventListener('change', markAsChanged);
       rssCopyright.addEventListener('input', markAsChanged);
       rssMaxItems.addEventListener('input', markAsChanged);
+      rssTtl.addEventListener('input', markAsChanged);
 
       function updateRssFeedUrlPreview() {
         const siteUrl = rssSiteUrl.value.replace(/\/+$/, '');
@@ -1226,6 +1233,7 @@
           rssLanguage.value = rss.language || 'de-DE';
           rssCopyright.value = rss.copyright || '';
           rssMaxItems.value = rss.maxItems || 20;
+          rssTtl.value = rss.ttl || 60;
           updateRssFeedUrlPreview();
 
           await updateOverhead();
