@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,7 @@
   <title>Admin - fourteenkilobytes</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="stylesheet" href="style.css">
+  <script src="/admin/i18n.js"></script>
 </head>
 
 <body>
@@ -55,14 +56,14 @@
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
-            Übersicht
+            <span data-i18n="nav.overview">Overview</span>
           </a>
           <a href="editor.html" class="nav-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Neu
+            <span data-i18n="nav.new">New</span>
           </a>
           <a href="settings.html" class="nav-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -70,7 +71,7 @@
               <path
                 d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-            Einstellungen
+            <span data-i18n="nav.settings">Settings</span>
           </a>
           <a href="/" target="_blank" rel="noopener" class="nav-icon external-link">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -78,7 +79,7 @@
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            Blog
+            <span data-i18n="nav.blog">Blog</span>
           </a>
           <!-- Visual separator before logout -->
           <span class="nav-separator" aria-hidden="true"></span>
@@ -88,20 +89,20 @@
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            Logout
+            <span data-i18n="nav.logout">Logout</span>
           </a>
         </nav>
       </div>
-      <h1 class="page-title">Übersicht</h1>
+      <h1 class="page-title" data-i18n="pages.overview">Overview</h1>
     </header>
 
     <!-- Content Card -->
     <div class="editor-card">
       <div class="card-header">
         <div class="dashboard-tabs">
-          <button type="button" class="tab-btn active" data-tab="posts">Posts</button>
-          <button type="button" class="tab-btn" data-tab="pages">Seiten</button>
-          <button type="button" class="tab-btn" data-tab="archive">Archiv</button>
+          <button type="button" class="tab-btn active" data-tab="posts" data-i18n="tabs.posts">Posts</button>
+          <button type="button" class="tab-btn" data-tab="pages" data-i18n="tabs.pages">Pages</button>
+          <button type="button" class="tab-btn" data-tab="archive" data-i18n="tabs.archive">Archive</button>
         </div>
         <div class="list-controls">
           <div class="search-box">
@@ -110,7 +111,7 @@
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
-            <input type="text" id="search-input" placeholder="Suche...">
+            <input type="text" id="search-input" data-i18n-placeholder="dashboard.search" placeholder="Search...">
           </div>
           <div class="date-range-picker">
             <div class="date-range-trigger" id="date-range-trigger">
@@ -120,20 +121,20 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span id="date-range-label">Datum</span>
+              <span id="date-range-label" data-i18n="dashboard.date">Date</span>
             </div>
             <div class="date-range-dropdown hidden" id="date-range-dropdown">
               <div class="date-range-inputs">
                 <div class="date-input-group">
-                  <label for="date-from">Von</label>
-                  <input type="date" id="date-from" placeholder="TT.MM.JJJJ">
+                  <label for="date-from" data-i18n="dashboard.dateFrom">From</label>
+                  <input type="date" id="date-from">
                 </div>
                 <div class="date-input-group">
-                  <label for="date-to">Bis</label>
-                  <input type="date" id="date-to" placeholder="TT.MM.JJJJ">
+                  <label for="date-to" data-i18n="dashboard.dateTo">To</label>
+                  <input type="date" id="date-to">
                 </div>
               </div>
-              <button type="button" class="btn btn-primary" id="clear-dates">Zurücksetzen</button>
+              <button type="button" class="btn btn-primary" id="clear-dates" data-i18n="dashboard.dateReset">Reset</button>
             </div>
           </div>
           <div class="page-size-selector">
@@ -141,7 +142,7 @@
               <option value="5">5</option>
               <option value="10" selected>10</option>
               <option value="20">20</option>
-              <option value="all">Alle</option>
+              <option value="all" data-i18n="dashboard.all">All</option>
             </select>
           </div>
         </div>
@@ -150,7 +151,7 @@
         <!-- Posts Tab -->
         <div id="tab-posts" class="tab-content active">
           <ul id="posts-list" class="posts-list">
-            <li class="empty">Lade...</li>
+            <li class="empty" data-i18n="dashboard.loading">Loading...</li>
           </ul>
           <div id="posts-pagination" class="pagination hidden"></div>
         </div>
@@ -158,7 +159,7 @@
         <!-- Pages Tab -->
         <div id="tab-pages" class="tab-content hidden">
           <ul id="pages-list" class="posts-list">
-            <li class="empty">Lade...</li>
+            <li class="empty" data-i18n="dashboard.loading">Loading...</li>
           </ul>
           <div id="pages-pagination" class="pagination hidden"></div>
         </div>
@@ -166,7 +167,7 @@
         <!-- Archive Tab -->
         <div id="tab-archive" class="tab-content hidden">
           <ul id="archive-list" class="posts-list">
-            <li class="empty">Lade...</li>
+            <li class="empty" data-i18n="dashboard.loading">Loading...</li>
           </ul>
           <div id="archive-pagination" class="pagination hidden"></div>
         </div>
@@ -186,6 +187,11 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     (async function () {
+      // Wait for i18n to be ready
+      while (!window.i18n?.loaded) {
+        await new Promise(r => setTimeout(r, 10));
+      }
+
       const dashboardView = document.getElementById('dashboard-view');
       const logoutBtn = document.getElementById('logout-btn');
       const postsList = document.getElementById('posts-list');
@@ -264,21 +270,22 @@
 
       // Update date range label
       function updateDateRangeLabel() {
+        const locale = i18n.getFullLocale();
         if (dateFrom && dateTo) {
-          const fromFormatted = new Date(dateFrom).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          const toFormatted = new Date(dateTo).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          dateRangeLabel.textContent = `${fromFormatted} - ${toFormatted}`;
+          const fromFormatted = new Date(dateFrom).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const toFormatted = new Date(dateTo).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = t('dashboard.dateRangeBetween', { from: fromFormatted, to: toFormatted });
           dateRangeTrigger.classList.add('active');
         } else if (dateFrom) {
-          const fromFormatted = new Date(dateFrom).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          dateRangeLabel.textContent = `Ab ${fromFormatted}`;
+          const fromFormatted = new Date(dateFrom).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = t('dashboard.dateRangeFrom', { date: fromFormatted });
           dateRangeTrigger.classList.add('active');
         } else if (dateTo) {
-          const toFormatted = new Date(dateTo).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          dateRangeLabel.textContent = `Bis ${toFormatted}`;
+          const toFormatted = new Date(dateTo).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+          dateRangeLabel.textContent = t('dashboard.dateRangeTo', { date: toFormatted });
           dateRangeTrigger.classList.add('active');
         } else {
-          dateRangeLabel.textContent = 'Datum';
+          dateRangeLabel.textContent = t('dashboard.date');
           dateRangeTrigger.classList.remove('active');
         }
       }
@@ -379,14 +386,14 @@
           confirm(text) {
             return new Promise(resolve => {
               show(text, [
-                { text: 'Ja', class: 'btn-danger', action: () => resolve(true) },
-                { text: 'Abbrechen', class: 'btn-secondary', action: () => resolve(false) }
+                { text: t('modal.yes'), class: 'btn-danger', action: () => resolve(true) },
+                { text: t('modal.cancel'), class: 'btn-secondary', action: () => resolve(false) }
               ]);
             });
           },
 
           error(text) {
-            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error');
+            show(text, [{ text: t('modal.ok'), class: 'btn-primary' }], 'error');
           },
 
           hide
@@ -423,9 +430,10 @@
 
           renderCurrentView();
         } catch (err) {
-          postsList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
-          pagesList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
-          archiveList.innerHTML = '<li class="empty">Fehler beim Laden</li>';
+          const errorMsg = `<li class="empty">${t('dashboard.loadError')}</li>`;
+          postsList.innerHTML = errorMsg;
+          pagesList.innerHTML = errorMsg;
+          archiveList.innerHTML = errorMsg;
           console.error(err);
         }
       }
@@ -468,14 +476,15 @@
         const filteredPosts = filterItems(allPosts);
         const filteredPages = filterItems(allPages);
         const filteredArchive = filterItems(allArchive);
-        renderPaginatedList(postsList, postsPagination, filteredPosts, postsPage, 'Post', 'Noch keine Posts.', (p) => { postsPage = p; renderCurrentView(); });
-        renderPaginatedList(pagesList, pagesPagination, filteredPages, pagesPage, 'Seite', 'Noch keine Seiten.', (p) => { pagesPage = p; renderCurrentView(); });
-        renderPaginatedList(archiveList, archivePagination, filteredArchive, archivePage, '', 'Keine gelöschten Artikel.', (p) => { archivePage = p; renderCurrentView(); });
+        renderPaginatedList(postsList, postsPagination, filteredPosts, postsPage, 'Post', t('dashboard.noPosts'), (p) => { postsPage = p; renderCurrentView(); });
+        renderPaginatedList(pagesList, pagesPagination, filteredPages, pagesPage, t('tabs.pages'), t('dashboard.noPages'), (p) => { pagesPage = p; renderCurrentView(); });
+        renderPaginatedList(archiveList, archivePagination, filteredArchive, archivePage, '', t('dashboard.noArchive'), (p) => { archivePage = p; renderCurrentView(); });
       }
 
       function renderPaginatedList(listEl, paginationEl, items, currentPage, typeName, emptyText, onPageChange) {
         if (items.length === 0) {
-          listEl.innerHTML = `<li class="empty">${emptyText} <a href="editor.html">Erstelle deine erste ${typeName}</a></li>`;
+          const createLink = typeName ? ` <a href="editor.html">${t('dashboard.createFirst', { type: typeName })}</a>` : '';
+          listEl.innerHTML = `<li class="empty">${emptyText}${createLink}</li>`;
           paginationEl.classList.add('hidden');
           return;
         }
@@ -496,7 +505,7 @@
               </div>
               <div class="post-meta">
                 /${item.slug} · ${App.formatDate(item.publishedAt)}
-                ${item.status === 'tombstone' ? ' · <span class="text-muted">gelöscht</span>' : ''}
+                ${item.status === 'tombstone' ? ` · <span class="text-muted">${t('dashboard.deleted')}</span>` : ''}
               </div>
             </div>
             <div class="post-actions">
@@ -504,27 +513,27 @@
                 <div class="actions-dropdown">
                   <button class="btn btn-secondary btn-small btn-icon actions-dropdown-toggle" onclick="toggleActionsDropdown(event, this)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                    Aktionen
+                    ${t('dashboard.actions')}
                     <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                   </button>
                   <div class="actions-dropdown-menu">
                     <a href="/${item.slug}" target="_blank">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      Ansehen
+                      ${t('dashboard.view')}
                     </a>
                     <button onclick="recompilePost('${item.slug}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                      Recompile
+                      ${t('dashboard.recompile')}
                     </button>
                     <button onclick="duplicatePost('${item.slug}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                      Duplizieren
+                      ${t('dashboard.duplicate')}
                     </button>
                   </div>
                 </div>
                 <button class="btn btn-danger btn-small btn-icon" onclick="deletePost('${item.slug}')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  Löschen
+                  ${t('dashboard.delete')}
                 </button>
               ` : ''}
             </div>
@@ -599,14 +608,14 @@
 
       // Global delete handler
       window.deletePost = async function (slug) {
-        const confirmed = await Modal.confirm(`"${slug}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`);
+        const confirmed = await Modal.confirm(t('dashboard.deleteConfirm', { slug }));
         if (!confirmed) return;
 
         try {
           await App.deletePost(slug);
           loadAllContent();
         } catch (err) {
-          Modal.error('Fehler beim Löschen: ' + err.message);
+          Modal.error(t('dashboard.deleteError', { error: err.message }));
         }
       };
 
@@ -623,7 +632,7 @@
           sessionStorage.setItem('clonedSource', JSON.stringify(sourceData));
           window.location.href = 'editor.html?clone=true';
         } catch (err) {
-          Modal.error('Fehler beim Duplizieren: ' + err.message);
+          Modal.error(t('dashboard.duplicateError', { error: err.message }));
         }
       };
 

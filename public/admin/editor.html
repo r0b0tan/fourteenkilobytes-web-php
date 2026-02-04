@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,7 @@
   <title>Editor - fourteenkilobytes</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="stylesheet" href="style.css">
+  <script src="/admin/i18n.js"></script>
 </head>
 
 <body>
@@ -55,7 +56,7 @@
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Übersicht
+          <span data-i18n="nav.overview">Overview</span>
         </a>
         <a href="editor.html" class="nav-icon active" aria-current="page">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -63,7 +64,7 @@
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Neu
+          <span data-i18n="nav.new">New</span>
         </a>
         <a href="settings.html" class="nav-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -72,7 +73,7 @@
             <path
               d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-          Einstellungen
+          <span data-i18n="nav.settings">Settings</span>
         </a>
         <a href="/" target="_blank" rel="noopener" class="nav-icon external-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -81,7 +82,7 @@
             <polyline points="15 3 21 3 21 9" />
             <line x1="10" y1="14" x2="21" y2="3" />
           </svg>
-          Blog
+          <span data-i18n="nav.blog">Blog</span>
         </a>
         <!-- Visual separator before logout -->
         <span class="nav-separator" aria-hidden="true"></span>
@@ -92,19 +93,19 @@
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          Logout
+          <span data-i18n="nav.logout">Logout</span>
         </a>
       </nav>
     </div>
     <div style="margin-top: 32px;">
       <div>
-        <h1 id="page-title" class="page-title" style="margin: 0;">New</h1>
+        <h1 id="page-title" class="page-title" style="margin: 0;" data-i18n="editor.new">New</h1>
         <p id="page-subtitle" class="page-subtitle" style="margin: 4px 0 0 0;">Creating source · not yet compiled</p>
       </div>
       <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 16px;">
         <div id="template-selector-container" style="display: flex; gap: 12px; align-items: center;">
           <select id="template-selector" class="page-type-select">
-            <option value="">Templates</option>
+            <option value="" data-i18n="editor.templatesSelect">Select template...</option>
           </select>
           <span style="color: var(--border-primary);">|</span>
         </div>
@@ -113,7 +114,7 @@
             <polyline points="23 4 23 10 17 10"></polyline>
             <polyline points="1 20 1 14 7 14"></polyline>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>Zurücksetzen</button>
+          </svg><span data-i18n="editor.resetBtn">Reset</span></button>
       </div>
     </div>
   </header>
@@ -121,29 +122,29 @@
   <!-- Card: Head -->
   <div class="editor-card">
     <div class="card-header">
-      <h2 class="card-title">Head</h2>
+      <h2 class="card-title" data-i18n="editor.head">Head</h2>
     </div>
     <div class="card-body card-body-grid">
       <div class="base-data-row">
         <div class="form-group">
-          <label for="title">Title</label>
-          <input type="text" id="title" placeholder="My first post">
+          <label for="title" data-i18n="editor.title">Title</label>
+          <input type="text" id="title" data-i18n-placeholder="editor.titlePlaceholder" placeholder="My first post">
         </div>
         <div class="form-group">
-          <label for="slug">Slug</label>
-          <input type="text" id="slug" placeholder="my-first-post">
+          <label for="slug" data-i18n="editor.slug">Slug</label>
+          <input type="text" id="slug" data-i18n-placeholder="editor.slugPlaceholder" placeholder="my-first-post">
         </div>
         <div class="form-group">
-          <label for="page-type">Build Type</label>
+          <label for="page-type" data-i18n="editor.pageType">Page Type</label>
           <select id="page-type" class="page-type-select">
-            <option value="post">Blog Post</option>
-            <option value="page">Static Page</option>
+            <option value="post" data-i18n="editor.pageTypePost">Post</option>
+            <option value="page" data-i18n="editor.pageTypePage">Page</option>
           </select>
           <span id="page-type-hint" class="text-small text-muted"></span>
         </div>
       </div>
       <div class="rail-item">
-        <span>Blog Title</span>
+        <span data-i18n="editor.blogTitle">Blog Title</span>
         <span id="title-bytes">0 B</span>
       </div>
 
@@ -152,19 +153,19 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="title-override-enabled">
-            <span>Override Title</span>
+            <span data-i18n="editor.browserTabTitle">Browser Tab Title</span>
           </label>
-          <p id="title-override-hint" class="override-hint">✓ Using: Title | Site</p>
+          <p id="title-override-hint" class="override-hint" data-i18n="editor.browserTabTitleHint">✓ Using title only</p>
         </div>
         <div id="title-override-editor" class="override-editor">
           <div class="form-group">
-            <label for="title-override">Browser Tab Title</label>
+            <label for="title-override" data-i18n="editor.browserTabTitle">Browser Tab Title</label>
             <input type="text" id="title-override" maxlength="100" placeholder="Custom browser tab title..." disabled>
           </div>
         </div>
       </div>
       <div class="rail-item" id="title-rail-item">
-        <span>Page Title</span>
+        <span data-i18n="editor.browserTabTitle">Browser Tab Title</span>
         <span id="browser-title-bytes">0 B</span>
       </div>
 
@@ -173,25 +174,25 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="meta-enabled">
-            <span>Override Meta</span>
+            <span data-i18n="settings.meta">Meta</span>
           </label>
-          <p id="meta-global-hint" class="override-hint">✓ Using global meta</p>
+          <p id="meta-global-hint" class="override-hint" data-i18n="settings.metaHint">Global SEO tags</p>
         </div>
         <div id="meta-editor" class="override-editor hidden">
           <div class="meta-row">
             <div class="form-group">
-              <label for="meta-description">Description</label>
-              <input type="text" id="meta-description" maxlength="160" placeholder="Page description...">
+              <label for="meta-description" data-i18n="settings.metaDescription">Description</label>
+              <input type="text" id="meta-description" maxlength="160" data-i18n-placeholder="settings.metaDescriptionPlaceholder" placeholder="Page description...">
             </div>
             <div class="form-group">
-              <label for="meta-author">Author</label>
-              <input type="text" id="meta-author" maxlength="100" placeholder="Author name">
+              <label for="meta-author" data-i18n="settings.metaAuthor">Author</label>
+              <input type="text" id="meta-author" maxlength="100" data-i18n-placeholder="settings.metaAuthorPlaceholder" placeholder="Author name">
             </div>
           </div>
         </div>
       </div>
       <div class="rail-item" id="meta-rail-item">
-        <span>Meta</span>
+        <span data-i18n="settings.meta">Meta</span>
         <span id="meta-bytes">0 B</span>
       </div>
 
@@ -200,20 +201,20 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="nav-enabled">
-            <span>Override Navigation</span>
+            <span data-i18n="settings.navigation">Navigation</span>
           </label>
-          <p id="nav-global-hint" class="override-hint">✓ Using global navigation</p>
+          <p id="nav-global-hint" class="override-hint" data-i18n="settings.navigationHint">Navigation links</p>
         </div>
         <div id="nav-editor" class="override-editor hidden">
-          <p class="text-small text-muted mb-1">Navigation-Links (erscheinen in jeder Seite)</p>
+          <p class="text-small text-muted mb-1" data-i18n="settings.navigationHint">Navigation links (appear on every page)</p>
           <div class="nav-editor-row">
             <div id="nav-links" class="nav-links"></div>
-            <button type="button" id="add-nav-link" class="btn btn-secondary">+ Link</button>
+            <button type="button" id="add-nav-link" class="btn btn-secondary" data-i18n="settings.navigationAddLink">+ Link</button>
           </div>
         </div>
       </div>
       <div class="rail-item" id="nav-rail-item">
-        <span>Navigation</span>
+        <span data-i18n="settings.navigation">Navigation</span>
         <span id="nav-bytes">0 B</span>
       </div>
     </div>
@@ -222,24 +223,24 @@
   <!-- Card: Body -->
   <div class="editor-card">
     <div class="card-header">
-      <h2 class="card-title">Body</h2>
+      <h2 class="card-title" data-i18n="editor.body">Body</h2>
     </div>
     <div class="card-body card-body-grid">
       <div class="block-editor-wrapper">
         <div id="block-editor" class="block-editor"></div>
         <div class="block-actions-row">
-          <button type="button" id="add-block-btn" class="btn btn-secondary">+ Add Block</button>
+          <button type="button" id="add-block-btn" class="btn btn-secondary" data-i18n="editor.addBlock">+ Add Block</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
-            <button type="button" data-type="paragraph">Paragraph</button>
-            <button type="button" data-type="heading" data-level="2">Heading</button>
-            <button type="button" data-type="list" data-list-type="unordered">List</button>
-            <button type="button" data-type="divider">Divider</button>
-            <button type="button" data-type="bloglist">Bloglist</button>
+            <button type="button" data-type="paragraph" data-i18n="editor.blockParagraph">Paragraph</button>
+            <button type="button" data-type="heading" data-level="2" data-i18n="editor.blockHeading">Heading</button>
+            <button type="button" data-type="list" data-list-type="unordered" data-i18n="editor.blockList">List</button>
+            <button type="button" data-type="divider" data-i18n="editor.blockDivider">Divider</button>
+            <button type="button" data-type="bloglist" data-i18n="editor.blockBloglist">Bloglist</button>
           </div>
         </div>
       </div>
       <div class="rail-item rail-item-total" id="content-rail">
-        <span>Content</span>
+        <span data-i18n="editor.body">Body</span>
         <span id="cost-content-total">0 B</span>
       </div>
     </div>
@@ -248,7 +249,7 @@
   <!-- Card: Footer -->
   <div class="editor-card">
     <div class="card-header">
-      <h2 class="card-title">Footer</h2>
+      <h2 class="card-title" data-i18n="editor.footer">Footer</h2>
     </div>
     <div class="card-body card-body-grid">
       <!-- Footer-Override -->
@@ -256,19 +257,19 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="footer-enabled">
-            <span>Override Footer</span>
+            <span data-i18n="settings.footerSection">Footer</span>
           </label>
-          <p id="footer-global-hint" class="override-hint">✓ Using global footer</p>
+          <p id="footer-global-hint" class="override-hint" data-i18n="settings.footerHint">Footer text</p>
         </div>
         <div id="footer-editor" class="override-editor hidden">
           <div class="footer-editor-row">
             <input type="text" id="footer-text" placeholder="© 2024 My Blog">
-            <button type="button" id="insert-bytes-btn" class="btn btn-secondary">+ Bytes</button>
+            <button type="button" id="insert-bytes-btn" class="btn btn-secondary" data-i18n="settings.footerBytesBtn">{{bytes}}</button>
           </div>
         </div>
       </div>
       <div class="rail-item">
-        <span>Footer</span>
+        <span data-i18n="settings.footerSection">Footer</span>
         <span id="footer-bytes">0 B</span>
       </div>
 
@@ -277,17 +278,17 @@
         <div class="override-section-header">
           <label class="override-toggle">
             <input type="checkbox" id="css-enabled">
-            <span>Add CSS</span>
+            <span data-i18n="tabs.css">CSS</span>
           </label>
           <p id="css-global-hint" class="override-hint"></p>
         </div>
         <div id="css-editor" class="override-editor">
-          <p class="css-warning-hint">Additional CSS is inserted after global CSS and increases page size.</p>
-          <textarea id="css-rules" rows="10" placeholder="/* Additional CSS */"></textarea>
+          <p class="css-warning-hint" data-i18n="settings.cssCustomHint">Custom CSS rules (embedded in every page)</p>
+          <textarea id="css-rules" rows="10" data-i18n-placeholder="settings.cssCustom" placeholder="/* Additional CSS */"></textarea>
         </div>
       </div>
       <div class="rail-item">
-        <span>CSS</span>
+        <span data-i18n="tabs.css">CSS</span>
         <span id="css-bytes">0 B</span>
       </div>
     </div>
@@ -297,17 +298,17 @@
   <div id="nav-link-popup" class="nav-link-popup hidden">
     <div class="popup-content">
       <div class="form-group">
-        <label>Text</label>
-        <input type="text" id="nav-link-text" placeholder="Home">
+        <label data-i18n="linkPopup.text">Text</label>
+        <input type="text" id="nav-link-text" data-i18n-placeholder="linkPopup.textPlaceholder" placeholder="Home">
       </div>
       <div class="form-group">
-        <label>Target</label>
-        <input type="text" id="nav-link-href" placeholder="/">
+        <label data-i18n="linkPopup.target">Target</label>
+        <input type="text" id="nav-link-href" data-i18n-placeholder="linkPopup.targetPlaceholder" placeholder="/">
       </div>
       <div class="popup-actions">
-        <button type="button" id="nav-link-save" class="btn btn-primary">OK</button>
-        <button type="button" id="nav-link-delete" class="btn btn-danger">Delete</button>
-        <button type="button" id="nav-link-cancel" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="nav-link-save" class="btn btn-primary" data-i18n="linkPopup.save">OK</button>
+        <button type="button" id="nav-link-delete" class="btn btn-danger" data-i18n="linkPopup.delete">Delete</button>
+        <button type="button" id="nav-link-cancel" class="btn btn-secondary" data-i18n="linkPopup.cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -416,7 +417,7 @@
             </div>
           </div>
         </div>
-        <button id="publish-btn" class="btn btn-primary build-publish-btn">Build & Publish</button>
+        <button id="publish-btn" class="btn btn-primary build-publish-btn" data-i18n="editor.buildPublish">Build & Publish</button>
       </div>
     </div>
   </div>
@@ -430,6 +431,11 @@
     import * as Compiler from './compiler.browser.js';
 
     (async function () {
+      // Wait for i18n to be ready
+      while (!window.i18n?.loaded) {
+        await new Promise(r => setTimeout(r, 10));
+      }
+
       // Check if setup is complete
       const status = await App.getSetupStatus();
       if (!status.setupComplete) {
@@ -2117,11 +2123,11 @@
         // Validate content before publish
         const blocks = blockEditor.querySelectorAll('.block-item');
         if (blocks.length === 0) {
-          Modal.error('At least one block required');
+          Modal.error(t('editor.buildError', { error: t('editor.blockRequired') }));
           return;
         }
 
-        const confirmed = await Modal.confirm('Execute build and publish?');
+        const confirmed = await Modal.confirm(t('editor.buildConfirm'));
         if (!confirmed) return;
 
         publishBtn.disabled = true;
@@ -2147,20 +2153,20 @@
 
               // Ask user if they want to split
               const splitConfirmed = await Modal.confirm(
-                `Your post exceeds the 14KB limit (${previewResult.bytes} bytes). Do you want to split it into ${estimatedPageCount} pages?`
+                t('editor.splitConfirm', { bytes: previewResult.bytes, pages: estimatedPageCount })
               );
 
               if (splitConfirmed) {
                 shouldPaginate = true;
               } else {
                 // User declined, abort publish
-                Modal.error('Post is too large and cannot be published as a single page.');
+                Modal.error(t('editor.tooLarge'));
                 publishBtn.disabled = false;
                 return;
               }
             } else {
               // Can't be paginated
-              Modal.error('Post is too large and cannot be split into pages.');
+              Modal.error(t('editor.cannotSplit'));
               publishBtn.disabled = false;
               return;
             }
@@ -2174,7 +2180,7 @@
 
               // Ask user if they want to split
               const splitConfirmed = await Modal.confirm(
-                `Your post is ${previewResult.bytes} bytes and exceeds the 14KB limit. Do you want to split it into ${estimatedPageCount} pages?`
+                t('editor.splitConfirm', { bytes: previewResult.bytes, pages: estimatedPageCount })
               );
 
               if (splitConfirmed) {
@@ -2196,10 +2202,10 @@
             : `${result.bytes} bytes`;
 
           Modal.success(
-            `<strong>Build completed</strong><br>/${result.slug} (${sizeInfo})`,
+            `<strong>${t('editor.buildSuccess')}</strong><br>/${result.slug} (${sizeInfo})`,
             [
-              { text: 'OK', class: 'btn-secondary' },
-              { text: 'Ansehen', class: 'btn-primary', action: () => window.open(`/${result.slug}`, '_blank') }
+              { text: t('modal.ok'), class: 'btn-secondary' },
+              { text: t('dashboard.view'), class: 'btn-primary', action: () => window.open(`/${result.slug}`, '_blank') }
             ],
             true
           );
@@ -2254,7 +2260,7 @@
 
           // Re-enable publish button
           publishBtn.disabled = false;
-          publishBtn.textContent = 'Build & Publish';
+          publishBtn.textContent = t('editor.buildPublish');
         } catch (err) {
           Modal.error(err.message);
           console.error(err);
@@ -2343,7 +2349,7 @@
           // Reset dropdown
           this.value = '';
         } catch (err) {
-          Modal.error('Fehler beim Laden der Vorlage: ' + err.message);
+          Modal.error(t('editor.templatesError', { error: err.message }));
           this.value = '';
         }
       });
@@ -2377,7 +2383,7 @@
           }
         } catch (err) {
           console.error('Failed to load source:', err);
-          Modal.error(`Konnte Quelle nicht laden: ${err.message}`);
+          Modal.error(t('editor.loadSourceError', { error: err.message }));
         }
       } else if (isCloning) {
         // Clone mode: load from sessionStorage
@@ -2417,7 +2423,7 @@
       // ============ CLEAR ALL BUTTON ============
 
       document.getElementById('clear-all-btn').addEventListener('click', async () => {
-        const confirmed = await Modal.confirm('Wirklich alle Eingaben löschen?');
+        const confirmed = await Modal.confirm(t('editor.resetConfirm'));
         if (!confirmed) return;
 
         // Clear all fields

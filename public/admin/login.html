@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - fourteenkilobytes</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="stylesheet" href="/admin/style.css">
+  <script src="/admin/i18n.js"></script>
 </head>
 <body>
   <div class="auth-container">
     <div class="editor-card auth-card">
       <div class="card-header">
-        <h2 class="card-title">Login</h2>
+        <h2 class="card-title" data-i18n="pages.login">Login</h2>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label for="password">Passwort</label>
-          <input type="password" id="password" placeholder="Passwort eingeben">
+          <label for="password" data-i18n="auth.password">Password</label>
+          <input type="password" id="password" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="Enter password">
         </div>
-        <button id="login-btn" class="btn btn-primary build-publish-btn">Anmelden</button>
+        <button id="login-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.login">Log in</button>
         <p id="login-error" class="message error hidden mt-1"></p>
       </div>
     </div>
@@ -27,6 +28,11 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     (async function() {
+      // Wait for i18n to be ready
+      while (!window.i18n?.loaded) {
+        await new Promise(r => setTimeout(r, 10));
+      }
+
       const passwordInput = document.getElementById('password');
       const loginBtn = document.getElementById('login-btn');
       const loginError = document.getElementById('login-error');
@@ -61,7 +67,7 @@
       loginBtn.addEventListener('click', async () => {
         const password = passwordInput.value.trim();
         if (!password) {
-          showError('Bitte Passwort eingeben');
+          showError(t('auth.errorEnterPassword'));
           return;
         }
 
@@ -72,7 +78,7 @@
           await App.login(password);
           window.location.href = '/admin/';
         } catch (err) {
-          showError(err.message === 'Invalid password' ? 'Falsches Passwort' : 'Fehler bei Anmeldung');
+          showError(err.message === 'Invalid password' ? t('auth.errorInvalidPassword') : t('auth.errorLoginFailed'));
           console.error(err);
         } finally {
           loginBtn.disabled = false;

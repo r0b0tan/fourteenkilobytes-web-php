@@ -622,7 +622,8 @@ const App = (function() {
    * Utility: format date
    */
   function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('de-DE', {
+    const locale = window.i18n?.getFullLocale() || 'en-US';
+    return new Date(iso).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

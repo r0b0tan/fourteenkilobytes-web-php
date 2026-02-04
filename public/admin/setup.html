@@ -1,34 +1,35 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Setup - fourteenkilobytes</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="stylesheet" href="/admin/style.css">
+  <script src="/admin/i18n.js"></script>
 </head>
 <body>
   <div class="auth-container">
     <div class="editor-card auth-card">
       <div class="card-header">
-        <h2 class="card-title">Setup</h2>
+        <h2 class="card-title" data-i18n="pages.setup">Setup</h2>
       </div>
       <div class="card-body">
-        <p class="text-muted text-small mb-2">Lege ein Admin-Passwort fest. Es gibt keine Wiederherstellung.</p>
+        <p class="text-muted text-small mb-2" data-i18n="auth.setupHint">Set an admin password. There is no recovery.</p>
 
         <div class="form-group">
-          <label for="password">Passwort</label>
-          <input type="password" id="password" placeholder="Mindestens 8 Zeichen">
+          <label for="password" data-i18n="auth.password">Password</label>
+          <input type="password" id="password" data-i18n-placeholder="auth.passwordMinLength" placeholder="Minimum 8 characters">
         </div>
 
         <div class="form-group">
-          <label for="password-confirm">Passwort wiederholen</label>
-          <input type="password" id="password-confirm" placeholder="Passwort bestätigen">
+          <label for="password-confirm" data-i18n="auth.passwordConfirm">Confirm password</label>
+          <input type="password" id="password-confirm" data-i18n-placeholder="auth.passwordConfirmPlaceholder" placeholder="Confirm password">
         </div>
 
-        <button id="setup-btn" class="btn btn-primary build-publish-btn">Einrichten</button>
+        <button id="setup-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.setup">Set up</button>
         <p id="setup-error" class="message error hidden mt-1"></p>
-        <p class="text-muted text-small mt-2" style="text-align: center;">Bei Passwortverlust: <code>data/instance.json</code> löschen</p>
+        <p class="text-muted text-small mt-2" style="text-align: center;" data-i18n="auth.setupRecoveryHint">If you lose your password: delete data/instance.json</p>
       </div>
     </div>
   </div>
@@ -36,6 +37,11 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     (async function() {
+      // Wait for i18n to be ready
+      while (!window.i18n?.loaded) {
+        await new Promise(r => setTimeout(r, 10));
+      }
+
       const passwordInput = document.getElementById('password');
       const passwordConfirmInput = document.getElementById('password-confirm');
       const setupBtn = document.getElementById('setup-btn');
@@ -54,12 +60,12 @@
 
         // Validate
         if (!password || password.length < 8) {
-          showError('Passwort muss mindestens 8 Zeichen haben');
+          showError(t('auth.errorPasswordMinLength'));
           return;
         }
 
         if (password !== passwordConfirm) {
-          showError('Passwörter stimmen nicht überein');
+          showError(t('auth.errorPasswordMismatch'));
           return;
         }
 
@@ -71,7 +77,7 @@
           // Setup complete, redirect to login
           window.location.href = '/admin/';
         } catch (err) {
-          showError(err.message || 'Fehler beim Einrichten');
+          showError(err.message || t('auth.errorSetupFailed'));
         } finally {
           setupBtn.disabled = false;
         }
