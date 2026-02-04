@@ -31,9 +31,7 @@
   <script type="module">
     (async function() {
       // Wait for i18n to be ready
-      while (!window.i18n?.loaded) {
-        await new Promise(r => setTimeout(r, 10));
-      }
+      await i18nReady();
 
       const loginForm = document.getElementById('login-form');
       const passwordInput = document.getElementById('password');
