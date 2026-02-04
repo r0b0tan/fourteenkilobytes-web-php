@@ -17,18 +17,20 @@
       <div class="card-body">
         <p class="text-muted text-small mb-2" data-i18n="auth.setupHint">Set an admin password. There is no recovery.</p>
 
-        <div class="form-group">
-          <label for="password" data-i18n="auth.password">Password</label>
-          <input type="password" id="password" data-i18n-placeholder="auth.passwordMinLength" placeholder="Minimum 8 characters">
-        </div>
+        <form id="setup-form" novalidate>
+          <div class="form-group">
+            <label for="password" data-i18n="auth.password">Password</label>
+            <input type="password" id="password" required minlength="8" autocomplete="new-password" data-i18n-placeholder="auth.passwordMinLength" placeholder="Minimum 8 characters" aria-describedby="setup-error">
+          </div>
 
-        <div class="form-group">
-          <label for="password-confirm" data-i18n="auth.passwordConfirm">Confirm password</label>
-          <input type="password" id="password-confirm" data-i18n-placeholder="auth.passwordConfirmPlaceholder" placeholder="Confirm password">
-        </div>
+          <div class="form-group">
+            <label for="password-confirm" data-i18n="auth.passwordConfirm">Confirm password</label>
+            <input type="password" id="password-confirm" required minlength="8" autocomplete="new-password" data-i18n-placeholder="auth.passwordConfirmPlaceholder" placeholder="Confirm password" aria-describedby="setup-error">
+          </div>
 
-        <button id="setup-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.setup">Set up</button>
-        <p id="setup-error" class="message error hidden mt-1"></p>
+          <button type="submit" id="setup-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.setup">Set up</button>
+          <p id="setup-error" class="message error hidden mt-1" role="alert" aria-live="polite"></p>
+        </form>
         <p class="text-muted text-small mt-2" style="text-align: center;" data-i18n="auth.setupRecoveryHint">If you lose your password: delete data/instance.json</p>
       </div>
     </div>
@@ -42,6 +44,7 @@
         await new Promise(r => setTimeout(r, 10));
       }
 
+      const setupForm = document.getElementById('setup-form');
       const passwordInput = document.getElementById('password');
       const passwordConfirmInput = document.getElementById('password-confirm');
       const setupBtn = document.getElementById('setup-btn');
@@ -54,23 +57,56 @@
         return;
       }
 
-      setupBtn.addEventListener('click', async () => {
+      // Real-time password match validation
+      passwordConfirmInput.addEventListener('input', () => {
+        if (passwordConfirmInput.value && passwordConfirmInput.value !== passwordInput.value) {
+          passwordConfirmInput.setCustomValidity(t('auth.errorPasswordMismatch'));
+        } else {
+          passwordConfirmInput.setCustomValidity('');
+        }
+      });
+
+      passwordInput.addEventListener('input', () => {
+        // Re-validate confirm field when password changes
+        if (passwordConfirmInput.value && passwordConfirmInput.value !== passwordInput.value) {
+          passwordConfirmInput.setCustomValidity(t('auth.errorPasswordMismatch'));
+        } else {
+          passwordConfirmInput.setCustomValidity('');
+        }
+      });
+
+      setupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Clear previous errors
+        setupError.classList.add('hidden');
+        passwordInput.setCustomValidity('');
+        passwordConfirmInput.setCustomValidity('');
+
         const password = passwordInput.value;
         const passwordConfirm = passwordConfirmInput.value;
 
-        // Validate
+        // Validate password length
         if (!password || password.length < 8) {
-          showError(t('auth.errorPasswordMinLength'));
+          passwordInput.setCustomValidity(t('auth.errorPasswordMinLength'));
+          passwordInput.reportValidity();
           return;
         }
 
+        // Validate password match
         if (password !== passwordConfirm) {
-          showError(t('auth.errorPasswordMismatch'));
+          passwordConfirmInput.setCustomValidity(t('auth.errorPasswordMismatch'));
+          passwordConfirmInput.reportValidity();
+          return;
+        }
+
+        // Check HTML5 validity
+        if (!setupForm.checkValidity()) {
+          setupForm.reportValidity();
           return;
         }
 
         setupBtn.disabled = true;
-        setupError.classList.add('hidden');
 
         try {
           await App.setup(password);
@@ -81,10 +117,6 @@
         } finally {
           setupBtn.disabled = false;
         }
-      });
-
-      passwordConfirmInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') setupBtn.click();
       });
 
       function showError(msg) {
