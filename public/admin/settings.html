@@ -1163,12 +1163,9 @@
           const settings = await App.getSettings();
           const allPosts = await App.getPosts();
 
-          console.log('Posts Data:', allPosts);
-
           // Homepage
           homepageSelect.innerHTML = `<option value="">${t('settings.homepageDefault')}</option>`;
           const pages = allPosts.filter(p => p.pageType === 'page' && p.status === 'published');
-          console.log('Filtered pages:', pages);
 
           for (const page of pages) {
             const option = document.createElement('option');
