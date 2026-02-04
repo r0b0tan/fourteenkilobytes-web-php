@@ -1,105 +1,287 @@
-# fourteenkilobytes (PHP Version)
+# fourteenkilobytes
 
-Eine einfache Blog-Software mit 14KB-Limit pro Seite. Diese PHP-Version benötigt kein Node.js - einfach auf den Server kopieren und fertig.
+A lightweight, experimental CMS built with PHP that enforces a strict **14,336-byte size limit** per page. This constraint encourages minimalist design and efficient content creation.
+
+## Features
+
+- **14KB Size Limit**: Each published page cannot exceed 14,336 bytes, promoting efficient web design
+- **No Database Required**: File-based JSON storage for simplicity and portability
+- **Admin Panel**: Modern single-page application with real-time byte counter
+- **Multi-Language Support**: English and German interfaces
+- **RSS Feed**: Built-in RSS 2.0 feed with configurable options
+- **Theme Presets**: Default, light, and dark CSS themes
+- **Multi-Page Content**: Automatic pagination for larger articles
+- **Template System**: Seed templates for quick content creation
+- **Zero Dependencies**: Pure PHP and vanilla JavaScript
+
+## Requirements
+
+- PHP 8.3 or higher
+- Apache with mod_rewrite or Nginx
+- Write access to the `data/` directory
 
 ## Installation
 
-1. **Ordner auf den Server kopieren**
+### Quick Start
 
-   Kopiere den gesamten Inhalt dieses Ordners in dein Webverzeichnis (z.B. `/var/www/html/` oder `htdocs/`).
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/r0b0tan/fourteenkilobytes-web-php.git
+   cd fourteenkilobytes-web-php
+   ```
 
-2. **Schreibrechte setzen**
+2. Build the distribution:
+   ```bash
+   ./build.sh
+   ```
 
-   Der `data/`-Ordner muss für den Webserver beschreibbar sein:
+3. Copy `dist/` contents to your web server's document root
+
+4. Ensure the `data/` directory is writable by the web server:
    ```bash
    chmod -R 755 data/
    chown -R www-data:www-data data/
    ```
 
-3. **Admin aufrufen**
+5. Visit `/admin/setup` to create your admin password
 
-   Öffne `https://deine-domain.de/admin/` im Browser und lege ein Passwort fest.
+### Development Server
 
-## Struktur
+For local development, use PHP's built-in server:
+
+```bash
+php -S localhost:8000 router.php
+```
+
+Then open http://localhost:8000/admin/ in your browser.
+
+## Project Structure
 
 ```
-/
-├── index.php           # Blog-Router (/, /:slug)
-├── .htaccess           # URL-Rewriting für Apache
+fourteenkilobytes/
+├── index.php              # Public blog router
+├── feed.php               # RSS 2.0 feed generator
+├── router.php             # Development server router
+├── build.sh               # Build script for deployment
+├── .htaccess              # Apache rewrite rules
+├── nginx.conf.example     # Nginx configuration template
+│
 ├── api/
-│   └── index.php       # API-Endpoints
+│   └── index.php          # REST API entry point
+│
 ├── public/
-│   ├── index.html      # Blog-Startseite (optional)
-│   └── admin/          # Admin-Interface
-│       ├── index.html
-│       ├── editor.html
-│       ├── settings.html
-│       ├── setup.html
-│       ├── app.js      # Frontend-Logik
-│       ├── compiler.js # Browser-Compiler
-│       └── style.css
-└── data/               # Daten (wird automatisch erstellt)
-    ├── instance.json   # Admin-Credentials
-    ├── manifest.json   # Post-Index
-    ├── settings.json   # Globale Einstellungen
-    └── posts/          # HTML-Dateien der Posts
+│   └── admin/             # Admin panel (SPA)
+│       ├── index.html     # Dashboard
+│       ├── editor.html    # Post/page editor
+│       ├── settings.html  # Site settings
+│       ├── login.html     # Login page
+│       ├── setup.html     # Initial setup
+│       ├── app.js         # Main application module
+│       ├── i18n.js        # Internationalization
+│       ├── compiler.browser.js  # 14KB compiler
+│       └── lang/          # Language files (en.json, de.json)
+│
+├── data/                  # Content storage (auto-created)
+│   ├── instance.json      # Instance configuration
+│   ├── manifest.json      # Post/page metadata index
+│   ├── settings.json      # Site-wide settings
+│   ├── posts/             # Compiled HTML files
+│   ├── sources/           # Source data for re-compilation
+│   └── seeds/             # Template seeds
+│
+└── dist/                  # Build output (generated)
 ```
 
-## Server-Anforderungen
+## Server Configuration
 
-- PHP 8.0 oder höher
-- Apache mit mod_rewrite (oder nginx mit entsprechender Konfiguration)
-- Schreibrechte für `data/`-Ordner
+### Apache
 
-## nginx-Konfiguration
+The included `.htaccess` file handles URL rewriting automatically. Ensure `mod_rewrite` is enabled:
 
-Falls du nginx statt Apache verwendest:
+```bash
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+```
+
+Your virtual host should allow `.htaccess` overrides:
+
+```apache
+<Directory /var/www/html>
+    AllowOverride All
+</Directory>
+```
+
+### Nginx
+
+Copy and adapt the provided `nginx.conf.example`:
 
 ```nginx
 server {
     listen 80;
-    server_name deine-domain.de;
-    root /pfad/zu/fourteenkilobytes;
-    index index.php;
+    server_name example.com;
+    root /var/www/fourteenkilobytes;
+    index index.php index.html;
 
-    # API
-    location /api/ {
-        try_files $uri /api/index.php?$args;
-    }
-
-    # Admin
-    location /admin {
-        alias /pfad/zu/fourteenkilobytes/public/admin;
-        try_files $uri $uri/ /public/admin/index.html;
-    }
-
-    # Blog posts
     location / {
-        try_files $uri $uri/ /index.php?slug=$uri&$args;
+        try_files $uri $uri/ /index.php?slug=$uri;
     }
 
-    # PHP
+    location /api {
+        try_files $uri /api/index.php?$query_string;
+    }
+
     location ~ \.php$ {
-        include fastcgi_params;
-        fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
     }
 }
 ```
 
-## Passwort zurücksetzen
+## Usage
 
-Falls du dein Passwort vergessen hast, lösche die Datei `data/instance.json` und rufe `/admin/setup` erneut auf.
+### Admin Panel
 
-## Backup
+Access the admin panel at `/admin/` to:
 
-Sichere regelmäßig den `data/`-Ordner - er enthält alle Posts und Einstellungen.
+- **Dashboard**: View and manage all posts/pages
+- **Editor**: Create and edit content with real-time byte counting
+- **Settings**: Configure site title, theme, header/footer, RSS, and metadata
 
-## Unterschiede zur Node.js-Version
+### Creating Content
 
-| Feature | Node.js | PHP |
-|---------|---------|-----|
-| Installation | `npm install` | Dateien kopieren |
-| Compiler | Serverseitig | Clientseitig (Browser) |
-| Webserver | Eingebaut | Apache/nginx erforderlich |
-| Runtime | Node.js 20+ | PHP 8.0+ |
+1. Navigate to the admin panel
+2. Click "New Post" or "New Page"
+3. Write your content using the block-based editor
+4. Monitor the byte counter to stay within the 14KB limit
+5. Click "Publish" when ready
+
+### Content Types
+
+- **Blog Posts**: Displayed on the homepage feed
+- **Static Pages**: Standalone pages accessible via their slug
+- **Multi-Page Articles**: Long content is automatically paginated
+
+### Settings
+
+| Section | Description |
+|---------|-------------|
+| General | Site title, homepage selection, favicon, language |
+| Header | Navigation links |
+| Footer | Footer content with byte counter variable |
+| CSS | Theme selection (default/light/dark) and custom CSS |
+| RSS | Feed configuration (URL, language, TTL, max items) |
+| Meta | Site description and author metadata |
+
+## API Reference
+
+### Authentication
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/setup` | POST | Initial password setup |
+| `/api/login` | POST | Login with password |
+| `/api/logout` | POST | Clear session |
+| `/api/auth-check` | GET | Verify authentication |
+
+### Posts
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/posts` | GET | List all posts |
+| `/api/posts/:slug` | GET | Get specific post |
+| `/api/posts` | POST | Create new post |
+| `/api/posts/:slug/republish` | POST | Regenerate from source |
+| `/api/posts/:slug` | DELETE | Delete (tombstone) post |
+
+### Settings & Data
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/settings` | GET | Load settings |
+| `/api/settings` | PUT | Update settings |
+| `/api/export` | GET | Export data |
+| `/api/import` | POST | Import backup |
+| `/api/reset` | POST | Factory reset |
+| `/api/seeds` | GET | List seed templates |
+| `/api/clone` | POST | Clone page or template |
+
+## The 14KB Constraint
+
+The 14,336-byte limit is enforced per page and includes:
+
+- HTML structure and markup
+- Content text
+- CSS styles (global + inline)
+- Navigation elements
+- Footer content
+- Pagination controls
+- Embedded icons
+
+The editor provides a real-time breakdown showing how bytes are allocated, helping you optimize your content.
+
+### Why 14KB?
+
+14KB (14,336 bytes) represents approximately one TCP initial congestion window. A page that fits within this limit can be delivered in a single round trip, ensuring fast load times even on slow connections.
+
+## Security
+
+- **Password Hashing**: PBKDF2 with 600,000 iterations
+- **Session Cookies**: HttpOnly, Secure, SameSite=Strict
+- **Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options
+- **Input Validation**: Strict slug format validation
+- **Timing-Safe Comparison**: Prevents timing attacks on authentication
+
+## Data Management
+
+### Export
+
+Export your data via the admin panel or API:
+
+```bash
+curl -b cookies.txt "https://example.com/api/export?type=all" > backup.json
+```
+
+### Import
+
+Restore from a backup:
+
+```bash
+curl -X POST -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d @backup.json \
+  "https://example.com/api/import"
+```
+
+### Backup Strategy
+
+The system automatically creates `.bak` files before modifying:
+- `manifest.json.bak`
+- `settings.json.bak`
+
+## Tombstoning
+
+When a post is deleted, it is "tombstoned" rather than permanently removed:
+
+- The URL returns HTTP 410 (Gone)
+- The slug cannot be reused
+- Deletion history is preserved in the manifest
+
+This approach maintains content integrity and proper HTTP semantics.
+
+## Contributing
+
+Contributions are welcome! Please ensure your changes:
+
+1. Maintain the zero-dependency philosophy
+2. Work within the 14KB constraint concept
+3. Support both English and German interfaces
+4. Follow existing code style
+
+## Author
+
+**Christoph Bauer**
+
+## License
+
+See [LICENSE](LICENSE) file for details.
