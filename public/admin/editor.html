@@ -1866,7 +1866,6 @@
         if (hasBloglist) {
           try {
             posts = await App.getPosts();
-            console.log('Loaded posts for bloglist:', posts);
           } catch (err) {
             console.warn('Failed to load posts for bloglist:', err);
           }
@@ -2388,7 +2387,6 @@
             loadFromSource(sourceData);
             // Show edit mode banner
             showEditModeBanner();
-            console.log('Loaded source for editing:', editSlug);
           }
         } catch (err) {
           console.error('Failed to load source:', err);
@@ -2402,7 +2400,6 @@
             const sourceData = JSON.parse(clonedData);
             loadFromSource(sourceData);
             sessionStorage.removeItem('clonedSource');
-            console.log('Loaded cloned source');
             // Show notification
             const pageTitle = document.getElementById('page-title');
             const pageSubtitle = document.getElementById('page-subtitle');
@@ -2414,10 +2411,7 @@
         }
       } else {
         // New document mode: try to restore from auto-save
-        const restored = loadFromLocalStorage();
-        if (restored) {
-          console.log('Restored from auto-save');
-        }
+        loadFromLocalStorage();
       }
 
       // Show edit mode indicator in title
