@@ -794,6 +794,44 @@ button:disabled {
   border-radius: 6px;
 }
 
+#language-editor,
+#homepage-editor,
+#favicon-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+  min-width: 600px;
+}
+
+#language-editor {
+  min-width: 300px;
+}
+
+#language-editor .form-group,
+#homepage-editor .form-group,
+#favicon-editor .form-group {
+  margin-bottom: 0;
+}
+
+#language-editor select {
+  max-width: 200px;
+}
+
+#homepage-editor select {
+  max-width: 100%;
+}
+
+.favicon-editor-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
 #rss-editor {
   display: flex;
   flex-direction: column;
@@ -857,6 +895,11 @@ button:disabled {
 }
 
 #rss-editor .form-group {
+  margin-bottom: 0;
+}
+
+#rss-url-editor .form-group,
+#rss-settings-editor .form-group {
   margin-bottom: 0;
 }
 
@@ -2448,7 +2491,6 @@ button:disabled {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-left: auto;
 }
 
 .favicon-actions .btn {

@@ -142,62 +142,78 @@
     <div class="card-body">
       <!-- General Tab -->
       <div id="tab-general" class="tab-content active">
-        <!-- Language Selection -->
-        <div class="form-group">
-          <h3 class="override-section-title" data-i18n="settings.language">Language</h3>
-          <p class="text-small text-muted mb-1" data-i18n="settings.languageHint">Changes require page reload</p>
-          <select id="admin-language" class="homepage-select" style="max-width: 200px;">
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="margin-top: 1.5rem;">
-          <h3 class="override-section-title" data-i18n="settings.homepage">Homepage</h3>
-          <p class="text-small text-muted mb-1" data-i18n="settings.homepageHint">Select a page to display as the homepage (/)</p>
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <select id="homepage-select" class="homepage-select" style="flex: 1;">
-              <option value="" data-i18n="settings.homepageDefault">— Default (automatic post list) —</option>
-            </select>
-            <button type="button" id="regenerate-homepage-btn" class="btn btn-secondary" style="display: none;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-              <span data-i18n="settings.homepageRegenerate">Regenerate</span>
-            </button>
+        <!-- Language Section -->
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title" data-i18n="settings.language">SPRACHE</h3>
+          <div id="language-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.languageHint">Änderungen erfordern Seiten-Neuladen</p>
+            <div class="form-group">
+              <label for="admin-language" data-i18n="settings.languageLabel">Sprache</label>
+              <select id="admin-language" class="homepage-select">
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 1.5rem;">
-          <h3 class="override-section-title" data-i18n="settings.favicon">Favicon</h3>
-          <p class="text-small text-muted mb-1" data-i18n="settings.faviconHint">Small icon displayed in the browser tab (max. 4KB, embedded as Base64)</p>
-          <div class="favicon-editor">
-            <div class="favicon-preview-container">
-              <div id="favicon-preview" class="favicon-preview">
-                <span class="favicon-placeholder" data-i18n="settings.faviconNone">No favicon</span>
+        <!-- Homepage Section -->
+        <div class="override-section">
+          <h3 class="override-section-title" data-i18n="settings.homepage">STARTSEITE</h3>
+          <div id="homepage-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.homepageHint">Wähle eine Seite, die als Startseite (/) angezeigt werden soll</p>
+            <div class="form-group">
+              <label for="homepage-select" data-i18n="settings.homepageLabel">Startseite</label>
+              <div style="display: flex; gap: 8px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <select id="homepage-select" class="homepage-select">
+                    <option value="" data-i18n="settings.homepageDefault">— Default (automatic post list) —</option>
+                  </select>
+                </div>
+                <button type="button" id="regenerate-homepage-btn" class="btn btn-secondary" style="display: none;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span data-i18n="settings.homepageRegenerate">Aktualisieren</span>
+                </button>
               </div>
             </div>
-            <div class="favicon-actions">
-              <label class="btn btn-secondary">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                <span data-i18n="settings.faviconUpload">Upload</span>
-                <input type="file" id="favicon-input" accept="image/png,image/x-icon,image/svg+xml,image/gif" hidden>
-              </label>
-              <button type="button" id="favicon-remove" class="btn btn-danger hidden">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                <span data-i18n="settings.faviconRemove">Remove</span>
-              </button>
+          </div>
+        </div>
+
+        <!-- Favicon Section -->
+        <div class="override-section">
+          <h3 class="override-section-title" data-i18n="settings.favicon">FAVICON</h3>
+          <div id="favicon-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.faviconHint">Small icon displayed in the browser tab (max. 4KB, embedded as Base64)</p>
+            <div class="favicon-editor-content">
+              <div class="favicon-preview-container">
+                <div id="favicon-preview" class="favicon-preview">
+                  <span class="favicon-placeholder" data-i18n="settings.faviconNone">No favicon</span>
+                </div>
+              </div>
+              <div class="favicon-actions">
+                <label class="btn btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span data-i18n="settings.faviconUpload">Upload</span>
+                  <input type="file" id="favicon-input" accept="image/png,image/x-icon,image/svg+xml,image/gif" hidden>
+                </label>
+                <button type="button" id="favicon-remove" class="btn btn-danger hidden">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  <span data-i18n="settings.faviconRemove">Remove</span>
+                </button>
+              </div>
+              <input type="hidden" id="favicon-data">
             </div>
-            <input type="hidden" id="favicon-data">
           </div>
         </div>
       </div>
