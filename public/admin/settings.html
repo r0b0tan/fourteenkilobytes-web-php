@@ -329,26 +329,39 @@
 
       <!-- RSS Tab -->
       <div id="tab-rss" class="tab-content hidden">
+        <!-- RSS Feed Section -->
         <div class="override-section override-section-first">
-          <h3 class="override-section-title" data-i18n="settings.rssSection">RSS Feed</h3>
+          <h3 class="override-section-title" data-i18n="settings.rssSection">RSS FEED</h3>
           <div class="override-section-header">
             <label class="override-toggle">
               <input type="checkbox" id="rss-enabled">
-              <span data-i18n="settings.rssEnable">Enable RSS feed</span>
+              <span data-i18n="settings.rssEnable">RSS Feed aktivieren</span>
             </label>
           </div>
           <div id="rss-editor" class="override-editor hidden">
-            <!-- Feed URL Preview -->
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label data-i18n="settings.rssFeedUrl">Feed URL</label>
-              <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="text" id="rss-feed-url-preview" readonly style="flex: 1; background: var(--gray-100); cursor: default;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.rssHint">RSS feed for your blog posts</p>
+            <div class="form-group">
+              <label for="rss-site-url" data-i18n="settings.rssSiteUrl">Website URL *</label>
+              <input type="url" id="rss-site-url" placeholder="https://example.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- RSS URL Section -->
+        <div class="override-section" id="rss-url-section" style="display: none;">
+          <h3 class="override-section-title" data-i18n="settings.rssFeedUrlSection">FEED URL</h3>
+          <div id="rss-url-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.rssFeedUrlHint">Ihr generierter RSS Feed</p>
+            <div class="form-group">
+              <label for="rss-feed-url-preview" data-i18n="settings.rssFeedUrl">Feed URL</label>
+              <div class="rss-url-row">
+                <input type="text" id="rss-feed-url-preview" readonly>
                 <button type="button" id="rss-copy-btn" class="btn btn-secondary">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
-                  <span data-i18n="settings.rssCopy">Copy</span>
+                  <span data-i18n="settings.rssCopy">Kopieren</span>
                 </button>
                 <a id="rss-preview-link" href="#" target="_blank" class="btn btn-secondary">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -356,53 +369,41 @@
                     <polyline points="15 3 21 3 21 9"></polyline>
                     <line x1="10" y1="14" x2="21" y2="3"></line>
                   </svg>
-                  <span data-i18n="settings.rssOpen">Open</span>
+                  <span data-i18n="settings.rssOpen">Öffnen</span>
                 </a>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Site URL -->
-            <div class="form-group">
-              <label for="rss-site-url" data-i18n="settings.rssSiteUrl">Website URL *</label>
-              <input type="url" id="rss-site-url" placeholder="https://example.com">
-              <p class="text-small text-muted" data-i18n="settings.rssSiteUrlHint">Base URL of your website (without trailing slash)</p>
-            </div>
-
-            <!-- Language -->
-            <div class="form-group">
-              <label for="rss-language" data-i18n="settings.rssLanguage">Language</label>
-              <select id="rss-language">
-                <option value="de-DE">Deutsch (de-DE)</option>
-                <option value="en-US">English (en-US)</option>
-                <option value="en-GB">English UK (en-GB)</option>
-                <option value="fr-FR">Français (fr-FR)</option>
-                <option value="es-ES">Español (es-ES)</option>
-                <option value="it-IT">Italiano (it-IT)</option>
-              </select>
-            </div>
-
-            <!-- Copyright -->
-            <div class="form-group">
-              <label for="rss-copyright" data-i18n="settings.rssCopyright">Copyright</label>
-              <input type="text" id="rss-copyright" placeholder="© 2026 Name">
-            </div>
-
-            <!-- Advanced Settings -->
-            <details class="override-section" style="margin-top: 1rem;">
-              <summary style="cursor: pointer; font-weight: 500; margin-bottom: 0.5rem;" data-i18n="settings.rssAdvanced">Advanced Settings</summary>
-              <div style="padding-top: 0.5rem;">
-                <div class="form-group">
-                  <label for="rss-max-items" data-i18n="settings.rssMaxItems">Maximum items</label>
-                  <input type="number" id="rss-max-items" min="5" max="100" value="20">
-                  <p class="text-small text-muted" data-i18n="settings.rssMaxItemsHint">Number of posts in the feed (5-100)</p>
-                </div>
-                <div class="form-group">
-                  <label for="rss-ttl" data-i18n="settings.rssTtl">Cache time (minutes)</label>
-                  <input type="number" id="rss-ttl" min="5" max="1440" value="60">
-                  <p class="text-small text-muted" data-i18n="settings.rssTtlHint">Recommended refresh rate for feed readers</p>
-                </div>
+        <!-- RSS Settings Section -->
+        <div class="override-section" id="rss-settings-section" style="display: none;">
+          <h3 class="override-section-title" data-i18n="settings.rssSettingsSection">EINSTELLUNGEN</h3>
+          <div id="rss-settings-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.rssSettingsHint">Feed-Konfiguration und Metadaten</p>
+            <div class="rss-settings-grid">
+              <div class="form-group">
+                <label for="rss-language" data-i18n="settings.rssLanguage">Sprache</label>
+                <select id="rss-language">
+                  <option value="de-DE">Deutsch (de-DE)</option>
+                  <option value="en-US">English (en-US)</option>
+                  <option value="en-GB">English UK (en-GB)</option>
+                  <option value="fr-FR">Français (fr-FR)</option>
+                  <option value="es-ES">Español (es-ES)</option>
+                  <option value="it-IT">Italiano (it-IT)</option>
+                </select>
               </div>
-            </details>
+
+              <div class="form-group">
+                <label for="rss-copyright" data-i18n="settings.rssCopyright">Copyright</label>
+                <input type="text" id="rss-copyright" placeholder="© 2026 Name">
+              </div>
+
+              <div class="form-group">
+                <label for="rss-max-items" data-i18n="settings.rssMaxItems">Maximale Einträge</label>
+                <input type="number" id="rss-max-items" min="5" max="100" value="20">
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -652,8 +653,9 @@
       const rssLanguage = document.getElementById('rss-language');
       const rssCopyright = document.getElementById('rss-copyright');
       const rssMaxItems = document.getElementById('rss-max-items');
-      const rssTtl = document.getElementById('rss-ttl');
       const rssFeedUrlPreview = document.getElementById('rss-feed-url-preview');
+      const rssUrlSection = document.getElementById('rss-url-section');
+      const rssSettingsSection = document.getElementById('rss-settings-section');
       const rssCopyBtn = document.getElementById('rss-copy-btn');
       const rssPreviewLink = document.getElementById('rss-preview-link');
       const saveBtn = document.getElementById('save-btn');
@@ -900,7 +902,10 @@
       // ============ RSS EDITOR ============
 
       rssEnabled.addEventListener('change', () => {
-        rssEditor.classList.toggle('hidden', !rssEnabled.checked);
+        const isEnabled = rssEnabled.checked;
+        rssEditor.classList.toggle('hidden', !isEnabled);
+        rssUrlSection.style.display = isEnabled ? 'block' : 'none';
+        rssSettingsSection.style.display = isEnabled ? 'block' : 'none';
         markAsChanged();
       });
 
@@ -912,7 +917,6 @@
       rssLanguage.addEventListener('change', markAsChanged);
       rssCopyright.addEventListener('input', markAsChanged);
       rssMaxItems.addEventListener('input', markAsChanged);
-      rssTtl.addEventListener('input', markAsChanged);
 
       function updateRssFeedUrlPreview() {
         const siteUrl = rssSiteUrl.value.replace(/\/+$/, '');
@@ -1198,12 +1202,14 @@
           // RSS
           const rss = settings.rss || {};
           rssEnabled.checked = rss.enabled || false;
-          rssEditor.classList.toggle('hidden', !rss.enabled);
+          const isRssEnabled = rss.enabled || false;
+          rssEditor.classList.toggle('hidden', !isRssEnabled);
+          rssUrlSection.style.display = isRssEnabled ? 'block' : 'none';
+          rssSettingsSection.style.display = isRssEnabled ? 'block' : 'none';
           rssSiteUrl.value = rss.siteUrl || '';
           rssLanguage.value = rss.language || 'de-DE';
           rssCopyright.value = rss.copyright || '';
           rssMaxItems.value = rss.maxItems || 20;
-          rssTtl.value = rss.ttl || 60;
           updateRssFeedUrlPreview();
 
           await updateOverhead();

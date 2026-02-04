@@ -434,6 +434,8 @@ label {
 
 input[type="text"],
 input[type="password"],
+input[type="url"],
+input[type="number"],
 textarea,
 select {
   width: 100%;
@@ -456,6 +458,8 @@ select {
 }
 
 input:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
 textarea:focus,
 select:focus {
   outline: none;
@@ -790,6 +794,38 @@ button:disabled {
   border-radius: 6px;
 }
 
+#rss-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+  max-width: 600px;
+}
+
+#rss-url-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+#rss-settings-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+  min-width: 900px;
+}
+
 #meta-editor {
   padding: 12px;
   background: var(--gray-100);
@@ -809,6 +845,80 @@ button:disabled {
   padding: 12px;
   background: var(--gray-100);
   border-radius: 6px;
+}
+
+#rss-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+}
+
+#rss-editor .form-group {
+  margin-bottom: 0;
+}
+
+/* RSS Feed URL Preview Row */
+.rss-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+}
+
+.rss-url-row input[type="text"] {
+  flex: 1;
+  height: 34px;
+  padding: 0 8px;
+  background: var(--white);
+  cursor: default;
+  box-sizing: border-box;
+  width: 500px;
+  flex: 0 0 500px;
+}
+
+.rss-url-row .btn {
+  height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+#rss-editor .form-group input[type="url"],
+#rss-editor .form-group input[type="text"]:not(#rss-feed-url-preview),
+#rss-editor .form-group input[type="number"]:not(#rss-max-items),
+#rss-editor .form-group select:not(#rss-language) {
+  max-width: 100%;
+  width: 500px;
+}
+
+#rss-language {
+  max-width: 100% !important;
+}
+
+#rss-copyright {
+  max-width: 100% !important;
+}
+
+#rss-max-items {
+  max-width: 100% !important;
+}
+
+.rss-settings-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr 150px;
+  gap: 16px;
+  align-items: end;
+  justify-content: start;
+}
+
+.rss-settings-grid .form-group {
+  margin-bottom: 0;
 }
 
 .nav-editor-row,
