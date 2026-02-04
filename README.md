@@ -14,6 +14,25 @@ A lightweight, experimental CMS built with PHP that enforces a strict **14,336-b
 - **Template System**: Seed templates for quick content creation
 - **Zero Dependencies**: Pure PHP and vanilla JavaScript
 
+## Philosophy
+
+In a world where the average webpage weighs 2.5MB, fourteenkilobytes is an experiment in radical minimalism.
+
+**The premise is simple:** What if we limited every page to what can be delivered in a single TCP round trip?
+
+The 14KB limit isn't arbitrary. It corresponds to the TCP initial congestion window—the maximum amount of data a server can send before waiting for acknowledgment. Stay under this limit, and your page arrives in one shot. No waiting. No spinners. No "content is loading" placeholders.
+
+This constraint forces interesting design decisions:
+
+- **No frameworks.** React, Vue, Tailwind—they don't fit. You write what you need.
+- **No lazy loading.** Everything arrives at once, or it doesn't arrive at all.
+- **No tracking scripts.** Google Analytics alone would blow the budget.
+- **Every byte matters.** That extra `<div>` wrapper? Think twice.
+
+The result is websites that load instantly on any connection, work without JavaScript, and respect both the user's time and bandwidth.
+
+Is this practical for every use case? No. But for blogs, portfolios, documentation, and personal sites, the question isn't "why limit yourself?"—it's "why did we ever need more?"
+
 ## Requirements
 
 - PHP 8.3 or higher
