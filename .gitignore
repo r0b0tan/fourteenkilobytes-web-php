@@ -25,6 +25,9 @@ composer.phar
 *.tmp
 *.bak
 
+# Build output
+dist/
+
 # Application data (contains sensitive tokens and user data)
 data/instance.json
 data/manifest.json
