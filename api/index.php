@@ -21,6 +21,11 @@ header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
 
+// HSTS - enforce HTTPS (1 year, include subdomains)
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+
 // Configuration
 define('DATA_DIR', dirname(__DIR__) . '/data');
 define('INSTANCE_FILE', DATA_DIR . '/instance.json');
@@ -46,15 +51,15 @@ define('MAX_REQUEST_SIZE', 2 * 1024 * 1024);
 define('COOKIE_NAME', 'fkb_auth_v2');
 define('COOKIE_LIFETIME', 86400); // 24 hours
 
-// Ensure data directories exist
+// Ensure data directories exist (0750 = owner rwx, group rx, others none)
 if (!is_dir(DATA_DIR)) {
-    mkdir(DATA_DIR, 0755, true);
+    mkdir(DATA_DIR, 0750, true);
 }
 if (!is_dir(POSTS_DIR)) {
-    mkdir(POSTS_DIR, 0755, true);
+    mkdir(POSTS_DIR, 0750, true);
 }
 if (!is_dir(SOURCES_DIR)) {
-    mkdir(SOURCES_DIR, 0755, true);
+    mkdir(SOURCES_DIR, 0750, true);
 }
 
 /**
@@ -247,7 +252,7 @@ function loadRateLimits(): array {
  * Save rate limits to file
  */
 function saveRateLimits(array $limits): void {
-    file_put_contents(RATE_LIMIT_FILE, json_encode($limits));
+    file_put_contents(RATE_LIMIT_FILE, json_encode($limits), LOCK_EX);
 }
 
 /**
@@ -277,6 +282,45 @@ function requireAuth(): void {
 }
 
 /**
+ * Validate request origin for CSRF protection
+ * Used for critical operations like reset, delete
+ */
+function validateOrigin(): bool {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+
+    // Get expected host from request
+    $expectedHost = $_SERVER['HTTP_HOST'] ?? '';
+    if (empty($expectedHost)) {
+        return false;
+    }
+
+    // Check Origin header first (preferred)
+    if (!empty($origin)) {
+        $originHost = parse_url($origin, PHP_URL_HOST);
+        return $originHost === $expectedHost;
+    }
+
+    // Fallback to Referer header
+    if (!empty($referer)) {
+        $refererHost = parse_url($referer, PHP_URL_HOST);
+        return $refererHost === $expectedHost;
+    }
+
+    // No Origin or Referer - reject for critical operations
+    return false;
+}
+
+/**
+ * Require valid origin or fail (CSRF protection)
+ */
+function requireValidOrigin(): void {
+    if (!validateOrigin()) {
+        sendJson(403, ['error' => 'Invalid request origin']);
+    }
+}
+
+/**
  * Load manifest
  */
 function loadManifest(): array {
@@ -299,7 +343,7 @@ function saveManifest(array $manifest): void {
         $backup = MANIFEST_FILE . '.bak';
         @copy(MANIFEST_FILE, $backup);
     }
-    file_put_contents(MANIFEST_FILE, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents(MANIFEST_FILE, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 /**
@@ -348,7 +392,7 @@ function saveSettings(array $settings): void {
         $backup = SETTINGS_FILE . '.bak';
         @copy(SETTINGS_FILE, $backup);
     }
-    file_put_contents(SETTINGS_FILE, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents(SETTINGS_FILE, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 /**
@@ -366,7 +410,7 @@ function loadPageTypes(): array {
  * Save page types index
  */
 function savePageTypes(array $index): void {
-    file_put_contents(PAGE_TYPES_FILE, json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents(PAGE_TYPES_FILE, json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 /**
@@ -374,7 +418,7 @@ function savePageTypes(array $index): void {
  */
 function saveSourceData(string $slug, array $sourceData): void {
     $path = SOURCES_DIR . "/{$slug}.json";
-    file_put_contents($path, json_encode($sourceData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    file_put_contents($path, json_encode($sourceData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 /**
@@ -610,7 +654,7 @@ if ($method === 'POST' && $path === '/posts') {
         $savedSlugs = [];
         foreach ($pages as $page) {
             $htmlPath = POSTS_DIR . "/{$page['slug']}.html";
-            file_put_contents($htmlPath, $page['html']);
+            file_put_contents($htmlPath, $page['html'], LOCK_EX);
             $savedSlugs[] = $page['slug'];
         }
 
@@ -676,7 +720,7 @@ if ($method === 'POST' && $path === '/posts') {
         }
 
         $htmlPath = POSTS_DIR . "/{$slug}.html";
-        file_put_contents($htmlPath, $html);
+        file_put_contents($htmlPath, $html, LOCK_EX);
 
         $newEntries = array_filter($manifest['entries'] ?? [], fn($e) => $e['slug'] !== $slug);
         $manifestEntry = [
@@ -746,6 +790,7 @@ if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path,
 // Route: DELETE /posts/:slug (protected)
 if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matches)) {
     requireAuth();
+    requireValidOrigin();
 
     $slug = $matches[1];
     $manifest = loadManifest();
@@ -770,7 +815,7 @@ if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matche
 
     // Replace HTML with tombstone
     $tombstoneHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
-    file_put_contents(POSTS_DIR . "/{$slug}.html", $tombstoneHtml);
+    file_put_contents(POSTS_DIR . "/{$slug}.html", $tombstoneHtml, LOCK_EX);
 
     saveManifest($manifest);
 
@@ -893,6 +938,7 @@ if ($method === 'POST' && $path === '/import') {
 // Route: DELETE /posts (protected) - Delete all posts
 if ($method === 'DELETE' && $path === '/posts') {
     requireAuth();
+    requireValidOrigin();
 
     $manifest = loadManifest();
     $deletedCount = 0;
@@ -908,7 +954,7 @@ if ($method === 'DELETE' && $path === '/posts') {
             $tombstoneHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
             $htmlPath = POSTS_DIR . "/{$entry['slug']}.html";
             if (file_exists($htmlPath)) {
-                file_put_contents($htmlPath, $tombstoneHtml);
+                file_put_contents($htmlPath, $tombstoneHtml, LOCK_EX);
             }
 
             // Handle paginated posts
@@ -916,7 +962,7 @@ if ($method === 'DELETE' && $path === '/posts') {
                 for ($i = 2; $i <= $entry['pageCount']; $i++) {
                     $pagePath = POSTS_DIR . "/{$entry['slug']}-{$i}.html";
                     if (file_exists($pagePath)) {
-                        file_put_contents($pagePath, $tombstoneHtml);
+                        file_put_contents($pagePath, $tombstoneHtml, LOCK_EX);
                     }
                 }
             }
@@ -931,6 +977,7 @@ if ($method === 'DELETE' && $path === '/posts') {
 // Route: POST /reset (protected) - Full reset (deletes everything including password)
 if ($method === 'POST' && $path === '/reset') {
     requireAuth();
+    requireValidOrigin();
 
     $body = readJsonBody();
     $confirmPhrase = $body['confirm'] ?? '';
@@ -991,6 +1038,11 @@ if ($method === 'POST' && $path === '/clone') {
 
     if (empty($sourceSlug)) {
         sendJson(400, ['error' => 'Missing sourceSlug']);
+    }
+
+    // Validate slug format to prevent path traversal
+    if (!preg_match('/^[a-z0-9-]+$/', $sourceSlug)) {
+        sendJson(400, ['error' => 'Invalid slug format']);
     }
 
     $sourceData = null;
