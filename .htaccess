@@ -1,6 +1,19 @@
 # fourteenkilobytes - Apache Configuration
 # This file must be in the root of your web directory
 
+# Disable directory listing
+Options -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "\.(bak|json|md)$">
+    Require all denied
+</FilesMatch>
+
+# Deny access to data directory
+<DirectoryMatch "data/">
+    Require all denied
+</DirectoryMatch>
+
 RewriteEngine On
 
 # API requests -> /api/index.php
@@ -10,7 +23,10 @@ RewriteRule ^api/(.*)$ api/index.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^public/admin/.*$ - [L]
 
-# Admin routes
+# Admin routes - prevent indexing
+<LocationMatch "^/admin">
+    Header set X-Robots-Tag "noindex, nofollow"
+</LocationMatch>
 RewriteRule ^admin/?$ public/admin/index.html [L]
 RewriteRule ^admin/(.+)$ public/admin/$1 [L]
 
