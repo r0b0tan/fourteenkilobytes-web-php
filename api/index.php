@@ -836,6 +836,12 @@ if ($method === 'POST' && $path === '/reset') {
         'globalCss' => '',
         'header' => ['enabled' => false, 'links' => []],
         'footer' => ['enabled' => false, 'content' => ''],
+        'bloglist' => [
+            'limit' => 10,
+            'archiveEnabled' => false,
+            'archiveSlug' => 'archiv',
+            'archiveLinkText' => 'Alle Posts anzeigen →',
+        ],
     ]);
 
     // Clear page types

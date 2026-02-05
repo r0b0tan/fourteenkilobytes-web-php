@@ -168,7 +168,7 @@
               <div style="display: flex; gap: 8px; align-items: flex-end;">
                 <div style="flex: 1;">
                   <select id="homepage-select" class="homepage-select">
-                    <option value="" data-i18n="settings.homepageDefault">— Default (automatic post list) —</option>
+                    <option value="" data-i18n="settings.homepageDefault">— Keine Homepage ausgewählt —</option>
                   </select>
                 </div>
                 <button type="button" id="regenerate-homepage-btn" class="btn btn-secondary" style="display: none;">
@@ -1271,8 +1271,29 @@
 
       async function loadSettings() {
         try {
-          const settings = await App.getSettings();
-          const allPosts = await App.getPosts();
+          let settings = await App.getSettings();
+          let allPosts = await App.getPosts();
+
+          // Auto-create default homepage if none exists
+          if (!settings.homepageSlug) {
+            const existingHomepage = allPosts.find(p => p.slug === 'startseite' && p.status === 'published');
+            if (!existingHomepage) {
+              // Create default homepage silently
+              try {
+                await App.createDefaultHomepage();
+                allPosts = await App.getPosts();
+              } catch (err) {
+                console.error('Failed to create default homepage:', err);
+              }
+            }
+            // Set startseite as homepage if it now exists
+            const homepage = allPosts.find(p => p.slug === 'startseite' && p.status === 'published');
+            if (homepage) {
+              settings.homepageSlug = 'startseite';
+              await App.saveSettings(settings);
+              settings = await App.getSettings();
+            }
+          }
 
           // Homepage
           homepageSelect.innerHTML = `<option value="">${t('settings.homepageDefault')}</option>`;

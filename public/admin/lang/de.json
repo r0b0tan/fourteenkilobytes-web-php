@@ -47,7 +47,7 @@
     "languageHint": "Änderungen erfordern Seiten-Neuladen",
     "homepage": "Startseite",
     "homepageHint": "Wähle eine Seite, die als Startseite (/) angezeigt werden soll",
-    "homepageDefault": "— Standard (automatische Postliste) —",
+    "homepageDefault": "— Keine Homepage ausgewählt —",
     "homepageRegenerate": "Aktualisieren",
     "homepageRegenerateConfirm": "Startseite \"{{slug}}\" mit aktuellen Posts neu generieren?",
     "homepageRegenerateSuccess": "Startseite erfolgreich aktualisiert!",
