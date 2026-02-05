@@ -20,15 +20,18 @@ $slug = $_GET['slug'] ?? '';
 
 // Root request - show blog index
 if (empty($slug)) {
-    // Check if custom homepage is configured
-    $homepageSlug = null;
+    // Load settings
+    $settings = [];
     if (file_exists(SETTINGS_FILE)) {
         $settingsContent = @file_get_contents(SETTINGS_FILE);
-        $settings = $settingsContent ? json_decode($settingsContent, true) : null;
-        if (is_array($settings)) {
-            $homepageSlug = $settings['homepageSlug'] ?? null;
+        $settings = $settingsContent ? json_decode($settingsContent, true) : [];
+        if (!is_array($settings)) {
+            $settings = [];
         }
     }
+
+    // Check if custom homepage is configured
+    $homepageSlug = $settings['homepageSlug'] ?? null;
 
     // Serve custom homepage if configured
     if ($homepageSlug) {
@@ -40,42 +43,13 @@ if (empty($slug)) {
         }
     }
 
-    // Fallback: generate simple index
+    // No homepage configured - show setup message
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Blog</title></head><body>';
-    echo '<h1>Blog</h1>';
-
-    if (file_exists(MANIFEST_FILE)) {
-        $content = @file_get_contents(MANIFEST_FILE);
-        $manifest = $content ? json_decode($content, true) : null;
-        if (!is_array($manifest)) {
-            $manifest = ['entries' => []];
-        }
-        $entries = $manifest['entries'] ?? [];
-
-        // Filter to published posts only
-        $posts = array_filter($entries, fn($e) => $e['status'] === 'published');
-
-        // Sort by date descending
-        usort($posts, fn($a, $b) => strcmp($b['publishedAt'], $a['publishedAt']));
-
-        if (count($posts) > 0) {
-            echo '<ul>';
-            foreach ($posts as $post) {
-                $title = htmlspecialchars($post['title']);
-                $slug = htmlspecialchars($post['slug']);
-                $date = date('d.m.Y', strtotime($post['publishedAt']));
-                echo "<li><a href=\"/{$slug}\">{$title}</a> <small>({$date})</small></li>";
-            }
-            echo '</ul>';
-        } else {
-            echo '<p>Noch keine Posts.</p>';
-        }
-    } else {
-        echo '<p>Noch keine Posts.</p>';
-    }
-
-    echo '<p><a href="/admin/">Admin</a></p>';
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Setup Required</title>';
+    echo '<style>body{font-family:system-ui,sans-serif;max-width:42rem;margin:2rem auto;padding:1rem;line-height:1.6}a{color:#10a697}</style>';
+    echo '</head><body>';
+    echo '<h1>Homepage nicht konfiguriert</h1>';
+    echo '<p>Bitte wähle in den <a href="/admin/settings.html">Einstellungen</a> eine Seite als Homepage aus.</p>';
     echo '</body></html>';
     exit;
 }

@@ -47,7 +47,7 @@
     "languageHint": "Changes require page reload",
     "homepage": "Homepage",
     "homepageHint": "Select a page to display as the homepage (/)",
-    "homepageDefault": "— Default (automatic post list) —",
+    "homepageDefault": "— No homepage selected —",
     "homepageRegenerate": "Regenerate",
     "homepageRegenerateConfirm": "Regenerate homepage \"{{slug}}\" with current posts?",
     "homepageRegenerateSuccess": "Homepage successfully updated!",
