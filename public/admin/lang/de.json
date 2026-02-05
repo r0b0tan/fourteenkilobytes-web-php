@@ -22,7 +22,8 @@
     "footer": "Footer",
     "css": "CSS",
     "rss": "RSS",
-    "data": "Daten"
+    "data": "Daten",
+    "bloglist": "Bloglist"
   },
   "auth": {
     "password": "Passwort",
@@ -150,7 +151,17 @@
     "discard": "Verwerfen",
     "discardConfirm": "Alle nicht gespeicherten Änderungen verwerfen?",
     "saved": "Einstellungen gespeichert",
-    "unsavedChanges": "Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?"
+    "unsavedChanges": "Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?",
+    "bloglistLimit": "POST LIMIT",
+    "bloglistLimitHint": "Maximale Anzahl an Posts in Bloglist-Blöcken",
+    "bloglistLimitLabel": "Limit",
+    "bloglistArchive": "ARCHIV-SEITE",
+    "archiveEnable": "Automatische Archiv-Seite aktivieren",
+    "archiveHint": "Eine Archiv-Seite mit allen Posts wird automatisch erstellt und aktualisiert",
+    "archiveSlug": "Archiv-URL",
+    "archiveLinkText": "Archiv-Link-Text",
+    "archiveGenerating": "Archiv wird generiert...",
+    "archiveGenerateSuccess": "Archiv-Seite erfolgreich generiert!"
   },
   "overhead": {
     "title": "Overhead",
@@ -226,8 +237,8 @@
     "blockList": "Liste",
     "blockDivider": "Trenner",
     "blockBloglist": "Blogliste",
-    "bloglistLimitLabel": "Posts begrenzen",
-    "bloglistArchiveLabel": "Archiv-Link anzeigen",
+    "bloglistPlaceholder": "Blog-Posts werden hier automatisch aufgelistet",
+    "bloglistSettingsLink": "Konfigurieren unter Einstellungen → Bloglist",
     "preview": "Vorschau",
     "bytes": "Bytes",
     "limit": "Limit",

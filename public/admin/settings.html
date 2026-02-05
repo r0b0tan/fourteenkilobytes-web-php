@@ -115,6 +115,7 @@
         <button type="button" class="tab-btn active" data-tab="general" data-i18n="tabs.general">General</button>
         <button type="button" class="tab-btn" data-tab="header" data-i18n="tabs.header">Header</button>
         <button type="button" class="tab-btn" data-tab="footer" data-i18n="tabs.footer">Footer</button>
+        <button type="button" class="tab-btn" data-tab="bloglist" data-i18n="tabs.bloglist">Bloglist</button>
         <button type="button" class="tab-btn" data-tab="css" data-i18n="tabs.css">CSS</button>
         <button type="button" class="tab-btn" data-tab="rss" data-i18n="tabs.rss">RSS</button>
         <button type="button" class="tab-btn" data-tab="data" data-i18n="tabs.data">Data</button>
@@ -296,6 +297,46 @@
             <div class="footer-editor-row">
               <input type="text" id="footer-content" placeholder="© 2026 | {{bytes}}/14336 bytes">
               <button type="button" id="insert-bytes-btn" class="btn btn-secondary" data-i18n="settings.footerBytesBtn">{{bytes}}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloglist Tab -->
+      <div id="tab-bloglist" class="tab-content hidden">
+        <!-- Limit Section -->
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title" data-i18n="settings.bloglistLimit">POST LIMIT</h3>
+          <div id="bloglist-limit-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.bloglistLimitHint">Maximum number of posts shown in bloglist blocks</p>
+            <div class="form-group">
+              <label for="bloglist-limit" data-i18n="settings.bloglistLimitLabel">Limit</label>
+              <input type="number" id="bloglist-limit" min="1" max="100" value="10" style="width: 100px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Archive Section -->
+        <div class="override-section">
+          <h3 class="override-section-title" data-i18n="settings.bloglistArchive">ARCHIVE PAGE</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="archive-enabled" checked>
+              <span data-i18n="settings.archiveEnable">Enable automatic archive page</span>
+            </label>
+          </div>
+          <div id="archive-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.archiveHint">An archive page showing all posts will be automatically generated and kept up-to-date</p>
+            <div class="form-group">
+              <label for="archive-slug" data-i18n="settings.archiveSlug">Archive URL</label>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span class="text-muted">/</span>
+                <input type="text" id="archive-slug" placeholder="archiv" style="flex: 1; max-width: 200px;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+              <label for="archive-link-text" data-i18n="settings.archiveLinkText">Archive link text</label>
+              <input type="text" id="archive-link-text" placeholder="Alle Posts anzeigen →">
             </div>
           </div>
         </div>
@@ -680,6 +721,11 @@
       const rssSettingsSection = document.getElementById('rss-settings-section');
       const rssCopyBtn = document.getElementById('rss-copy-btn');
       const rssPreviewLink = document.getElementById('rss-preview-link');
+      const bloglistLimit = document.getElementById('bloglist-limit');
+      const archiveEnabled = document.getElementById('archive-enabled');
+      const archiveEditor = document.getElementById('archive-editor');
+      const archiveSlug = document.getElementById('archive-slug');
+      const archiveLinkText = document.getElementById('archive-link-text');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
@@ -960,6 +1006,18 @@
         }
       });
 
+      // ============ BLOGLIST EDITOR ============
+
+      bloglistLimit.addEventListener('input', markAsChanged);
+
+      archiveEnabled.addEventListener('change', () => {
+        archiveEditor.classList.toggle('hidden', !archiveEnabled.checked);
+        markAsChanged();
+      });
+
+      archiveSlug.addEventListener('input', markAsChanged);
+      archiveLinkText.addEventListener('input', markAsChanged);
+
       // ============ CSS EDITOR ============
 
       cssEnabled.addEventListener('change', () => {
@@ -1075,6 +1133,12 @@
             copyright: rssCopyright.value.trim(),
             maxItems: parseInt(rssMaxItems.value) || 20,
             ttl: parseInt(rssTtl.value) || 60,
+          },
+          bloglist: {
+            limit: parseInt(bloglistLimit.value) || 10,
+            archiveEnabled: archiveEnabled.checked,
+            archiveSlug: archiveSlug.value.trim() || 'archiv',
+            archiveLinkText: archiveLinkText.value.trim() || 'Alle Posts anzeigen →',
           },
         };
       }
@@ -1233,6 +1297,14 @@
           rssTtl.value = rss.ttl || 60;
           updateRssFeedUrlPreview();
 
+          // Bloglist
+          const bloglist = settings.bloglist || {};
+          bloglistLimit.value = bloglist.limit || 10;
+          archiveEnabled.checked = bloglist.archiveEnabled || false;
+          archiveEditor.classList.toggle('hidden', !archiveEnabled.checked);
+          archiveSlug.value = bloglist.archiveSlug || 'archiv';
+          archiveLinkText.value = bloglist.archiveLinkText || 'Alle Posts anzeigen →';
+
           await updateOverhead();
 
           // Store initial settings for comparison
@@ -1274,6 +1346,19 @@
           if (newLanguage !== localStorage.getItem('adminLanguage')) {
             localStorage.setItem('adminLanguage', newLanguage);
             i18n.setLocale(newLanguage);
+          }
+
+          // Generate archive page if enabled
+          if (settings.bloglist?.archiveEnabled) {
+            try {
+              saveBtn.innerHTML = `<div class="loading-spinner" style="width:14px;height:14px;"></div> <span style="margin-left:4px;">${t('settings.archiveGenerating')}</span>`;
+              await App.generateArchivePage();
+              Toast.success(t('settings.archiveGenerateSuccess'));
+            } catch (archiveErr) {
+              console.error('Archive generation failed:', archiveErr);
+              // Don't fail the whole save if archive generation fails
+              Toast.error('Archive generation failed: ' + archiveErr.message);
+            }
           }
 
           // Update initial settings and reset change tracking
