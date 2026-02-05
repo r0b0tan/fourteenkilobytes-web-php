@@ -243,8 +243,8 @@ const App = (function() {
           // But NOT on the archive page itself (that would be redundant)
           if (settings.bloglist.archiveEnabled && !updatedBlock.archiveLink && !isArchivePage) {
             updatedBlock.archiveLink = {
-              href: '/' + (settings.bloglist.archiveSlug || 'archiv'),
-              text: settings.bloglist.archiveLinkText || 'Alle Posts anzeigen →',
+              href: '/' + (settings.bloglist.archiveSlug || 'archive'),
+              text: settings.bloglist.archiveLinkText || 'View all posts →',
             };
           }
           return updatedBlock;

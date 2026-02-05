@@ -252,7 +252,7 @@
     "bytes": "Bytes",
     "limit": "Limit",
     "overLimit": "Über Limit!",
-    "buildPublish": "Bauen & Veröffentlichen",
+    "buildPublish": "Kompilieren & Veröffentlichen",
     "buildConfirm": "Build ausführen und veröffentlichen?",
     "buildSuccess": "Erfolgreich veröffentlicht!",
     "buildError": "Build fehlgeschlagen: {{error}}",
