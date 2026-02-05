@@ -163,7 +163,12 @@
     "archiveLinkTextSection": "ARCHIV-LINK-TEXT",
     "archiveLinkText": "Archiv-Link-Text",
     "archiveGenerating": "Archiv wird generiert...",
-    "archiveGenerateSuccess": "Archiv-Seite erfolgreich generiert!"
+    "archiveGenerateSuccess": "Archiv-Seite erfolgreich generiert!",
+    "archiveRecompile": "Rekompilieren",
+    "archiveRecompileConfirm": "Archiv-Seite \"/{{slug}}\" mit aktuellen Posts neu kompilieren?",
+    "archiveRecompileSuccess": "Archiv-Seite erfolgreich rekompiliert!",
+    "archiveRecompiling": "Kompiliere...",
+    "archiveRecompiled": "Rekompiliert"
   },
   "overhead": {
     "title": "Overhead",

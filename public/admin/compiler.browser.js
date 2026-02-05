@@ -577,16 +577,24 @@ ${navItems}
     footer = `<footer>${escapeHtml(input.footer.content)}</footer>`;
     breakdown.footer = measureBytes(footer);
   }
-  const contentBlocks = input.content.map(
-    (block, index) => {
+  const contentBlocks = [];
+  input.content.forEach((block, index) => {
+    if (block.type === "bloglist") {
+      const bloglistBlocks = flattenBloglistToItems(
+        input.posts || [],
+        block,
+        index
+      );
+      contentBlocks.push(...bloglistBlocks);
+    } else {
       const html = flattenContentBlock(block, input.icons, input.posts);
-      return {
+      contentBlocks.push({
         html,
         bytes: measureBytes(html),
         sourceIndex: index
-      };
+      });
     }
-  );
+  });
   const contentHtml = contentBlocks.map((b) => b.html).join("\n");
   breakdown.content = measureBytes(contentHtml);
   const doctype = "<!DOCTYPE html>";
@@ -679,6 +687,53 @@ ${items}
   }
   return html;
 }
+function flattenBloglistToItems(posts, block, sourceIndex) {
+  const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
+  if (published.length === 0) {
+    const html = '<p class="empty">Noch keine Posts.</p>';
+    return [{
+      html,
+      bytes: measureBytes(html),
+      sourceIndex
+    }];
+  }
+  published.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  const limit = block?.limit === null ? published.length : block?.limit ?? DEFAULT_BLOGLIST_LIMIT;
+  const limitedPosts = published.slice(0, limit);
+  const blocks = limitedPosts.map((post) => {
+    const date = new Date(post.publishedAt).toLocaleDateString("de-DE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+    const html = `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
+    return {
+      html,
+      bytes: measureBytes(html),
+      sourceIndex,
+      blockType: "bloglist-item"
+    };
+  });
+  if (block?.archiveLink) {
+    const archiveHtml = `<p class="archive-link"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
+    blocks.push({
+      html: archiveHtml,
+      bytes: measureBytes(archiveHtml),
+      sourceIndex,
+      blockType: "bloglist-archive-link"
+    });
+  } else if (block?.limit === null) {
+    const endHtml = '<p class="end-of-list">\u2014 Ende der Liste \u2014</p>';
+    blocks.push({
+      html: endHtml,
+      bytes: measureBytes(endHtml),
+      sourceIndex,
+      blockType: "bloglist-archive-link"
+      // Same type so it's handled the same way
+    });
+  }
+  return blocks;
+}
 function flattenInlineNodes(nodes, icons, placement) {
   return nodes.map((node, index) => flattenInlineNode(node, icons, placement, index)).join("");
 }
@@ -740,9 +795,9 @@ function generatePaginationNav(baseSlug, currentPage, totalPages) {
       links.push(`<a href="${slug}">${i}</a>`);
     }
   }
-  return `<nav aria-label="pagination">
+  return `<div class="pagination">
 ${links.join("\n")}
-</nav>`;
+</div>`;
 }
 function calculatePaginationBytes(baseSlug, currentPage, totalPages) {
   const html = generatePaginationNav(baseSlug, currentPage, totalPages);
@@ -751,13 +806,59 @@ function calculatePaginationBytes(baseSlug, currentPage, totalPages) {
 function calculateFixedOverhead(breakdown) {
   return breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons;
 }
+var BLOGLIST_WRAPPER_OPEN = '<ul class="posts">\n';
+var BLOGLIST_WRAPPER_CLOSE = "\n</ul>";
+var BLOGLIST_WRAPPER_BYTES = measureBytes(BLOGLIST_WRAPPER_OPEN) + measureBytes(BLOGLIST_WRAPPER_CLOSE);
+function assembleContentHtml(blocks) {
+  if (blocks.length === 0)
+    return "";
+  const parts = [];
+  let inBloglist = false;
+  let bloglistItems = [];
+  for (const block of blocks) {
+    if (block.blockType === "bloglist-item") {
+      if (!inBloglist) {
+        inBloglist = true;
+        bloglistItems = [];
+      }
+      bloglistItems.push(block.html);
+    } else {
+      if (inBloglist) {
+        parts.push(BLOGLIST_WRAPPER_OPEN + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
+        inBloglist = false;
+        bloglistItems = [];
+      }
+      parts.push(block.html);
+    }
+  }
+  if (inBloglist) {
+    parts.push(BLOGLIST_WRAPPER_OPEN + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
+  }
+  return parts.join("\n");
+}
+function calculateBloglistWrapperOverhead(blocks) {
+  let overhead = 0;
+  let inBloglist = false;
+  for (const block of blocks) {
+    if (block.blockType === "bloglist-item") {
+      if (!inBloglist) {
+        inBloglist = true;
+        overhead += BLOGLIST_WRAPPER_BYTES;
+      }
+    } else {
+      inBloglist = false;
+    }
+  }
+  return overhead;
+}
 function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination) {
   const fixedOverhead = calculateFixedOverhead(baseBreakdown);
   const totalContentBytes = contentBlocks.reduce((sum, b) => sum + b.bytes, 0);
   const contentNewlines = Math.max(0, contentBlocks.length - 1);
   const totalContentWithNewlines = totalContentBytes + contentNewlines;
-  if (fixedOverhead + totalContentWithNewlines <= SIZE_LIMIT) {
-    const contentHtml = contentBlocks.map((b) => b.html).join("\n");
+  const bloglistWrapperOverhead = calculateBloglistWrapperOverhead(contentBlocks);
+  if (fixedOverhead + totalContentWithNewlines + bloglistWrapperOverhead <= SIZE_LIMIT) {
+    const contentHtml = assembleContentHtml(contentBlocks);
     return {
       success: true,
       pages: [
@@ -797,6 +898,7 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
     pages = [];
     let currentPageBlocks = [];
     let currentPageBytes = 0;
+    let currentPageHasBloglist = false;
     let pageNumber = 1;
     for (let i = 0; i < contentBlocks.length; i++) {
       const block = contentBlocks[i];
@@ -807,10 +909,18 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
       );
       const availableBudget = SIZE_LIMIT - fixedOverhead - paginationBytes;
       const newlineBytes = currentPageBlocks.length > 0 ? 1 : 0;
-      const candidateBytes = currentPageBytes + newlineBytes + block.bytes;
+      let candidateBytes = currentPageBytes + newlineBytes + block.bytes;
+      if (block.blockType === "bloglist-item" && !currentPageHasBloglist) {
+        candidateBytes += BLOGLIST_WRAPPER_BYTES;
+      }
       if (candidateBytes <= availableBudget) {
         currentPageBlocks.push(block);
         currentPageBytes = candidateBytes;
+        if (block.blockType === "bloglist-item") {
+          currentPageHasBloglist = true;
+        } else {
+          currentPageHasBloglist = false;
+        }
       } else {
         if (currentPageBlocks.length === 0) {
           return {
@@ -823,7 +933,7 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
             }
           };
         }
-        const contentHtml = currentPageBlocks.map((b) => b.html).join("\n");
+        const contentHtml = assembleContentHtml(currentPageBlocks);
         const paginationHtml = generatePaginationNav(
           baseSlug,
           pageNumber,
@@ -843,10 +953,16 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
         pageNumber++;
         currentPageBlocks = [block];
         currentPageBytes = block.bytes;
+        if (block.blockType === "bloglist-item") {
+          currentPageBytes += BLOGLIST_WRAPPER_BYTES;
+          currentPageHasBloglist = true;
+        } else {
+          currentPageHasBloglist = false;
+        }
       }
     }
     if (currentPageBlocks.length > 0) {
-      const contentHtml = currentPageBlocks.map((b) => b.html).join("\n");
+      const contentHtml = assembleContentHtml(currentPageBlocks);
       const paginationHtml = generatePaginationNav(
         baseSlug,
         pageNumber,
