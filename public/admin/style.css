@@ -796,7 +796,11 @@ button:disabled {
 
 #language-editor,
 #homepage-editor,
-#favicon-editor {
+#favicon-editor,
+#bloglist-limit-editor,
+#archive-editor,
+#archive-url-editor,
+#archive-link-text-editor {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -813,7 +817,11 @@ button:disabled {
 
 #language-editor .form-group,
 #homepage-editor .form-group,
-#favicon-editor .form-group {
+#favicon-editor .form-group,
+#bloglist-limit-editor .form-group,
+#archive-editor .form-group,
+#archive-url-editor .form-group,
+#archive-link-text-editor .form-group {
   margin-bottom: 0;
 }
 

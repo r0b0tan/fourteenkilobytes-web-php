@@ -157,8 +157,10 @@
     "bloglistLimitLabel": "Limit",
     "bloglistArchive": "ARCHIV-SEITE",
     "archiveEnable": "Automatische Archiv-Seite aktivieren",
-    "archiveHint": "Eine Archiv-Seite mit allen Posts wird automatisch erstellt und aktualisiert",
+
+    "archiveUrlSection": "ARCHIV-URL",
     "archiveSlug": "Archiv-URL",
+    "archiveLinkTextSection": "ARCHIV-LINK-TEXT",
     "archiveLinkText": "Archiv-Link-Text",
     "archiveGenerating": "Archiv wird generiert...",
     "archiveGenerateSuccess": "Archiv-Seite erfolgreich generiert!"
