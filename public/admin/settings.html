@@ -335,7 +335,7 @@
               <label for="archive-slug" data-i18n="settings.archiveSlug">Archive URL</label>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="text-muted">/</span>
-                <input type="text" id="archive-slug" value="archiv" style="flex: 1; max-width: 200px;">
+                <input type="text" id="archive-slug" value="archive" style="flex: 1; max-width: 200px;">
                 <button type="button" id="recompile-archive-btn" class="btn btn-secondary">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="23 4 23 10 17 10"></polyline>
@@ -355,7 +355,7 @@
           <div id="archive-link-text-editor" class="override-editor" style="display: block;">
             <div class="form-group">
               <label for="archive-link-text" data-i18n="settings.archiveLinkText">Archive link text</label>
-              <input type="text" id="archive-link-text" value="Alle Posts anzeigen →">
+              <input type="text" id="archive-link-text" value="View all posts →">
             </div>
           </div>
         </div>
@@ -1184,8 +1184,8 @@
           bloglist: {
             limit: parseInt(bloglistLimit.value) || 10,
             archiveEnabled: archiveEnabled.checked,
-            archiveSlug: archiveSlug.value.trim() || 'archiv',
-            archiveLinkText: archiveLinkText.value.trim() || 'Alle Posts anzeigen →',
+            archiveSlug: archiveSlug.value.trim() || 'archive',
+            archiveLinkText: archiveLinkText.value.trim() || 'View all posts →',
           },
         };
       }
@@ -1372,8 +1372,8 @@
           const isArchiveEnabled = bloglist.archiveEnabled !== false;
           archiveUrlSection.style.display = isArchiveEnabled ? 'block' : 'none';
           archiveLinkTextSection.style.display = isArchiveEnabled ? 'block' : 'none';
-          archiveSlug.value = bloglist.archiveSlug || 'archiv';
-          archiveLinkText.value = bloglist.archiveLinkText || 'Alle Posts anzeigen →';
+          archiveSlug.value = bloglist.archiveSlug || 'archive';
+          archiveLinkText.value = bloglist.archiveLinkText || 'View all posts →';
 
           await updateOverhead();
 

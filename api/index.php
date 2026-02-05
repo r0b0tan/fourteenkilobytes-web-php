@@ -211,8 +211,8 @@ function loadSettings(): array {
             'bloglist' => [
                 'limit' => 10,
                 'archiveEnabled' => true,
-                'archiveSlug' => 'archiv',
-                'archiveLinkText' => 'Alle Posts anzeigen →',
+                'archiveSlug' => 'archive',
+                'archiveLinkText' => 'View all posts →',
             ],
         ];
     }
@@ -227,8 +227,8 @@ function loadSettings(): array {
         $settings['bloglist'] = [
             'limit' => 10,
             'archiveEnabled' => false,
-            'archiveSlug' => 'archiv',
-            'archiveLinkText' => 'Alle Posts anzeigen →',
+            'archiveSlug' => 'archive',
+            'archiveLinkText' => 'View all posts →',
         ];
     }
     return $settings;
@@ -839,8 +839,8 @@ if ($method === 'POST' && $path === '/reset') {
         'bloglist' => [
             'limit' => 10,
             'archiveEnabled' => false,
-            'archiveSlug' => 'archiv',
-            'archiveLinkText' => 'Alle Posts anzeigen →',
+            'archiveSlug' => 'archive',
+            'archiveLinkText' => 'View all posts →',
         ],
     ]);
 
