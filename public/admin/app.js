@@ -617,9 +617,9 @@ const App = (function() {
   }
 
   /**
-   * Factory reset - deletes all data
+   * Full reset - deletes all data including password
    */
-  async function factoryReset() {
+  async function fullReset() {
     return apiFetch('/api/reset', {
       method: 'POST',
       body: JSON.stringify({ confirm: 'RESET' }),
@@ -822,7 +822,7 @@ const App = (function() {
     getGlobalSettingsInfo,
     exportData,
     importData,
-    factoryReset,
+    fullReset,
     escapeHtml,
     formatDate,
     slugify,

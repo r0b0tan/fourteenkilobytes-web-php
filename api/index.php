@@ -814,7 +814,7 @@ if ($method === 'DELETE' && $path === '/posts') {
     sendJson(200, ['deleted' => $deletedCount]);
 }
 
-// Route: POST /reset (protected) - Factory reset
+// Route: POST /reset (protected) - Full reset (deletes everything including password)
 if ($method === 'POST' && $path === '/reset') {
     requireAuth();
 
@@ -857,6 +857,11 @@ if ($method === 'POST' && $path === '/reset') {
     $sourceFiles = glob(SOURCES_DIR . '/*.json');
     foreach ($sourceFiles as $file) {
         @unlink($file);
+    }
+
+    // Delete instance.json (password) - this forces re-setup
+    if (file_exists(INSTANCE_FILE)) {
+        @unlink(INSTANCE_FILE);
     }
 
     sendJson(200, ['reset' => true]);
