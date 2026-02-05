@@ -257,6 +257,7 @@
     "buildSuccess": "Erfolgreich veröffentlicht!",
     "buildError": "Build fehlgeschlagen: {{error}}",
     "blockRequired": "Mindestens ein Block erforderlich",
+    "titleRequired": "Titel erforderlich",
     "splitConfirm": "Dein Post überschreitet das 14KB-Limit ({{bytes}} Bytes). Möchtest du ihn in {{pages}} Seiten aufteilen?",
     "tooLarge": "Post ist zu groß und kann nicht als einzelne Seite veröffentlicht werden.",
     "cannotSplit": "Post ist zu groß und kann nicht in Seiten aufgeteilt werden.",

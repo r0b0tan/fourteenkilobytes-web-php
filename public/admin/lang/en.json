@@ -256,6 +256,7 @@
     "buildSuccess": "Published successfully!",
     "buildError": "Build failed: {{error}}",
     "blockRequired": "At least one block required",
+    "titleRequired": "Title required",
     "splitConfirm": "Your post exceeds the 14KB limit ({{bytes}} bytes). Do you want to split it into {{pages}} pages?",
     "tooLarge": "Post is too large and cannot be published as a single page.",
     "cannotSplit": "Post is too large and cannot be split into pages.",

@@ -2137,6 +2137,12 @@
       // ============ PUBLISH ============
 
       publishBtn.addEventListener('click', async () => {
+        // Validate title before publish
+        if (!titleInput.value.trim()) {
+          Modal.error(t('editor.buildError', { error: t('editor.titleRequired') }));
+          return;
+        }
+
         // Validate content before publish
         const blocks = blockEditor.querySelectorAll('.block-item');
         if (blocks.length === 0) {
