@@ -545,13 +545,13 @@
               </svg>
               <span data-i18n="settings.deleteAll">Delete all articles</span>
             </button>
-            <button type="button" id="factory-reset-btn" class="btn btn-danger">
+            <button type="button" id="full-reset-btn" class="btn btn-danger">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
-              <span data-i18n="settings.factoryReset">Factory reset</span>
+              <span data-i18n="settings.fullReset">Full reset</span>
             </button>
           </div>
         </div>
@@ -1567,7 +1567,7 @@
       const importDropzone = document.getElementById('import-dropzone');
       const importFile = document.getElementById('import-file');
       const deleteAllBtn = document.getElementById('delete-all-btn');
-      const factoryResetBtn = document.getElementById('factory-reset-btn');
+      const fullResetBtn = document.getElementById('full-reset-btn');
 
       // Shared backdrop for all modals
       const backdrop = document.getElementById('modal-backdrop');
@@ -1836,23 +1836,23 @@
         }
       });
 
-      // Factory reset
-      factoryResetBtn.addEventListener('click', async () => {
-        const confirmed = await Modal.confirm(t('settings.factoryResetConfirm'));
+      // Full reset
+      fullResetBtn.addEventListener('click', async () => {
+        const confirmed = await Modal.confirm(t('settings.fullResetConfirm'));
         if (!confirmed) return;
 
-        const doubleConfirmed = await Modal.confirm(t('settings.factoryResetConfirm2'));
+        const doubleConfirmed = await Modal.confirm(t('settings.fullResetConfirm2'));
         if (!doubleConfirmed) return;
 
-        factoryResetBtn.disabled = true;
+        fullResetBtn.disabled = true;
         try {
-          await App.factoryReset();
-          Toast.success(t('settings.factoryResetSuccess'));
-          // Reload page to reflect changes
-          setTimeout(() => window.location.reload(), 1500);
+          await App.fullReset();
+          Toast.success(t('settings.fullResetSuccess'));
+          // Redirect to setup page since password was deleted
+          setTimeout(() => window.location.href = '/admin/setup.html', 1500);
         } catch (err) {
           Toast.error(t('errors.generic', { error: err.message }));
-          factoryResetBtn.disabled = false;
+          fullResetBtn.disabled = false;
         }
       });
 
