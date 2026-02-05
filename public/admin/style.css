@@ -1343,9 +1343,62 @@ button:disabled {
 .block-bloglist {
   background: var(--gray-200);
   padding: 16px;
-  text-align: center;
+  text-align: left;
   border: 1px dashed var(--gray-400);
+  cursor: default;
+}
+
+.bloglist-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloglist-info {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.bloglist-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bloglist-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.bloglist-option label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.bloglist-option input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.bloglist-option input[type="number"],
+.bloglist-option input[type="text"] {
+  padding: 4px 8px;
+  border: 1px solid var(--gray-400);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.bloglist-option input[type="number"]:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.bloglist-archive-fields {
+  width: 100%;
 }
 
 /* Editable list blocks */
