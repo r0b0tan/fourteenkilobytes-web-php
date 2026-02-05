@@ -119,6 +119,7 @@
         <button type="button" class="tab-btn" data-tab="css" data-i18n="tabs.css">CSS</button>
         <button type="button" class="tab-btn" data-tab="rss" data-i18n="tabs.rss">RSS</button>
         <button type="button" class="tab-btn" data-tab="data" data-i18n="tabs.data">Data</button>
+        <button type="button" class="tab-btn" data-tab="logs" data-i18n="tabs.logs">Logs</button>
       </div>
       <div class="settings-actions">
         <button id="discard-btn" class="btn btn-secondary hidden">
@@ -553,6 +554,79 @@
               </svg>
               <span data-i18n="settings.fullReset">Full reset</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs Tab -->
+      <div id="tab-logs" class="tab-content hidden">
+        <!-- Logs Viewer Section -->
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title" data-i18n="settings.logsSection">AUDIT LOGS</h3>
+          <div class="logs-toolbar">
+            <div class="logs-search-row">
+              <input type="text" id="logs-search" class="logs-search" data-i18n-placeholder="settings.logsSearch" placeholder="Suche...">
+              <select id="logs-filter" class="logs-filter">
+                <option value="" data-i18n="settings.logsFilterAll">Alle Aktionen</option>
+                <option value="login_success">Login erfolgreich</option>
+                <option value="login_failed">Login fehlgeschlagen</option>
+                <option value="logout">Logout</option>
+                <option value="post_create">Post erstellt</option>
+                <option value="post_delete">Post gelöscht</option>
+                <option value="posts_delete_all">Alle Posts gelöscht</option>
+                <option value="settings_update">Einstellungen geändert</option>
+                <option value="csrf_failure">CSRF-Fehler</option>
+                <option value="full_reset">Reset</option>
+                <option value="audit_log_cleared">Logs gelöscht</option>
+              </select>
+            </div>
+            <div class="logs-actions">
+              <button type="button" id="logs-refresh-btn" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span data-i18n="settings.logsRefresh">Aktualisieren</span>
+              </button>
+              <button type="button" id="logs-export-btn" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span data-i18n="settings.logsExport">Exportieren</span>
+              </button>
+              <button type="button" id="logs-clear-btn" class="btn btn-danger">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span data-i18n="settings.logsClear">Löschen</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="logs-table-container">
+            <table class="logs-table">
+              <thead>
+                <tr>
+                  <th data-i18n="settings.logsTime">Zeit</th>
+                  <th data-i18n="settings.logsAction">Aktion</th>
+                  <th data-i18n="settings.logsIP">IP</th>
+                  <th data-i18n="settings.logsDetails">Details</th>
+                </tr>
+              </thead>
+              <tbody id="logs-body">
+                <tr class="logs-empty">
+                  <td colspan="4" data-i18n="settings.logsLoading">Lade Logs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="logs-footer">
+            <span id="logs-count" data-i18n="settings.logsCount">0 Einträge</span>
           </div>
         </div>
       </div>
@@ -1853,6 +1927,156 @@
         } catch (err) {
           Toast.error(t('errors.generic', { error: err.message }));
           fullResetBtn.disabled = false;
+        }
+      });
+
+      // ============ LOGS TAB ============
+
+      const logsSearch = document.getElementById('logs-search');
+      const logsFilter = document.getElementById('logs-filter');
+      const logsBody = document.getElementById('logs-body');
+      const logsCount = document.getElementById('logs-count');
+      const logsRefreshBtn = document.getElementById('logs-refresh-btn');
+      const logsExportBtn = document.getElementById('logs-export-btn');
+      const logsClearBtn = document.getElementById('logs-clear-btn');
+
+      let allLogs = [];
+      let logsLoaded = false;
+
+      function formatLogTime(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString('de-DE', {
+          day: '2-digit', month: '2-digit', year: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      }
+
+      function getActionLabel(action) {
+        const labels = {
+          'login_success': '✓ Login',
+          'login_failed': '✗ Login fehlgeschlagen',
+          'logout': 'Logout',
+          'post_create': '+ Post erstellt',
+          'post_delete': '− Post gelöscht',
+          'posts_delete_all': '⚠ Alle Posts gelöscht',
+          'settings_update': '⚙ Einstellungen',
+          'csrf_failure': '⚠ CSRF-Fehler',
+          'full_reset': '⚠ Reset',
+          'setup_complete': '✓ Setup',
+          'audit_log_cleared': 'Logs gelöscht'
+        };
+        return labels[action] || action;
+      }
+
+      function getActionClass(action) {
+        if (action.includes('failed') || action.includes('failure')) return 'log-error';
+        if (action.includes('delete') || action.includes('reset') || action.includes('clear')) return 'log-warning';
+        if (action.includes('success') || action.includes('create') || action.includes('setup')) return 'log-success';
+        return '';
+      }
+
+      function formatDetails(details) {
+        if (!details || Object.keys(details).length === 0) return '—';
+        const parts = [];
+        for (const [key, value] of Object.entries(details)) {
+          if (key === 'ip') continue; // IP is shown in separate column
+          if (typeof value === 'object') {
+            parts.push(`${key}: ${JSON.stringify(value)}`);
+          } else {
+            parts.push(`${key}: ${value}`);
+          }
+        }
+        return parts.join(', ') || '—';
+      }
+
+      function renderLogs() {
+        const search = logsSearch.value.toLowerCase();
+        const filter = logsFilter.value;
+
+        const filtered = allLogs.filter(e => {
+          if (filter && e.action !== filter) return false;
+          if (search) {
+            const text = JSON.stringify(e).toLowerCase();
+            if (!text.includes(search)) return false;
+          }
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsEmpty')}</td></tr>`;
+        } else {
+          logsBody.innerHTML = filtered.map(e => `
+            <tr class="${getActionClass(e.action)}">
+              <td class="log-time" title="${e.timestamp}">${formatLogTime(e.timestamp)}</td>
+              <td class="log-action">${getActionLabel(e.action)}</td>
+              <td class="log-ip">${e.ip || '—'}</td>
+              <td class="log-details" title="${formatDetails(e.details)}">${formatDetails(e.details)}</td>
+            </tr>
+          `).join('');
+        }
+
+        logsCount.textContent = t('settings.logsCountDisplay', { shown: filtered.length, total: allLogs.length });
+      }
+
+      async function loadLogs() {
+        try {
+          logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsLoading')}</td></tr>`;
+          const action = logsFilter.value || undefined;
+          const data = await App.getAuditLogs({ limit: 200, action });
+          allLogs = data.entries || [];
+          logsLoaded = true;
+          renderLogs();
+        } catch (err) {
+          logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsError')}: ${err.message}</td></tr>`;
+        }
+      }
+
+      // Lazy load logs when tab is first opened
+      tabBtns.forEach(btn => {
+        const originalHandler = btn.onclick;
+        btn.addEventListener('click', () => {
+          if (btn.dataset.tab === 'logs' && !logsLoaded) {
+            loadLogs();
+          }
+        });
+      });
+
+      logsSearch.addEventListener('input', debounce(renderLogs, 200));
+      logsFilter.addEventListener('change', () => {
+        loadLogs(); // Reload with new filter
+      });
+
+      logsRefreshBtn.addEventListener('click', loadLogs);
+
+      logsExportBtn.addEventListener('click', () => {
+        window.location.href = '/api/audit-log/export';
+      });
+
+      logsClearBtn.addEventListener('click', async () => {
+        const confirmed = await Modal.confirm(t('settings.logsClearConfirm'));
+        if (!confirmed) return;
+
+        logsClearBtn.disabled = true;
+        try {
+          const csrf = document.cookie.match(/fkb_csrf=([^;]+)/)?.[1];
+          const res = await fetch('/api/audit-log', {
+            method: 'DELETE',
+            headers: { 'X-CSRF-Token': csrf },
+            credentials: 'same-origin'
+          });
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed');
+          }
+
+          const result = await res.json();
+          Toast.success(t('settings.logsClearSuccess', { count: result.deletedEntries }));
+          await loadLogs();
+        } catch (err) {
+          Toast.error(t('errors.generic', { error: err.message }));
+        } finally {
+          logsClearBtn.disabled = false;
         }
       });
 

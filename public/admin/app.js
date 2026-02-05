@@ -801,6 +801,17 @@ const App = (function() {
     return publish(archiveInput);
   }
 
+  /**
+   * Get audit logs
+   */
+  async function getAuditLogs({ limit = 100, action = null } = {}) {
+    let url = `/api/audit-log?limit=${limit}`;
+    if (action) {
+      url += `&action=${encodeURIComponent(action)}`;
+    }
+    return apiFetch(url);
+  }
+
   // Public API
   return {
     getConfig,
@@ -834,6 +845,7 @@ const App = (function() {
     clonePage,
     generateArchivePage,
     createDefaultHomepage,
+    getAuditLogs,
   };
 })();
 
