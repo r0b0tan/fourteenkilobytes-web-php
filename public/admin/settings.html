@@ -325,18 +325,29 @@
               <span data-i18n="settings.archiveEnable">Enable automatic archive page</span>
             </label>
           </div>
-          <div id="archive-editor" class="override-editor" style="display: block;">
-            <p class="text-small text-muted mb-1" data-i18n="settings.archiveHint">An archive page showing all posts will be automatically generated and kept up-to-date</p>
+        </div>
+
+        <!-- Archive URL Section -->
+        <div class="override-section" id="archive-url-section">
+          <h3 class="override-section-title" data-i18n="settings.archiveUrlSection">ARCHIVE URL</h3>
+          <div id="archive-url-editor" class="override-editor" style="display: block;">
             <div class="form-group">
               <label for="archive-slug" data-i18n="settings.archiveSlug">Archive URL</label>
               <div style="display: flex; align-items: center; gap: 4px;">
                 <span class="text-muted">/</span>
-                <input type="text" id="archive-slug" placeholder="archiv" style="flex: 1; max-width: 200px;">
+                <input type="text" id="archive-slug" value="archiv" style="flex: 1; max-width: 200px;">
               </div>
             </div>
-            <div class="form-group" style="margin-top: 1rem;">
+          </div>
+        </div>
+
+        <!-- Archive Link Text Section -->
+        <div class="override-section" id="archive-link-text-section">
+          <h3 class="override-section-title" data-i18n="settings.archiveLinkTextSection">ARCHIVE LINK TEXT</h3>
+          <div id="archive-link-text-editor" class="override-editor" style="display: block;">
+            <div class="form-group">
               <label for="archive-link-text" data-i18n="settings.archiveLinkText">Archive link text</label>
-              <input type="text" id="archive-link-text" placeholder="Alle Posts anzeigen →">
+              <input type="text" id="archive-link-text" value="Alle Posts anzeigen →">
             </div>
           </div>
         </div>
@@ -723,7 +734,8 @@
       const rssPreviewLink = document.getElementById('rss-preview-link');
       const bloglistLimit = document.getElementById('bloglist-limit');
       const archiveEnabled = document.getElementById('archive-enabled');
-      const archiveEditor = document.getElementById('archive-editor');
+      const archiveUrlSection = document.getElementById('archive-url-section');
+      const archiveLinkTextSection = document.getElementById('archive-link-text-section');
       const archiveSlug = document.getElementById('archive-slug');
       const archiveLinkText = document.getElementById('archive-link-text');
       const saveBtn = document.getElementById('save-btn');
@@ -1011,7 +1023,9 @@
       bloglistLimit.addEventListener('input', markAsChanged);
 
       archiveEnabled.addEventListener('change', () => {
-        archiveEditor.classList.toggle('hidden', !archiveEnabled.checked);
+        const isEnabled = archiveEnabled.checked;
+        archiveUrlSection.style.display = isEnabled ? 'block' : 'none';
+        archiveLinkTextSection.style.display = isEnabled ? 'block' : 'none';
         markAsChanged();
       });
 
@@ -1300,8 +1314,10 @@
           // Bloglist
           const bloglist = settings.bloglist || {};
           bloglistLimit.value = bloglist.limit || 10;
-          archiveEnabled.checked = bloglist.archiveEnabled || false;
-          archiveEditor.classList.toggle('hidden', !archiveEnabled.checked);
+          archiveEnabled.checked = bloglist.archiveEnabled !== false;
+          const isArchiveEnabled = bloglist.archiveEnabled !== false;
+          archiveUrlSection.style.display = isArchiveEnabled ? 'block' : 'none';
+          archiveLinkTextSection.style.display = isArchiveEnabled ? 'block' : 'none';
           archiveSlug.value = bloglist.archiveSlug || 'archiv';
           archiveLinkText.value = bloglist.archiveLinkText || 'Alle Posts anzeigen →';
 

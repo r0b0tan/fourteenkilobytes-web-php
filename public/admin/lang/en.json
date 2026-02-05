@@ -157,8 +157,9 @@
     "bloglistLimitLabel": "Limit",
     "bloglistArchive": "ARCHIVE PAGE",
     "archiveEnable": "Enable automatic archive page",
-    "archiveHint": "An archive page showing all posts will be automatically generated and kept up-to-date",
+    "archiveUrlSection": "ARCHIVE URL",
     "archiveSlug": "Archive URL",
+    "archiveLinkTextSection": "ARCHIVE LINK TEXT",
     "archiveLinkText": "Archive link text",
     "archiveGenerating": "Generating archive...",
     "archiveGenerateSuccess": "Archive page generated successfully!"
