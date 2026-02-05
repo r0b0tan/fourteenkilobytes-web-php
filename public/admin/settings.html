@@ -333,9 +333,17 @@
           <div id="archive-url-editor" class="override-editor" style="display: block;">
             <div class="form-group">
               <label for="archive-slug" data-i18n="settings.archiveSlug">Archive URL</label>
-              <div style="display: flex; align-items: center; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="text-muted">/</span>
                 <input type="text" id="archive-slug" value="archiv" style="flex: 1; max-width: 200px;">
+                <button type="button" id="recompile-archive-btn" class="btn btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span data-i18n="settings.archiveRecompile">Rekompilieren</span>
+                </button>
               </div>
             </div>
           </div>
@@ -738,6 +746,7 @@
       const archiveLinkTextSection = document.getElementById('archive-link-text-section');
       const archiveSlug = document.getElementById('archive-slug');
       const archiveLinkText = document.getElementById('archive-link-text');
+      const recompileArchiveBtn = document.getElementById('recompile-archive-btn');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
@@ -817,6 +826,30 @@
           Toast.error(t('errors.generic', { error: err.message }));
           regenerateHomepageBtn.querySelector('span').textContent = t('settings.homepageRegenerate');
           regenerateHomepageBtn.disabled = false;
+        }
+      });
+
+      recompileArchiveBtn.addEventListener('click', async () => {
+        if (!archiveEnabled.checked) return;
+
+        const slug = archiveSlug.value.trim() || 'archiv';
+        const confirmed = await Modal.confirm(t('settings.archiveRecompileConfirm', { slug }));
+        if (!confirmed) return;
+
+        recompileArchiveBtn.disabled = true;
+        recompileArchiveBtn.querySelector('span').textContent = t('settings.archiveRecompiling');
+        try {
+          await App.generateArchivePage();
+          Toast.success(t('settings.archiveRecompileSuccess'));
+          recompileArchiveBtn.querySelector('span').textContent = t('settings.archiveRecompiled');
+          setTimeout(() => {
+            recompileArchiveBtn.querySelector('span').textContent = t('settings.archiveRecompile');
+            recompileArchiveBtn.disabled = false;
+          }, 2000);
+        } catch (err) {
+          Toast.error(t('errors.generic', { error: err.message }));
+          recompileArchiveBtn.querySelector('span').textContent = t('settings.archiveRecompile');
+          recompileArchiveBtn.disabled = false;
         }
       });
 

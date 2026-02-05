@@ -2215,16 +2215,6 @@
           const input = await buildInput(shouldPaginate);
           const result = await App.publish(input);
 
-          // If this is a post (not page), regenerate archive page silently
-          if (input.pageType !== 'page') {
-            try {
-              await App.generateArchivePage();
-            } catch (archiveErr) {
-              console.warn('Archive page regeneration failed:', archiveErr);
-              // Don't show error to user - archive regeneration is best-effort
-            }
-          }
-
           const sizeInfo = result.pageCount && result.pageCount > 1
             ? `${result.pageCount} pages, ${result.totalBytes} bytes`
             : `${result.bytes} bytes`;
