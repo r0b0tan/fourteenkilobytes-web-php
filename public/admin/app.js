@@ -163,6 +163,12 @@ const App = (function() {
     const settings = await getSettings();
     const mergedInput = { ...input };
 
+    // Load posts if there are bloglist blocks in the content
+    const hasBloglist = mergedInput.content?.some(block => block.type === 'bloglist');
+    if (hasBloglist && !mergedInput.posts) {
+      mergedInput.posts = await getPosts();
+    }
+
     // Site Title: use global if enabled and input has none
     if (!input.siteTitle && settings.siteTitleEnabled !== false && settings.siteTitle) {
       mergedInput.siteTitle = settings.siteTitle;
