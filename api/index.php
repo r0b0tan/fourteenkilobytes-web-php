@@ -208,6 +208,12 @@ function loadSettings(): array {
             'globalCss' => '',
             'header' => ['enabled' => false, 'links' => []],
             'footer' => ['enabled' => false, 'content' => ''],
+            'bloglist' => [
+                'limit' => 10,
+                'archiveEnabled' => true,
+                'archiveSlug' => 'archiv',
+                'archiveLinkText' => 'Alle Posts anzeigen →',
+            ],
         ];
     }
     $content = file_get_contents(SETTINGS_FILE);
@@ -215,6 +221,15 @@ function loadSettings(): array {
     // Ensure cssMode has a default for existing settings
     if (!isset($settings['cssMode'])) {
         $settings['cssMode'] = 'default';
+    }
+    // Ensure bloglist has default for existing settings
+    if (!isset($settings['bloglist'])) {
+        $settings['bloglist'] = [
+            'limit' => 10,
+            'archiveEnabled' => false,
+            'archiveSlug' => 'archiv',
+            'archiveLinkText' => 'Alle Posts anzeigen →',
+        ];
     }
     return $settings;
 }

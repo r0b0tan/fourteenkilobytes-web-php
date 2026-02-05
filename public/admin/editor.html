@@ -752,33 +752,8 @@
           sourceData.content.forEach(block => {
             let blockEl;
             if (block.type === 'bloglist') {
+              // Bloglist options are now configured globally in Settings → Bloglist
               blockEl = createBlockElement('bloglist');
-              // Restore bloglist options
-              if (block.limit !== undefined) {
-                const limitEnabled = blockEl.querySelector('.bloglist-limit-enabled');
-                const limitValue = blockEl.querySelector('.bloglist-limit-value');
-                if (block.limit === null) {
-                  // No limit
-                  if (limitEnabled) limitEnabled.checked = false;
-                  if (limitValue) limitValue.disabled = true;
-                } else {
-                  if (limitEnabled) limitEnabled.checked = true;
-                  if (limitValue) {
-                    limitValue.value = block.limit;
-                    limitValue.disabled = false;
-                  }
-                }
-              }
-              if (block.archiveLink) {
-                const archiveEnabled = blockEl.querySelector('.bloglist-archive-enabled');
-                const archiveFields = blockEl.querySelector('.bloglist-archive-fields');
-                const archiveHref = blockEl.querySelector('.bloglist-archive-href');
-                const archiveText = blockEl.querySelector('.bloglist-archive-text');
-                if (archiveEnabled) archiveEnabled.checked = true;
-                if (archiveFields) archiveFields.style.display = 'block';
-                if (archiveHref) archiveHref.value = block.archiveLink.href || '/archiv';
-                if (archiveText) archiveText.value = block.archiveLink.text || 'Alle Posts anzeigen →';
-              }
             } else if (block.type === 'divider') {
               blockEl = createBlockElement('divider');
             } else if (block.type === 'codeblock') {
@@ -1377,48 +1352,13 @@
           content.innerHTML = `
             <div class="bloglist-config">
               <div class="bloglist-info">
-                <em style="color: #999;">Blog posts will be listed here automatically</em>
+                <em style="color: #999;" data-i18n="editor.bloglistPlaceholder">Blog posts will be listed here automatically</em>
               </div>
-              <div class="bloglist-options">
-                <div class="bloglist-option">
-                  <label>
-                    <input type="checkbox" class="bloglist-limit-enabled" checked>
-                    <span data-i18n="editor.bloglistLimitLabel">Limit posts</span>
-                  </label>
-                  <input type="number" class="bloglist-limit-value" value="20" min="1" max="100" style="width: 60px; margin-left: 8px;">
-                </div>
-                <div class="bloglist-option">
-                  <label>
-                    <input type="checkbox" class="bloglist-archive-enabled">
-                    <span data-i18n="editor.bloglistArchiveLabel">Show archive link</span>
-                  </label>
-                  <div class="bloglist-archive-fields" style="display: none; margin-top: 8px; margin-left: 20px;">
-                    <input type="text" class="bloglist-archive-href" value="/archiv" placeholder="/archiv" style="width: 120px;">
-                    <input type="text" class="bloglist-archive-text" value="Alle Posts anzeigen →" placeholder="Link text" style="width: 180px; margin-left: 8px;">
-                  </div>
-                </div>
+              <div class="bloglist-settings-link">
+                <a href="settings.html#bloglist" style="color: var(--text-secondary); font-size: 12px;" data-i18n="editor.bloglistSettingsLink">Configure in Settings → Bloglist</a>
               </div>
             </div>
           `;
-          // Setup event handlers for bloglist config
-          const limitEnabled = content.querySelector('.bloglist-limit-enabled');
-          const limitValue = content.querySelector('.bloglist-limit-value');
-          const archiveEnabled = content.querySelector('.bloglist-archive-enabled');
-          const archiveFields = content.querySelector('.bloglist-archive-fields');
-
-          limitEnabled.addEventListener('change', () => {
-            limitValue.disabled = !limitEnabled.checked;
-            debouncedPreview();
-          });
-
-          archiveEnabled.addEventListener('change', () => {
-            archiveFields.style.display = archiveEnabled.checked ? 'block' : 'none';
-            debouncedPreview();
-          });
-
-          limitValue.addEventListener('change', () => debouncedPreview());
-          content.querySelector('.bloglist-archive-href').addEventListener('change', () => debouncedPreview());
-          content.querySelector('.bloglist-archive-text').addEventListener('change', () => debouncedPreview());
         } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
           content.className = 'block-content block-list';
           // Determine list tag from listType or legacy type
@@ -1859,32 +1799,9 @@
           const type = block.dataset.type;
 
           if (type === 'bloglist') {
-            const bloglistBlock = { type: 'bloglist' };
-
-            // Get limit config
-            const limitEnabled = block.querySelector('.bloglist-limit-enabled');
-            const limitValue = block.querySelector('.bloglist-limit-value');
-            if (limitEnabled && limitEnabled.checked && limitValue) {
-              bloglistBlock.limit = parseInt(limitValue.value, 10) || 20;
-            } else if (limitEnabled && !limitEnabled.checked) {
-              // Explicit null means "no limit"
-              bloglistBlock.limit = null;
-            }
-
-            // Get archive link config
-            const archiveEnabled = block.querySelector('.bloglist-archive-enabled');
-            if (archiveEnabled && archiveEnabled.checked) {
-              const archiveHref = block.querySelector('.bloglist-archive-href');
-              const archiveText = block.querySelector('.bloglist-archive-text');
-              if (archiveHref && archiveText) {
-                bloglistBlock.archiveLink = {
-                  href: archiveHref.value || '/archiv',
-                  text: archiveText.value || 'Alle Posts anzeigen →'
-                };
-              }
-            }
-
-            content.push(bloglistBlock);
+            // Bloglist options are configured globally in Settings → Bloglist
+            // Just store the block type, options will be applied from settings during compile
+            content.push({ type: 'bloglist' });
           } else if (type === 'divider') {
             content.push({
               type: 'divider'
@@ -2297,6 +2214,16 @@
           // Now do the actual publish with the user's choice
           const input = await buildInput(shouldPaginate);
           const result = await App.publish(input);
+
+          // If this is a post (not page), regenerate archive page silently
+          if (input.pageType !== 'page') {
+            try {
+              await App.generateArchivePage();
+            } catch (archiveErr) {
+              console.warn('Archive page regeneration failed:', archiveErr);
+              // Don't show error to user - archive regeneration is best-effort
+            }
+          }
 
           const sizeInfo = result.pageCount && result.pageCount > 1
             ? `${result.pageCount} pages, ${result.totalBytes} bytes`
