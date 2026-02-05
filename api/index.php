@@ -51,6 +51,19 @@ define('MAX_REQUEST_SIZE', 2 * 1024 * 1024);
 define('COOKIE_NAME', 'fkb_auth_v2');
 define('COOKIE_LIFETIME', 86400); // 24 hours
 
+// CSRF settings
+define('CSRF_COOKIE_NAME', 'fkb_csrf');
+define('CSRF_HEADER_NAME', 'HTTP_X_CSRF_TOKEN');
+
+// Session settings
+define('SESSION_FILE', DATA_DIR . '/sessions.json');
+define('SESSION_ROTATION_INTERVAL', 900); // Rotate token every 15 minutes
+define('SESSION_MAX_LIFETIME', 86400); // Max 24 hours even with rotation
+
+// Audit logging
+define('AUDIT_LOG_FILE', DATA_DIR . '/audit.log');
+define('AUDIT_LOG_MAX_SIZE', 5 * 1024 * 1024); // 5MB max before rotation
+
 // Ensure data directories exist (0750 = owner rwx, group rx, others none)
 if (!is_dir(DATA_DIR)) {
     mkdir(DATA_DIR, 0750, true);
@@ -170,6 +183,191 @@ function clearAuthCookie(): void {
     ]);
 }
 
+// ============================================================================
+// CSRF Token Management
+// ============================================================================
+
+/**
+ * Generate a new CSRF token
+ */
+function generateCsrfToken(): string {
+    return bin2hex(random_bytes(32));
+}
+
+/**
+ * Set CSRF cookie (readable by JavaScript for header submission)
+ */
+function setCsrfCookie(string $token): void {
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    setcookie(CSRF_COOKIE_NAME, $token, [
+        'expires' => time() + COOKIE_LIFETIME,
+        'path' => '/',
+        'httponly' => false, // Must be readable by JS
+        'secure' => $secure,
+        'samesite' => 'Strict',
+    ]);
+}
+
+/**
+ * Clear CSRF cookie
+ */
+function clearCsrfCookie(): void {
+    setcookie(CSRF_COOKIE_NAME, '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'samesite' => 'Strict',
+    ]);
+}
+
+/**
+ * Validate CSRF token from header against cookie
+ */
+function validateCsrfToken(): bool {
+    $cookieToken = $_COOKIE[CSRF_COOKIE_NAME] ?? '';
+    $headerToken = $_SERVER[CSRF_HEADER_NAME] ?? '';
+
+    if (empty($cookieToken) || empty($headerToken)) {
+        return false;
+    }
+
+    return hash_equals($cookieToken, $headerToken);
+}
+
+/**
+ * Require valid CSRF token or fail
+ */
+function requireCsrfToken(): void {
+    if (!validateCsrfToken()) {
+        auditLog('csrf_failure', ['ip' => getClientIp()]);
+        sendJson(403, ['error' => 'Invalid or missing CSRF token']);
+    }
+}
+
+// ============================================================================
+// Session Management
+// ============================================================================
+
+/**
+ * Load sessions from file
+ */
+function loadSessions(): array {
+    if (!file_exists(SESSION_FILE)) {
+        return [];
+    }
+    $content = @file_get_contents(SESSION_FILE);
+    return $content ? json_decode($content, true) : [];
+}
+
+/**
+ * Save sessions to file
+ */
+function saveSessions(array $sessions): void {
+    file_put_contents(SESSION_FILE, json_encode($sessions), LOCK_EX);
+}
+
+/**
+ * Create a new session
+ */
+function createSession(string $authToken): string {
+    $sessions = loadSessions();
+    $sessionId = bin2hex(random_bytes(32));
+    $now = time();
+
+    $sessions[$sessionId] = [
+        'authToken' => $authToken,
+        'createdAt' => $now,
+        'lastRotation' => $now,
+        'ip' => getClientIp(),
+        'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+    ];
+
+    // Clean up expired sessions
+    $sessions = array_filter($sessions, fn($s) =>
+        time() - $s['createdAt'] < SESSION_MAX_LIFETIME
+    );
+
+    saveSessions($sessions);
+    return $sessionId;
+}
+
+/**
+ * Validate and optionally rotate session
+ */
+function validateSession(string $sessionId): ?array {
+    $sessions = loadSessions();
+
+    if (!isset($sessions[$sessionId])) {
+        return null;
+    }
+
+    $session = $sessions[$sessionId];
+    $now = time();
+
+    // Check max lifetime
+    if ($now - $session['createdAt'] > SESSION_MAX_LIFETIME) {
+        unset($sessions[$sessionId]);
+        saveSessions($sessions);
+        return null;
+    }
+
+    // Check if rotation needed
+    if ($now - $session['lastRotation'] > SESSION_ROTATION_INTERVAL) {
+        // Create new session ID, preserve session data
+        $newSessionId = bin2hex(random_bytes(32));
+        $session['lastRotation'] = $now;
+        $sessions[$newSessionId] = $session;
+        unset($sessions[$sessionId]);
+        saveSessions($sessions);
+
+        // Return new session ID for cookie update
+        return ['session' => $session, 'newSessionId' => $newSessionId];
+    }
+
+    return ['session' => $session, 'newSessionId' => null];
+}
+
+/**
+ * Destroy a session
+ */
+function destroySession(string $sessionId): void {
+    $sessions = loadSessions();
+    unset($sessions[$sessionId]);
+    saveSessions($sessions);
+}
+
+/**
+ * Destroy all sessions (for password change, security events)
+ */
+function destroyAllSessions(): void {
+    saveSessions([]);
+}
+
+// ============================================================================
+// Audit Logging
+// ============================================================================
+
+/**
+ * Write an audit log entry
+ */
+function auditLog(string $action, array $details = []): void {
+    // Rotate log if too large
+    if (file_exists(AUDIT_LOG_FILE) && filesize(AUDIT_LOG_FILE) > AUDIT_LOG_MAX_SIZE) {
+        $backupFile = AUDIT_LOG_FILE . '.' . date('Y-m-d-His') . '.bak';
+        @rename(AUDIT_LOG_FILE, $backupFile);
+    }
+
+    $entry = [
+        'timestamp' => date('c'),
+        'action' => $action,
+        'ip' => getClientIp(),
+        'userAgent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 200),
+        'details' => $details,
+    ];
+
+    $line = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+    file_put_contents(AUDIT_LOG_FILE, $line, FILE_APPEND | LOCK_EX);
+}
+
 /**
  * Get client IP address
  */
@@ -278,45 +476,6 @@ function checkAuth(): bool {
 function requireAuth(): void {
     if (!checkAuth()) {
         sendJson(401, ['error' => 'Unauthorized']);
-    }
-}
-
-/**
- * Validate request origin for CSRF protection
- * Used for critical operations like reset, delete
- */
-function validateOrigin(): bool {
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-
-    // Get expected host from request
-    $expectedHost = $_SERVER['HTTP_HOST'] ?? '';
-    if (empty($expectedHost)) {
-        return false;
-    }
-
-    // Check Origin header first (preferred)
-    if (!empty($origin)) {
-        $originHost = parse_url($origin, PHP_URL_HOST);
-        return $originHost === $expectedHost;
-    }
-
-    // Fallback to Referer header
-    if (!empty($referer)) {
-        $refererHost = parse_url($referer, PHP_URL_HOST);
-        return $refererHost === $expectedHost;
-    }
-
-    // No Origin or Referer - reject for critical operations
-    return false;
-}
-
-/**
- * Require valid origin or fail (CSRF protection)
- */
-function requireValidOrigin(): void {
-    if (!validateOrigin()) {
-        sendJson(403, ['error' => 'Invalid request origin']);
     }
 }
 
@@ -494,8 +653,12 @@ if ($method === 'POST' && $path === '/setup') {
 
     // Auto-login after setup
     setAuthCookie($token);
+    $csrfToken = generateCsrfToken();
+    setCsrfCookie($csrfToken);
 
-    sendJson(201, ['success' => true]);
+    auditLog('setup_complete', ['ip' => getClientIp()]);
+
+    sendJson(201, ['success' => true, 'csrfToken' => $csrfToken]);
 }
 
 // Route: POST /login
@@ -523,18 +686,31 @@ if ($method === 'POST' && $path === '/login') {
 
     if (!hash_equals($storedToken, $token)) {
         recordFailedAttempt($clientIp);
+        auditLog('login_failed', ['ip' => $clientIp, 'attempts' => loadRateLimits()[$clientIp]['attempts'] ?? 1]);
         sendJson(401, ['error' => 'Invalid password']);
     }
 
     // Clear rate limit on successful login
     clearRateLimit($clientIp);
+
+    // Set auth cookie and create session
     setAuthCookie($token);
-    sendJson(200, ['success' => true]);
+    $sessionId = createSession($token);
+
+    // Generate and set CSRF token
+    $csrfToken = generateCsrfToken();
+    setCsrfCookie($csrfToken);
+
+    auditLog('login_success', ['ip' => $clientIp, 'sessionId' => substr($sessionId, 0, 8) . '...']);
+
+    sendJson(200, ['success' => true, 'csrfToken' => $csrfToken]);
 }
 
 // Route: POST /logout
 if ($method === 'POST' && $path === '/logout') {
+    auditLog('logout', ['ip' => getClientIp()]);
     clearAuthCookie();
+    clearCsrfCookie();
     sendJson(200, ['success' => true]);
 }
 
@@ -682,6 +858,8 @@ if ($method === 'POST' && $path === '/posts') {
         $pageTypes['types'][$baseSlug] = $pageType;
         savePageTypes($pageTypes);
 
+        auditLog('post_create', ['slug' => $baseSlug, 'title' => $title, 'pageCount' => count($pages), 'totalBytes' => $totalBytes, 'pageType' => $pageType]);
+
         sendJson(201, [
             'slug' => $baseSlug,
             'pages' => $savedSlugs,
@@ -743,6 +921,8 @@ if ($method === 'POST' && $path === '/posts') {
         $pageTypes['types'][$slug] = $pageType;
         savePageTypes($pageTypes);
 
+        auditLog('post_create', ['slug' => $slug, 'title' => $title, 'bytes' => $bytes, 'pageType' => $pageType]);
+
         sendJson(201, [
             'slug' => $slug,
             'hash' => $hash,
@@ -790,7 +970,7 @@ if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path,
 // Route: DELETE /posts/:slug (protected)
 if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matches)) {
     requireAuth();
-    requireValidOrigin();
+    requireCsrfToken();
 
     $slug = $matches[1];
     $manifest = loadManifest();
@@ -819,6 +999,8 @@ if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matche
 
     saveManifest($manifest);
 
+    auditLog('post_delete', ['slug' => $slug]);
+
     sendJson(200, ['tombstoned' => true, 'slug' => $slug]);
 }
 
@@ -839,7 +1021,91 @@ if ($method === 'PUT' && $path === '/settings') {
     }
 
     saveSettings($settings);
+    auditLog('settings_update', ['keys' => array_keys($settings)]);
     sendJson(200, ['success' => true]);
+}
+
+// Route: GET /audit-log (protected)
+if ($method === 'GET' && $path === '/audit-log') {
+    requireAuth();
+
+    $limit = min((int)($_GET['limit'] ?? 100), 500); // Max 500 entries
+    $action = $_GET['action'] ?? null;
+
+    if (!file_exists(AUDIT_LOG_FILE)) {
+        sendJson(200, ['entries' => [], 'total' => 0]);
+    }
+
+    // Read file in reverse (newest first)
+    $lines = file(AUDIT_LOG_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $lines = array_reverse($lines);
+
+    $entries = [];
+    $total = 0;
+
+    foreach ($lines as $line) {
+        $entry = json_decode($line, true);
+        if ($entry === null) {
+            continue;
+        }
+
+        // Filter by action if specified
+        if ($action !== null && $entry['action'] !== $action) {
+            continue;
+        }
+
+        $total++;
+
+        if (count($entries) < $limit) {
+            $entries[] = $entry;
+        }
+    }
+
+    sendJson(200, [
+        'entries' => $entries,
+        'total' => $total,
+        'limit' => $limit,
+    ]);
+}
+
+// Route: GET /audit-log/export (protected) - Download as file
+if ($method === 'GET' && $path === '/audit-log/export') {
+    requireAuth();
+
+    if (!file_exists(AUDIT_LOG_FILE)) {
+        sendJson(404, ['error' => 'No audit log exists']);
+    }
+
+    $filename = 'audit-log-' . date('Y-m-d-His') . '.jsonl';
+    header('Content-Type: application/x-ndjson');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    readfile(AUDIT_LOG_FILE);
+    exit;
+}
+
+// Route: DELETE /audit-log (protected) - Clear audit log
+if ($method === 'DELETE' && $path === '/audit-log') {
+    requireAuth();
+    requireCsrfToken();
+
+    if (!file_exists(AUDIT_LOG_FILE)) {
+        sendJson(404, ['error' => 'No audit log exists']);
+    }
+
+    // Log the deletion before deleting (will be the only entry after)
+    $entryCount = count(file(AUDIT_LOG_FILE, FILE_SKIP_EMPTY_LINES));
+
+    // Archive old log before deletion
+    $archivePath = AUDIT_LOG_FILE . '.' . date('Y-m-d-His') . '.deleted';
+    @copy(AUDIT_LOG_FILE, $archivePath);
+
+    // Clear the log file
+    file_put_contents(AUDIT_LOG_FILE, '', LOCK_EX);
+
+    // Log the clear action
+    auditLog('audit_log_cleared', ['deletedEntries' => $entryCount, 'archivedTo' => basename($archivePath)]);
+
+    sendJson(200, ['cleared' => true, 'deletedEntries' => $entryCount]);
 }
 
 // Route: GET /icons
@@ -938,7 +1204,7 @@ if ($method === 'POST' && $path === '/import') {
 // Route: DELETE /posts (protected) - Delete all posts
 if ($method === 'DELETE' && $path === '/posts') {
     requireAuth();
-    requireValidOrigin();
+    requireCsrfToken();
 
     $manifest = loadManifest();
     $deletedCount = 0;
@@ -971,13 +1237,15 @@ if ($method === 'DELETE' && $path === '/posts') {
 
     saveManifest($manifest);
 
+    auditLog('posts_delete_all', ['count' => $deletedCount]);
+
     sendJson(200, ['deleted' => $deletedCount]);
 }
 
 // Route: POST /reset (protected) - Full reset (deletes everything including password)
 if ($method === 'POST' && $path === '/reset') {
     requireAuth();
-    requireValidOrigin();
+    requireCsrfToken();
 
     $body = readJsonBody();
     $confirmPhrase = $body['confirm'] ?? '';
@@ -1024,6 +1292,11 @@ if ($method === 'POST' && $path === '/reset') {
     if (file_exists(INSTANCE_FILE)) {
         @unlink(INSTANCE_FILE);
     }
+
+    // Destroy all sessions
+    destroyAllSessions();
+
+    auditLog('full_reset', ['ip' => getClientIp()]);
 
     sendJson(200, ['reset' => true]);
 }

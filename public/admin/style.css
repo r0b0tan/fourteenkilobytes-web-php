@@ -2777,3 +2777,165 @@ button:disabled {
   align-items: center;
   gap: 0.5rem;
 }
+
+/* ============================================================================
+   Audit Logs
+   ============================================================================ */
+
+.logs-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.logs-search-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.logs-search {
+  flex: 1;
+  min-width: 150px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--input-bg);
+}
+
+.logs-filter {
+  min-width: 180px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--input-bg);
+}
+
+.logs-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.logs-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.logs-table th {
+  text-align: left;
+  padding: 0.75rem;
+  background: var(--card-header-bg);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.logs-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+  vertical-align: top;
+}
+
+.logs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.logs-table tbody tr:hover {
+  background: var(--gray-100);
+}
+
+.log-time {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.log-action {
+  font-weight: 500;
+}
+
+.log-ip {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.log-details {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.logs-empty td {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+/* Log row states */
+.log-error {
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.log-error:hover {
+  background: rgba(220, 38, 38, 0.1) !important;
+}
+
+.log-error .log-action {
+  color: #dc2626;
+}
+
+.log-warning {
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.log-warning:hover {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.log-warning .log-action {
+  color: #b45309;
+}
+
+.log-success .log-action {
+  color: var(--accent);
+}
+
+.logs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .logs-table th:nth-child(3),
+  .logs-table td:nth-child(3) {
+    display: none;
+  }
+
+  .log-details {
+    max-width: 150px;
+  }
+}

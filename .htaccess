@@ -5,7 +5,7 @@
 Options -Indexes
 
 # Deny access to sensitive files
-<FilesMatch "\.(bak|json|md)$">
+<FilesMatch "\.(bak|json|md|log)$">
     Require all denied
 </FilesMatch>
 
