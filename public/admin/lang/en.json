@@ -44,8 +44,10 @@
   },
   "settings": {
     "language": "Language",
+    "languageLabel": "Language",
     "languageHint": "Changes require page reload",
     "homepage": "Homepage",
+    "homepageLabel": "Homepage",
     "homepageHint": "Select a page to display as the homepage (/)",
     "homepageDefault": "— No homepage selected —",
     "homepageRegenerate": "Regenerate",
