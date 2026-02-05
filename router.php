@@ -23,6 +23,7 @@ if ($uri === '/admin/') {
     $file = __DIR__ . '/public/admin/index.html';
     if (file_exists($file)) {
         header('Content-Type: text/html; charset=utf-8');
+        header('X-Robots-Tag: noindex, nofollow');
         readfile($file);
         return true;
     }
@@ -63,6 +64,8 @@ if (preg_match('/^\/admin\/(.+)$/', $uri, $matches)) {
         if (isset($contentTypes[$ext])) {
             header('Content-Type: ' . $contentTypes[$ext] . '; charset=utf-8');
         }
+        // Prevent search engine indexing of admin area
+        header('X-Robots-Tag: noindex, nofollow');
         readfile($realFile);
         return true;
     }

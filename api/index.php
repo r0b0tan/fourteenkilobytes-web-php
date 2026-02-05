@@ -29,10 +29,18 @@ define('SETTINGS_FILE', DATA_DIR . '/settings.json');
 define('PAGE_TYPES_FILE', DATA_DIR . '/page-types.json');
 define('POSTS_DIR', DATA_DIR . '/posts');
 define('SOURCES_DIR', DATA_DIR . '/sources');
+define('RATE_LIMIT_FILE', DATA_DIR . '/rate-limits.json');
 
 // Token derivation settings
 define('ITERATIONS', 600000);
 define('KEY_LENGTH', 32);
+
+// Rate limiting settings
+define('RATE_LIMIT_MAX_ATTEMPTS', 5);
+define('RATE_LIMIT_WINDOW_SECONDS', 300); // 5 minutes
+
+// Request size limit (2MB - accounts for base64 encoded content)
+define('MAX_REQUEST_SIZE', 2 * 1024 * 1024);
 
 // Cookie settings
 define('COOKIE_NAME', 'fkb_auth_v2');
@@ -62,10 +70,22 @@ function sendJson(int $status, mixed $data): never {
  * Read JSON body from request
  */
 function readJsonBody(): array {
+    // Check Content-Length header first
+    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
+    if ($contentLength > MAX_REQUEST_SIZE) {
+        sendJson(413, ['error' => 'Request body too large']);
+    }
+
     $body = file_get_contents('php://input');
     if (empty($body)) {
         return [];
     }
+
+    // Double-check actual body size
+    if (strlen($body) > MAX_REQUEST_SIZE) {
+        sendJson(413, ['error' => 'Request body too large']);
+    }
+
     $data = json_decode($body, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         sendJson(400, ['error' => 'Invalid JSON body']);
@@ -143,6 +163,91 @@ function clearAuthCookie(): void {
         'httponly' => true,
         'samesite' => 'Strict',
     ]);
+}
+
+/**
+ * Get client IP address
+ */
+function getClientIp(): string {
+    // Check for forwarded IP (behind proxy/load balancer)
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($forwarded) {
+        // Take first IP in chain
+        $ips = explode(',', $forwarded);
+        return trim($ips[0]);
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+}
+
+/**
+ * Check rate limit for IP
+ */
+function checkRateLimit(string $ip): bool {
+    $limits = loadRateLimits();
+    $now = time();
+
+    if (!isset($limits[$ip])) {
+        return true;
+    }
+
+    $entry = $limits[$ip];
+    // Check if window has expired
+    if ($now - $entry['firstAttempt'] > RATE_LIMIT_WINDOW_SECONDS) {
+        return true;
+    }
+
+    return $entry['attempts'] < RATE_LIMIT_MAX_ATTEMPTS;
+}
+
+/**
+ * Record failed login attempt
+ */
+function recordFailedAttempt(string $ip): void {
+    $limits = loadRateLimits();
+    $now = time();
+
+    if (!isset($limits[$ip]) || $now - $limits[$ip]['firstAttempt'] > RATE_LIMIT_WINDOW_SECONDS) {
+        $limits[$ip] = ['attempts' => 1, 'firstAttempt' => $now];
+    } else {
+        $limits[$ip]['attempts']++;
+    }
+
+    saveRateLimits($limits);
+}
+
+/**
+ * Clear rate limit for IP (on successful login)
+ */
+function clearRateLimit(string $ip): void {
+    $limits = loadRateLimits();
+    unset($limits[$ip]);
+    saveRateLimits($limits);
+}
+
+/**
+ * Load rate limits from file
+ */
+function loadRateLimits(): array {
+    if (!file_exists(RATE_LIMIT_FILE)) {
+        return [];
+    }
+    $content = @file_get_contents(RATE_LIMIT_FILE);
+    $limits = $content ? json_decode($content, true) : [];
+
+    // Clean up expired entries
+    $now = time();
+    $limits = array_filter($limits, fn($entry) =>
+        $now - $entry['firstAttempt'] <= RATE_LIMIT_WINDOW_SECONDS
+    );
+
+    return $limits;
+}
+
+/**
+ * Save rate limits to file
+ */
+function saveRateLimits(array $limits): void {
+    file_put_contents(RATE_LIMIT_FILE, json_encode($limits));
 }
 
 /**
@@ -355,6 +460,12 @@ if ($method === 'POST' && $path === '/login') {
         sendJson(400, ['error' => 'Setup not complete']);
     }
 
+    // Rate limiting check
+    $clientIp = getClientIp();
+    if (!checkRateLimit($clientIp)) {
+        sendJson(429, ['error' => 'Too many login attempts. Please try again later.']);
+    }
+
     $body = readJsonBody();
     $password = $body['password'] ?? '';
 
@@ -367,9 +478,12 @@ if ($method === 'POST' && $path === '/login') {
     $storedToken = getApiToken();
 
     if (!hash_equals($storedToken, $token)) {
+        recordFailedAttempt($clientIp);
         sendJson(401, ['error' => 'Invalid password']);
     }
 
+    // Clear rate limit on successful login
+    clearRateLimit($clientIp);
     setAuthCookie($token);
     sendJson(200, ['success' => true]);
 }
