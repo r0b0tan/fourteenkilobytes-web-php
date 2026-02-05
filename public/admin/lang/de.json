@@ -226,6 +226,8 @@
     "blockList": "Liste",
     "blockDivider": "Trenner",
     "blockBloglist": "Blogliste",
+    "bloglistLimitLabel": "Posts begrenzen",
+    "bloglistArchiveLabel": "Archiv-Link anzeigen",
     "preview": "Vorschau",
     "bytes": "Bytes",
     "limit": "Limit",

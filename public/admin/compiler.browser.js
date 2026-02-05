@@ -261,7 +261,13 @@ function validateContentBlock(block, path) {
     }
     return { valid: true };
   }
-  if (blockType === "bloglist" || blockType === "divider") {
+  if (blockType === "divider") {
+    return { valid: true };
+  }
+  if (blockType === "bloglist") {
+    const bloglistResult = validateBloglistBlock(block, path);
+    if (!bloglistResult.valid)
+      return bloglistResult;
     return { valid: true };
   }
   for (let i = 0; i < block.children.length; i++) {
@@ -430,6 +436,49 @@ function validateMeta(meta) {
   }
   return { valid: true };
 }
+function validateBloglistBlock(block, path) {
+  if (block.limit !== void 0 && block.limit !== null) {
+    if (typeof block.limit !== "number" || !Number.isInteger(block.limit) || block.limit < 1) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `bloglist with invalid limit: ${block.limit}`,
+          allowed: ["bloglist with positive integer limit or no limit"],
+          path
+        }
+      };
+    }
+  }
+  if (block.archiveLink !== void 0) {
+    if (typeof block.archiveLink !== "object" || block.archiveLink === null) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "bloglist with invalid archiveLink",
+          allowed: ["bloglist with archiveLink object containing href and text"],
+          path
+        }
+      };
+    }
+    const hrefResult = validateHref(block.archiveLink.href, `${path}.archiveLink.href`);
+    if (!hrefResult.valid)
+      return hrefResult;
+    if (!block.archiveLink.text || block.archiveLink.text.trim().length === 0) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "bloglist archiveLink with empty text",
+          allowed: ["bloglist archiveLink with non-empty text"],
+          path: `${path}.archiveLink.text`
+        }
+      };
+    }
+  }
+  return { valid: true };
+}
 function validateIcons(icons) {
   const available = getAvailableIconIds();
   for (let i = 0; i < icons.length; i++) {
@@ -576,7 +625,7 @@ ${navItems}
 }
 function flattenContentBlock(block, icons, posts) {
   if (block.type === "bloglist") {
-    return renderBloglist(posts || []);
+    return renderBloglist(posts || [], block);
   }
   if (block.type === "divider") {
     return "<hr>";
@@ -604,13 +653,16 @@ ${items}
   }
   return `<p>${inlineHtml}</p>`;
 }
-function renderBloglist(posts) {
+var DEFAULT_BLOGLIST_LIMIT = 20;
+function renderBloglist(posts, block) {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {
     return '<p class="empty">Noch keine Posts.</p>';
   }
   published.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-  const items = published.map((post) => {
+  const limit = block?.limit === null ? published.length : block?.limit ?? DEFAULT_BLOGLIST_LIMIT;
+  const limitedPosts = published.slice(0, limit);
+  const items = limitedPosts.map((post) => {
     const date = new Date(post.publishedAt).toLocaleDateString("de-DE", {
       year: "numeric",
       month: "long",
@@ -618,9 +670,14 @@ function renderBloglist(posts) {
     });
     return `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
   }).join("\n");
-  return `<ul class="posts">
+  let html = `<ul class="posts">
 ${items}
 </ul>`;
+  if (block?.archiveLink) {
+    html += `
+<p class="archive-link"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
+  }
+  return html;
 }
 function flattenInlineNodes(nodes, icons, placement) {
   return nodes.map((node, index) => flattenInlineNode(node, icons, placement, index)).join("");
