@@ -44,8 +44,10 @@
   },
   "settings": {
     "language": "Sprache",
+    "languageLabel": "Sprache",
     "languageHint": "Änderungen erfordern Seiten-Neuladen",
     "homepage": "Startseite",
+    "homepageLabel": "Startseite",
     "homepageHint": "Wähle eine Seite, die als Startseite (/) angezeigt werden soll",
     "homepageDefault": "— Keine Homepage ausgewählt —",
     "homepageRegenerate": "Aktualisieren",
