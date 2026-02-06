@@ -162,7 +162,7 @@
             <input type="checkbox" id="title-override-enabled">
             <span data-i18n="editor.browserTabTitle">Browser Tab Title</span>
           </label>
-          <p id="title-override-hint" class="override-hint" data-i18n="editor.browserTabTitleHint">✓ Using title only</p>
+          <p id="title-override-hint" class="override-hint"><svg class="hint-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> <span data-i18n="editor.browserTabTitleHint">Using title only</span></p>
         </div>
         <div id="title-override-editor" class="override-editor">
           <div class="form-group">
@@ -1022,13 +1022,15 @@
 
       // ============ TITLE OVERRIDE EDITOR ============
 
+      const checkIcon = '<svg class="hint-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+
       function updateTitleOverrideHint() {
         const siteTitleEnabled = window.globalConfig?.siteTitleEnabled !== false;
         const siteTitleText = window.globalConfig?.siteTitle;
         if (siteTitleEnabled && siteTitleText) {
-          titleOverrideHint.textContent = `✓ Using: Title | ${siteTitleText}`;
+          titleOverrideHint.innerHTML = `${checkIcon} <span>${t('editor.browserTabTitleHintWithSite').replace('Site Title', siteTitleText)}</span>`;
         } else {
-          titleOverrideHint.textContent = '✓ Using title only';
+          titleOverrideHint.innerHTML = `${checkIcon} <span data-i18n="editor.browserTabTitleHint">${t('editor.browserTabTitleHint')}</span>`;
         }
       }
 
@@ -1071,7 +1073,7 @@
 
         // Update hint with theme name
         const themeName = getThemeDisplayName(window.globalConfig?.cssMode);
-        cssGlobalHint.textContent = `✓ ${themeName} is used globally`;
+        cssGlobalHint.innerHTML = `${checkIcon} <span>${themeName} is used globally</span>`;
       }
 
       cssEnabled.addEventListener('change', () => {
