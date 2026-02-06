@@ -127,6 +127,9 @@ export async function init() {
   dashboardView.classList.remove('hidden');
   loadAllContent();
 
+  // Check for available updates
+  checkForUpdates();
+
   // Date range picker dropdown
   dateRangeTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -623,6 +626,107 @@ export async function init() {
         d.querySelector('.actions-dropdown-toggle')?.focus();
       });
     }
+  });
+}
+
+// Check for available updates from GitHub
+async function checkForUpdates() {
+  try {
+    const response = await fetch('/api/check-updates');
+    if (!response.ok) return;
+    
+    const data = await response.json();
+    
+    if (data.updateAvailable) {
+      showUpdateBanner(data);
+    }
+  } catch (err) {
+    // Silently fail - update check is not critical
+    console.log('Update check failed:', err.message);
+  }
+}
+
+// Check if update should be shown based on user preferences
+function shouldShowUpdate(version) {
+  // Check if permanently dismissed
+  const dismissedVersion = localStorage.getItem('dismissedUpdateVersion');
+  if (dismissedVersion === version) {
+    return false;
+  }
+  
+  // Check if snoozed
+  const snoozeData = localStorage.getItem('snoozedUpdate');
+  if (snoozeData) {
+    try {
+      const { version: snoozedVersion, until } = JSON.parse(snoozeData);
+      if (snoozedVersion === version && Date.now() < until) {
+        return false;
+      }
+    } catch (e) {
+      // Invalid data, clear it
+      localStorage.removeItem('snoozedUpdate');
+    }
+  }
+  
+  return true;
+}
+
+// Show update notification banner
+function showUpdateBanner(updateInfo) {
+  // Check if should show based on user preferences
+  if (!shouldShowUpdate(updateInfo.latest)) {
+    return;
+  }
+  
+  const dashboardView = document.getElementById('dashboard-view');
+  const banner = document.createElement('div');
+  banner.className = 'update-banner';
+  banner.setAttribute('role', 'alert');
+  const safeVersion = App.escapeHtml(updateInfo.latest);
+  const safeCurrentVersion = App.escapeHtml(updateInfo.current);
+  const safeReleaseUrl = App.escapeHtml(updateInfo.releaseUrl);
+
+  banner.innerHTML = `
+    <div class="update-banner-content">
+      <div class="update-banner-icon">🎉</div>
+      <div class="update-banner-text">
+        <strong>${t('dashboard.updateAvailable', { version: safeVersion })}</strong>
+        <span>${t('dashboard.currentVersion', { version: safeCurrentVersion })}</span>
+      </div>
+      <div class="update-banner-actions">
+        <a href="${safeReleaseUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">
+          ${t('dashboard.viewRelease')}
+        </a>
+        <button class="btn btn-small btn-text snooze-update" data-version="${safeVersion}">
+          ${t('dashboard.remindLater')}
+        </button>
+        <button class="btn btn-small btn-text dismiss-update" data-version="${safeVersion}">
+          ${t('modal.dismiss')}
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Insert at the top of dashboard
+  dashboardView.insertBefore(banner, dashboardView.firstChild);
+  
+  // Snooze handler (7 days)
+  banner.querySelector('.snooze-update').addEventListener('click', (e) => {
+    const version = e.target.dataset.version;
+    const snoozeUntil = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+    localStorage.setItem('snoozedUpdate', JSON.stringify({
+      version: version,
+      until: snoozeUntil
+    }));
+    banner.remove();
+  });
+  
+  // Dismiss handler (permanent for this version)
+  banner.querySelector('.dismiss-update').addEventListener('click', (e) => {
+    const version = e.target.dataset.version;
+    localStorage.setItem('dismissedUpdateVersion', version);
+    localStorage.removeItem('snoozedUpdate'); // Clear any snooze
+    banner.remove();
   });
 }
 

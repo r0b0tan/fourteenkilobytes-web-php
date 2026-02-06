@@ -243,7 +243,11 @@
     "delete": "Delete",
     "deleteConfirm": "Really delete \"{{slug}}\"? This action cannot be undone.",
     "deleteError": "Error deleting: {{error}}",
-    "duplicateError": "Error duplicating: {{error}}"
+    "duplicateError": "Error duplicating: {{error}}",
+    "updateAvailable": "Update available: Version {{version}}",
+    "currentVersion": "You are using: {{version}}",
+    "viewRelease": "View Release",
+    "remindLater": "Remind in 7 days"
   },
   "editor": {
     "new": "New",
@@ -297,7 +301,8 @@
     "ok": "OK",
     "cancel": "Cancel",
     "confirm": "Confirm",
-    "error": "Error"
+    "error": "Error",
+    "dismiss": "Dismiss"
   },
   "errors": {
     "generic": "An error occurred: {{error}}",
