@@ -713,6 +713,83 @@ button:disabled {
   text-decoration: line-through;
 }
 
+/* Update Banner */
+.update-banner {
+  background: linear-gradient(135deg, #10a89b 0%, #0d9488 100%);
+  color: white;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.update-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.update-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.update-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.update-banner-text strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.update-banner-text span {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.update-banner-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.update-banner .btn-primary {
+  background: white;
+  color: var(--accent);
+  border: none;
+}
+
+.update-banner .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.update-banner .btn-text {
+  color: white;
+  opacity: 0.9;
+}
+
+.update-banner .btn-text:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* ============ EDITOR LAYOUT ============ */
 
 /* ZONE A – Basisdaten (in Card) */

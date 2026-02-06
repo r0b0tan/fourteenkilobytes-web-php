@@ -244,7 +244,11 @@
     "delete": "Löschen",
     "deleteConfirm": "\"{{slug}}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteError": "Fehler beim Löschen: {{error}}",
-    "duplicateError": "Fehler beim Duplizieren: {{error}}"
+    "duplicateError": "Fehler beim Duplizieren: {{error}}",
+    "updateAvailable": "Update verfügbar: Version {{version}}",
+    "currentVersion": "Du verwendest: {{version}}",
+    "viewRelease": "Release ansehen",
+    "remindLater": "In 7 Tagen erinnern"
   },
   "editor": {
     "new": "Neu",
@@ -298,7 +302,8 @@
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirm": "Bestätigen",
-    "error": "Fehler"
+    "error": "Fehler",
+    "dismiss": "Ausblenden"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten: {{error}}",
