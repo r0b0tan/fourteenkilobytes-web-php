@@ -1,52 +1,81 @@
 # nginx configuration for fourteenkilobytes
-# Place this in /etc/nginx/sites-available/ and symlink to sites-enabled/
+# Copy to /etc/nginx/sites-available/ and symlink to sites-enabled/
+#
+# Adjust:
+#   - server_name
+#   - root path
+#   - SSL certificate paths
+#   - PHP-FPM socket version (php8.3-fpm.sock)
+#
+# Important:
+#   - Set open_basedir in /etc/php/8.3/fpm/php.ini to include your root
+#   - Set data/ ownership: sudo chown -R www-data:www-data /path/to/data/
+#
+# After changes: sudo nginx -t && sudo systemctl reload nginx
 
 server {
-    listen 80;
+    listen 443 ssl;
     server_name yourdomain.com;
-    root /var/www/fourteenkilobytes-web-php;
-    index index.php index.html;
 
-    # API routes
-    location /api/ {
-        try_files $uri /api/index.php$is_args$args;
-    }
+    root /var/www/fourteenkilobytes;
+    index index.php;
 
-    # Admin panel
-    location /admin {
-        try_files $uri $uri/ /public/admin/index.html;
-    }
+    ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
 
-    location /admin/ {
-        try_files $uri /public/admin/$uri /public/admin/index.html;
-    }
-
-    # Static files in public/admin
-    location ~ ^/admin/.*\.(css|js|html)$ {
-        root /var/www/fourteenkilobytes-web-php/public;
-        rewrite ^/admin/(.*)$ /admin/$1 break;
-    }
-
-    # Blog root
-    location = / {
-        try_files /public/index.html /index.php;
-    }
-
-    # Blog posts (slug format)
-    location ~ ^/([a-z0-9-]+)/?$ {
-        try_files $uri /index.php?slug=$1;
-    }
-
-    # PHP handler
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    # Deny access to hidden files
-    location ~ /\. {
+    # Sensitive files - block direct access
+    location ~* \.(bak|json|md|log)$ {
         deny all;
+    }
+
+    # data/ directory - block access
+    location ~ ^/data/ {
+        deny all;
+    }
+
+    # API requests -> api/index.php
+    location /api/ {
+        try_files $uri /api/index.php?$query_string;
+    }
+
+    # Admin panel - serve from public/admin/
+    # ^~ ensures priority over regex locations (static assets, json deny)
+    location ^~ /admin {
+        add_header X-Robots-Tag "noindex, nofollow" always;
+        add_header Cache-Control "no-store" always;
+
+        # /admin or /admin/ -> index.html
+        rewrite ^/admin/?$ /public/admin/index.html break;
+
+        # Paths with file extension -> serve directly
+        rewrite ^/admin/(.+\..+)$ /public/admin/$1 break;
+
+        # Paths without extension -> append .html
+        rewrite ^/admin/(.+)$ /public/admin/$1.html break;
+    }
+
+    # RSS Feed
+    location = /feed.xml {
+        rewrite ^ /feed.php last;
+    }
+
+    # Static assets
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        try_files $uri =404;
+        expires 7d;
+        access_log off;
+    }
+
+    # Blog slugs and main route -> index.php
+    location / {
+        rewrite ^/([a-z0-9-]+)/?$ /index.php?slug=$1 last;
+        try_files $uri /index.php?$query_string;
+    }
+
+    # PHP-FPM
+    location ~ \.php$ {
+        include fastcgi.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
     }
 }

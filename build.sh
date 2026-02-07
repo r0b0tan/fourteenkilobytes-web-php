@@ -16,6 +16,7 @@ cp "$SCRIPT_DIR/index.php" "$DIST_DIR/"
 cp "$SCRIPT_DIR/feed.php" "$DIST_DIR/"
 cp "$SCRIPT_DIR/router.php" "$DIST_DIR/"
 cp "$SCRIPT_DIR/.htaccess" "$DIST_DIR/"
+cp "$SCRIPT_DIR/nginx.conf.example" "$DIST_DIR/"
 
 # Copy directories
 cp -r "$SCRIPT_DIR/api" "$DIST_DIR/"
