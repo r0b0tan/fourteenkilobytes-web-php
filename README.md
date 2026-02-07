@@ -56,10 +56,9 @@ Is this practical for every use case? No. But for blogs, portfolios, documentati
 
 3. Copy `dist/` contents to your web server's document root
 
-4. Ensure the `data/` directory is writable by the web server:
+4. Ensure the `data/` directory is owned by the web server user (e.g., `www-data` for nginx/Apache):
    ```bash
-   chmod -R 755 data/
-   chown -R www-data:www-data data/
+   sudo chown -R www-data:www-data data/
    ```
 
 5. Visit `/admin/setup` to create your admin password
@@ -134,28 +133,31 @@ Your virtual host should allow `.htaccess` overrides:
 
 Copy and adapt the provided `nginx.conf.example`:
 
-```nginx
-server {
-    listen 80;
-    server_name example.com;
-    root /var/www/fourteenkilobytes;
-    index index.php index.html;
-
-    location / {
-        try_files $uri $uri/ /index.php?slug=$uri;
-    }
-
-    location /api {
-        try_files $uri /api/index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
+```bash
+sudo cp nginx.conf.example /etc/nginx/sites-available/fourteenkilobytes
+sudo ln -s /etc/nginx/sites-available/fourteenkilobytes /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
 ```
+
+The config handles all routes: API (`/api/`), admin panel (`/admin`), RSS feed (`/feed.xml`), blog slugs, and static assets. Adjust `server_name`, `root`, SSL paths, and the PHP-FPM socket version to match your setup.
+
+**Important:** 
+
+1. Ensure that PHP-FPM's `open_basedir` (in `/etc/php/8.3/fpm/php.ini`) includes your document root:
+
+   ```ini
+   open_basedir = /var/www/fourteenkilobytes:/tmp:/var/tmp
+   ```
+
+   Then restart PHP-FPM: `sudo systemctl restart php8.3-fpm`
+
+2. Set correct ownership for the `data/` directory so PHP-FPM can write files:
+
+   ```bash
+   sudo chown -R www-data:www-data /var/www/fourteenkilobytes/data/
+   ```
+
+   This is required for the initial setup, post creation, settings, and other write operations.
 
 ## Usage
 
