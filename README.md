@@ -159,6 +159,75 @@ The config handles all routes: API (`/api/`), admin panel (`/admin`), RSS feed (
 
    This is required for the initial setup, post creation, settings, and other write operations.
 
+## Deployment
+
+The project includes a deployment script that supports various hosting environments:
+
+```bash
+./deploy.sh [target] [options]
+```
+
+### Shared Hosting (FTP)
+
+Perfect for cheap hosting with cPanel/Plesk (Apache + .htaccess):
+
+```bash
+./deploy.sh ftp -H ftp.example.com -u username -p /public_html
+```
+
+Or use your FTP client to upload `dist/` contents. Everything works out-of-the-box.
+
+### VPS / Root Server (SSH)
+
+Deploy to your own server with automated setup:
+
+```bash
+./deploy.sh ssh -h user@example.com -p /var/www/fourteenkilobytes -s
+```
+
+The `-s` flag automatically:
+- Sets data/ permissions (`chown www-data:www-data`)
+- Installs nginx config (if detected)
+- Detects web server (Apache/nginx)
+
+### Local Development (XAMPP/MAMP)
+
+Copy to your local web server:
+
+```bash
+./deploy.sh local -p /Applications/XAMPP/htdocs/fourteenkilobytes
+```
+
+Then visit http://localhost/fourteenkilobytes/admin/setup
+
+### Docker
+
+Run with Docker for instant local environment:
+
+```bash
+# Build and run
+./deploy.sh docker
+
+# Or use docker-compose
+docker-compose up -d
+```
+
+Access at http://localhost:8080/admin/setup
+
+The Docker setup includes:
+- PHP 8.3 + Apache
+- Pre-configured .htaccess
+- Persistent data/ volume
+- Health checks
+
+### Manual Deployment
+
+1. Run `./build.sh` to generate `dist/`
+2. Upload `dist/` contents to your server
+3. Ensure `data/` is writable by web server
+4. Configure web server (copy .htaccess for Apache or nginx.conf.example for nginx)
+5. Visit `/admin/setup`
+
 ## Usage
 
 ### Admin Panel
