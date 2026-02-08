@@ -27,7 +27,7 @@
     "logs": "Logs"
   },
   "auth": {
-    "password": "Password",
+    "password": "Admin Password",
     "passwordPlaceholder": "Enter password",
     "passwordConfirm": "Confirm password",
     "passwordConfirmPlaceholder": "Confirm password",
