@@ -17,10 +17,16 @@ cp "$SCRIPT_DIR/feed.php" "$DIST_DIR/"
 cp "$SCRIPT_DIR/router.php" "$DIST_DIR/"
 cp "$SCRIPT_DIR/.htaccess" "$DIST_DIR/"
 cp "$SCRIPT_DIR/nginx.conf.example" "$DIST_DIR/"
+cp "$SCRIPT_DIR/version.json" "$DIST_DIR/"
+cp "$SCRIPT_DIR/fix-permissions.sh" "$DIST_DIR/"
 
 # Copy directories
 cp -r "$SCRIPT_DIR/api" "$DIST_DIR/"
 cp -r "$SCRIPT_DIR/public" "$DIST_DIR/"
+cp -r "$SCRIPT_DIR/setup" "$DIST_DIR/"
+
+# Remove backup files from setup if they exist
+rm -f "$DIST_DIR/setup/index.php.backup"
 
 # Copy data directory structure (without user data)
 mkdir -p "$DIST_DIR/data/posts"
