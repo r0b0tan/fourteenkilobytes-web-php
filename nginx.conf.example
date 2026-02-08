@@ -63,6 +63,13 @@ server {
         try_files $uri /api/index.php?$query_string;
     }
 
+    # Language files - allow public access to JSON
+    # This must come before the regex deny block below because ^~ stops regex search
+    location ^~ /lang/ {
+        alias /var/www/fourteenkilobytes/public/lang/;
+        add_header Cache-Control "public, max-age=604800";
+    }
+
     # Admin panel - serve from public/admin/
     # ^~ ensures priority over regex locations (static assets, json deny)
     location ^~ /admin {
