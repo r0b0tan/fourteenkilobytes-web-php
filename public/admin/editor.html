@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor - fourteenkilobytes</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/admin/favicon-32x32.png">
+  <link rel="stylesheet" href="/admin/style.css">
   <script src="/admin/i18n.js"></script>
 </head>
 
@@ -24,7 +24,7 @@
     <div class="header-top">
       <!-- Logo with improved accessibility -->
       <div class="logo-container">
-        <a href="index.html" class="logo" aria-label="14KB Dashboard">
+        <a href="/admin/index.html" class="logo" aria-label="14KB Dashboard">
           <!-- SVG uses currentColor to inherit accent from CSS -->
           <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
             viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -58,7 +58,7 @@
       </div>
       <!-- Semantic nav with improved structure -->
       <nav class="header-nav" aria-label="Main navigation">
-        <a href="index.html" class="nav-icon">
+        <a href="/admin/index.html" class="nav-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             aria-hidden="true">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -66,7 +66,7 @@
           </svg>
           <span data-i18n="nav.overview">Overview</span>
         </a>
-        <a href="editor.html" class="nav-icon active" aria-current="page">
+        <a href="/admin/editor.html" class="nav-icon active" aria-current="page">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -74,7 +74,7 @@
           </svg>
           <span data-i18n="nav.new">New</span>
         </a>
-        <a href="settings.html" class="nav-icon">
+        <a href="/admin/settings.html" class="nav-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             aria-hidden="true">
             <circle cx="12" cy="12" r="3" />
@@ -432,7 +432,7 @@
   <!-- Live CSS Container -->
   <style id="live-css"></style>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="/admin/app.js"></script>
   <script type="module">
     // Import compiler (browser bundle)
     import * as Compiler from './compiler.browser.js';

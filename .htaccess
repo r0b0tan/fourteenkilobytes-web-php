@@ -38,7 +38,10 @@ RewriteRule ^public/admin/.*$ - [L]
 # Admin routes - prevent indexing
 SetEnvIf Request_URI "^/admin" ADMIN_REQ
 Header set X-Robots-Tag "noindex, nofollow" env=ADMIN_REQ
-RewriteRule ^admin/?$ public/admin/index.html [L]
+
+# Redirect /admin to /admin/index.html to fix relative path issues
+RewriteRule ^admin/?$ /admin/index.html [R=301,L]
+RewriteRule ^admin/index.html$ public/admin/index.html [L]
 RewriteRule ^admin/(.+)$ public/admin/$1 [L]
 
 # Static files in public (pass through if exists)
