@@ -44,6 +44,13 @@ define('KEY_LENGTH', 32);
 define('RATE_LIMIT_MAX_ATTEMPTS', 5);
 define('RATE_LIMIT_WINDOW_SECONDS', 300); // 5 minutes
 
+// Global rate limiting (per IP per endpoint)
+define('GLOBAL_RATE_LIMIT_FILE', DATA_DIR . '/global-rate-limits.json');
+define('GLOBAL_RATE_LIMIT_MAX_REQUESTS', 100); // requests per window
+define('GLOBAL_RATE_LIMIT_WINDOW', 900); // 15 minutes
+define('GLOBAL_RATE_LIMIT_STRICT_MAX', 30); // for write operations
+define('GLOBAL_RATE_LIMIT_STRICT_WINDOW', 300); // 5 minutes
+
 // Request size limit (2MB - accounts for base64 encoded content)
 define('MAX_REQUEST_SIZE', 2 * 1024 * 1024);
 
@@ -143,10 +150,10 @@ function readInstanceState(): ?array {
 }
 
 /**
- * Check if setup is complete
+ * Check if setup is complete (both lock file AND password must exist)
  */
 function isSetupComplete(): bool {
-    return readInstanceState() !== null;
+    return file_exists(DATA_DIR . '/.setup-complete') && readInstanceState() !== null;
 }
 
 /**
@@ -163,6 +170,20 @@ function getApiToken(): ?string {
 function setAuthCookie(string $token): void {
     $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     setcookie(COOKIE_NAME, $token, [
+        'expires' => time() + COOKIE_LIFETIME,
+        'path' => '/',
+        'httponly' => true,
+        'secure' => $secure,
+        'samesite' => 'Strict',
+    ]);
+}
+
+/**
+ * Set session cookie
+ */
+function setSessionCookie(string $sessionId): void {
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    setcookie('fkb_session', $sessionId, [
         'expires' => time() + COOKIE_LIFETIME,
         'path' => '/',
         'httponly' => true,
@@ -458,8 +479,103 @@ function saveRateLimits(array $limits): void {
     file_put_contents(RATE_LIMIT_FILE, json_encode($limits), LOCK_EX);
 }
 
+// ============================================================================
+// Global Rate Limiting (per endpoint)
+// ============================================================================
+
 /**
- * Check authorization via cookie
+ * Load global rate limits
+ */
+function loadGlobalRateLimits(): array {
+    if (!file_exists(GLOBAL_RATE_LIMIT_FILE)) {
+        return [];
+    }
+    $content = @file_get_contents(GLOBAL_RATE_LIMIT_FILE);
+    $limits = $content ? json_decode($content, true) : [];
+    
+    // Clean up expired entries
+    $now = time();
+    foreach ($limits as $key => $entry) {
+        $window = $entry['window'] ?? GLOBAL_RATE_LIMIT_WINDOW;
+        if ($now - $entry['firstRequest'] > $window) {
+            unset($limits[$key]);
+        }
+    }
+    
+    return $limits;
+}
+
+/**
+ * Save global rate limits
+ */
+function saveGlobalRateLimits(array $limits): void {
+    file_put_contents(GLOBAL_RATE_LIMIT_FILE, json_encode($limits), LOCK_EX);
+}
+
+/**
+ * Check global rate limit for endpoint
+ * @param string $endpoint The API endpoint path
+ * @param bool $strict Use stricter limits for write operations
+ */
+function checkGlobalRateLimit(string $endpoint, bool $strict = false): void {
+    $ip = getClientIp();
+    $key = "ip:{$ip}:endpoint:{$endpoint}";
+    
+    $limits = loadGlobalRateLimits();
+    $now = time();
+    
+    $maxRequests = $strict ? GLOBAL_RATE_LIMIT_STRICT_MAX : GLOBAL_RATE_LIMIT_MAX_REQUESTS;
+    $window = $strict ? GLOBAL_RATE_LIMIT_STRICT_WINDOW : GLOBAL_RATE_LIMIT_WINDOW;
+    
+    if (!isset($limits[$key])) {
+        // First request from this IP for this endpoint
+        $limits[$key] = [
+            'requests' => 1,
+            'firstRequest' => $now,
+            'window' => $window,
+        ];
+        saveGlobalRateLimits($limits);
+        return;
+    }
+    
+    $entry = $limits[$key];
+    
+    // Check if window has expired
+    if ($now - $entry['firstRequest'] > $window) {
+        // Reset counter
+        $limits[$key] = [
+            'requests' => 1,
+            'firstRequest' => $now,
+            'window' => $window,
+        ];
+        saveGlobalRateLimits($limits);
+        return;
+    }
+    
+    // Check if limit exceeded
+    if ($entry['requests'] >= $maxRequests) {
+        $retryAfter = $window - ($now - $entry['firstRequest']);
+        header("Retry-After: {$retryAfter}");
+        auditLog('rate_limit_exceeded', [
+            'ip' => $ip,
+            'endpoint' => $endpoint,
+            'requests' => $entry['requests'],
+            'limit' => $maxRequests,
+        ]);
+        sendJson(429, [
+            'error' => 'Rate limit exceeded',
+            'retryAfter' => $retryAfter,
+            'limit' => $maxRequests,
+        ]);
+    }
+    
+    // Increment counter
+    $limits[$key]['requests']++;
+    saveGlobalRateLimits($limits);
+}
+
+/**
+ * Check authorization via cookie and session
  */
 function checkAuth(): bool {
     $token = getApiToken();
@@ -472,7 +588,42 @@ function checkAuth(): bool {
         return false;
     }
 
-    return hash_equals($token, $cookieToken);
+    // Validate against stored token
+    if (!hash_equals($token, $cookieToken)) {
+        return false;
+    }
+
+    // Session-based validation for additional security
+    $sessionId = $_COOKIE['fkb_session'] ?? '';
+    if (!empty($sessionId)) {
+        $validation = validateSession($sessionId);
+        if ($validation === null) {
+            // Session expired or invalid
+            return false;
+        }
+
+        // If session was rotated, update the session cookie
+        if ($validation['newSessionId'] !== null) {
+            setSessionCookie($validation['newSessionId']);
+        }
+
+        // Verify token from session matches
+        $sessionToken = $validation['session']['authToken'] ?? '';
+        if (!hash_equals($token, $sessionToken)) {
+            return false;
+        }
+
+        // Additional security: Check IP consistency (optional, can cause issues with mobile)
+        // Uncomment if needed:
+        // $currentIp = getClientIp();
+        // $sessionIp = $validation['session']['ip'] ?? '';
+        // if (!empty($sessionIp) && $currentIp !== $sessionIp) {
+        //     auditLog('session_ip_mismatch', ['current' => $currentIp, 'session' => $sessionIp]);
+        //     return false;
+        // }
+    }
+
+    return true;
 }
 
 /**
@@ -499,15 +650,36 @@ function loadManifest(): array {
 }
 
 /**
- * Save manifest
+ * Save manifest with atomic write operation
  */
 function saveManifest(array $manifest): void {
-    // Create backup before saving
+    // Atomic write using temp file
+    $tmpFile = MANIFEST_FILE . '.tmp.' . uniqid() . '.json';
+    
+    $jsonContent = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($jsonContent === false) {
+        sendJson(500, ['error' => 'Failed to encode manifest data']);
+    }
+    
+    // Write to temp file
+    if (file_put_contents($tmpFile, $jsonContent, LOCK_EX) === false) {
+        @unlink($tmpFile);
+        sendJson(500, ['error' => 'Failed to write manifest']);
+    }
+    
+    // Create backup before replacing
     if (file_exists(MANIFEST_FILE)) {
         $backup = MANIFEST_FILE . '.bak';
         @copy(MANIFEST_FILE, $backup);
     }
-    file_put_contents(MANIFEST_FILE, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    
+    // Atomic move (rename is atomic on same filesystem)
+    if (!@rename($tmpFile, MANIFEST_FILE)) {
+        @unlink($tmpFile);
+        sendJson(500, ['error' => 'Failed to finalize manifest']);
+    }
+    
+    @chmod(MANIFEST_FILE, 0640);
 }
 
 /**
@@ -552,15 +724,36 @@ function loadSettings(): array {
 }
 
 /**
- * Save settings
+ * Save settings with atomic write operation
  */
 function saveSettings(array $settings): void {
-    // Create backup before saving
+    // Atomic write using temp file
+    $tmpFile = SETTINGS_FILE . '.tmp.' . uniqid() . '.json';
+    
+    $jsonContent = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if ($jsonContent === false) {
+        sendJson(500, ['error' => 'Failed to encode settings data']);
+    }
+    
+    // Write to temp file
+    if (file_put_contents($tmpFile, $jsonContent, LOCK_EX) === false) {
+        @unlink($tmpFile);
+        sendJson(500, ['error' => 'Failed to write settings']);
+    }
+    
+    // Create backup before replacing
     if (file_exists(SETTINGS_FILE)) {
         $backup = SETTINGS_FILE . '.bak';
         @copy(SETTINGS_FILE, $backup);
     }
-    file_put_contents(SETTINGS_FILE, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    
+    // Atomic move
+    if (!@rename($tmpFile, SETTINGS_FILE)) {
+        @unlink($tmpFile);
+        sendJson(500, ['error' => 'Failed to finalize settings']);
+    }
+    
+    @chmod(SETTINGS_FILE, 0640);
 }
 
 /**
@@ -644,6 +837,20 @@ if ($method === 'POST' && $path === '/setup') {
         sendJson(400, ['error' => 'Password must be at least 8 characters']);
     }
 
+    // Create lock file FIRST to prevent race conditions
+    $setupLockFile = DATA_DIR . '/.setup-complete';
+    $lockContent = date('c') . "\n";
+    
+    // Atomic lock file creation
+    $lockFp = @fopen($setupLockFile, 'x');
+    if ($lockFp === false) {
+        // Lock file already exists, setup is in progress or complete
+        sendJson(403, ['error' => 'Setup already complete or in progress']);
+    }
+    fwrite($lockFp, $lockContent);
+    fclose($lockFp);
+
+    // Now create instance file
     $salt = base64_encode(random_bytes(32));
     $token = deriveToken($password, $salt);
     $state = [
@@ -652,16 +859,18 @@ if ($method === 'POST' && $path === '/setup') {
         'createdAt' => date('c'),
     ];
 
-    // Atomic write (fail if exists)
-    $fp = @fopen(INSTANCE_FILE, 'x');
-    if ($fp === false) {
-        sendJson(403, ['error' => 'Setup already complete']);
+    // Write instance file with lock
+    $stateJson = json_encode($state, JSON_PRETTY_PRINT);
+    if (@file_put_contents(INSTANCE_FILE, $stateJson, LOCK_EX) === false) {
+        // Rollback: Remove lock file if instance creation fails
+        @unlink($setupLockFile);
+        sendJson(500, ['error' => 'Failed to create instance file']);
     }
-    fwrite($fp, json_encode($state, JSON_PRETTY_PRINT));
-    fclose($fp);
 
     // Auto-login after setup
     setAuthCookie($token);
+    $sessionId = createSession($token);
+    setSessionCookie($sessionId);
     $csrfToken = generateCsrfToken();
     setCsrfCookie($csrfToken);
 
@@ -705,6 +914,7 @@ if ($method === 'POST' && $path === '/login') {
     // Set auth cookie and create session
     setAuthCookie($token);
     $sessionId = createSession($token);
+    setSessionCookie($sessionId);
 
     // Generate and set CSRF token
     $csrfToken = generateCsrfToken();
@@ -717,9 +927,25 @@ if ($method === 'POST' && $path === '/login') {
 
 // Route: POST /logout
 if ($method === 'POST' && $path === '/logout') {
+    $sessionId = $_COOKIE['fkb_session'] ?? '';
+    if (!empty($sessionId)) {
+        destroySession($sessionId);
+    }
+    
     auditLog('logout', ['ip' => getClientIp()]);
     clearAuthCookie();
     clearCsrfCookie();
+    
+    // Clear session cookie
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    setcookie('fkb_session', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'httponly' => true,
+        'secure' => $secure,
+        'samesite' => 'Strict',
+    ]);
+    
     sendJson(200, ['success' => true]);
 }
 
@@ -736,6 +962,8 @@ if ($method === 'GET' && $path === '/auth-check') {
 
 // Route: GET /posts
 if ($method === 'GET' && $path === '/posts') {
+    checkGlobalRateLimit('/posts', false);
+    
     $manifest = loadManifest();
     $pageTypes = loadPageTypes();
 
@@ -793,6 +1021,8 @@ if ($method === 'GET' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matches))
 // Route: POST /posts (protected)
 if ($method === 'POST' && $path === '/posts') {
     requireAuth();
+    requireCsrfToken();
+    checkGlobalRateLimit('/posts:create', true); // Strict rate limit for writes
 
     $body = readJsonBody();
     $timestamp = date('c');
@@ -960,6 +1190,7 @@ if ($method === 'POST' && $path === '/posts') {
 // Route: POST /posts/:slug/republish (protected) - Regenerate page with current posts
 if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path, $matches)) {
     requireAuth();
+    requireCsrfToken();
 
     $slug = $matches[1];
     $manifest = loadManifest();
@@ -995,6 +1226,7 @@ if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/republish$#', $path,
 if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matches)) {
     requireAuth();
     requireCsrfToken();
+    checkGlobalRateLimit('/posts:delete', true);
 
     $slug = $matches[1];
     $manifest = loadManifest();
@@ -1031,12 +1263,15 @@ if ($method === 'DELETE' && preg_match('#^/posts/([a-z0-9-]+)$#', $path, $matche
 // Route: GET /settings (protected)
 if ($method === 'GET' && $path === '/settings') {
     requireAuth();
+    checkGlobalRateLimit('/settings', false);
     sendJson(200, loadSettings());
 }
 
 // Route: PUT /settings (protected)
 if ($method === 'PUT' && $path === '/settings') {
     requireAuth();
+    requireCsrfToken();
+    checkGlobalRateLimit('/settings:update', true);
 
     $settings = readJsonBody();
 
@@ -1052,6 +1287,7 @@ if ($method === 'PUT' && $path === '/settings') {
 // Route: GET /audit-log (protected)
 if ($method === 'GET' && $path === '/audit-log') {
     requireAuth();
+    checkGlobalRateLimit('/audit-log', false);
 
     $limit = min((int)($_GET['limit'] ?? 100), 500); // Max 500 entries
     $action = $_GET['action'] ?? null;
@@ -1142,6 +1378,7 @@ if ($method === 'GET' && $path === '/icons') {
 // Route: GET /export (protected)
 if ($method === 'GET' && $path === '/export') {
     requireAuth();
+    checkGlobalRateLimit('/export', true); // Strict limit - resource intensive
 
     $type = $_GET['type'] ?? 'all';
     $export = [
@@ -1191,6 +1428,8 @@ if ($method === 'GET' && $path === '/export') {
 // Route: POST /import (protected)
 if ($method === 'POST' && $path === '/import') {
     requireAuth();
+    requireCsrfToken();
+    checkGlobalRateLimit('/import', true);
 
     $body = readJsonBody();
 
@@ -1229,6 +1468,7 @@ if ($method === 'POST' && $path === '/import') {
 if ($method === 'DELETE' && $path === '/posts') {
     requireAuth();
     requireCsrfToken();
+    checkGlobalRateLimit('/posts:delete-all', true);
 
     $manifest = loadManifest();
     $deletedCount = 0;
@@ -1270,6 +1510,7 @@ if ($method === 'DELETE' && $path === '/posts') {
 if ($method === 'POST' && $path === '/reset') {
     requireAuth();
     requireCsrfToken();
+    checkGlobalRateLimit('/reset', true);
 
     $body = readJsonBody();
     $confirmPhrase = $body['confirm'] ?? '';
@@ -1317,6 +1558,12 @@ if ($method === 'POST' && $path === '/reset') {
         @unlink(INSTANCE_FILE);
     }
 
+    // Delete setup lock file - force full setup wizard
+    $setupLockFile = DATA_DIR . '/.setup-complete';
+    if (file_exists($setupLockFile)) {
+        @unlink($setupLockFile);
+    }
+
     // Destroy all sessions
     destroyAllSessions();
 
@@ -1328,6 +1575,7 @@ if ($method === 'POST' && $path === '/reset') {
 // Route: POST /clone (protected) - Clone a page or seed
 if ($method === 'POST' && $path === '/clone') {
     requireAuth();
+    requireCsrfToken();
 
     $body = readJsonBody();
     $sourceType = $body['sourceType'] ?? 'page'; // 'page' or 'seed'

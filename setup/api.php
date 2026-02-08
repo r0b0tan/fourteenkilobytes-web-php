@@ -8,6 +8,15 @@
 
 declare(strict_types=1);
 
+// Start session for setup token validation with secure cookie settings
+$secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+session_start([
+    'cookie_httponly' => true,
+    'cookie_samesite' => 'Strict',
+    'cookie_secure' => $secure,
+    'use_strict_mode' => true,
+]);
+
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -45,15 +54,25 @@ function readJsonBody(): array {
 
 // Check if setup is already completed
 function isSetupComplete(): bool {
-    return file_exists(SETUP_LOCK_FILE);
+    return file_exists(SETUP_LOCK_FILE) && file_exists(INSTANCE_FILE);
+}
+
+// Validate setup token for write operations
+function validateSetupToken(): void {
+    $token = $_SERVER['HTTP_X_SETUP_TOKEN'] ?? '';
+    $sessionToken = $_SESSION['setup_token'] ?? '';
+    
+    if (empty($token) || empty($sessionToken) || !hash_equals($sessionToken, $token)) {
+        sendJson(403, ['error' => 'Invalid or missing setup token']);
+    }
 }
 
 // Route parsing
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['PATH_INFO'] ?? '/';
 
-// Block all routes if setup is complete (except status check)
-if (isSetupComplete() && $path !== '/status') {
+// Block all routes if setup is complete (except status and webserver-config)
+if (isSetupComplete() && !in_array($path, ['/status', '/webserver-config'])) {
     sendJson(403, ['error' => 'Setup already completed', 'setupComplete' => true]);
 }
 
@@ -181,6 +200,13 @@ if ($method === 'GET' && $path === '/check') {
 
 // Route: POST /initialize - Create initial files and admin account
 if ($method === 'POST' && $path === '/initialize') {
+    // Validate setup token
+    validateSetupToken();
+    
+    // Rotate setup token for additional security
+    $_SESSION['setup_token'] = bin2hex(random_bytes(32));
+    $newToken = $_SESSION['setup_token'];
+    
     $body = readJsonBody();
     
     $password = $body['password'] ?? '';
@@ -188,8 +214,23 @@ if ($method === 'POST' && $path === '/initialize') {
     $language = $body['language'] ?? 'en';
     
     // Validate password
-    if (strlen($password) < 8) {
-        sendJson(400, ['error' => 'Password must be at least 8 characters']);
+    if (strlen($password) < 8 || strlen($password) > 500) {
+        sendJson(400, ['error' => 'Password must be 8-500 characters']);
+    }
+    
+    // Validate and sanitize site title
+    $siteTitle = trim($siteTitle);
+    if (strlen($siteTitle) === 0) {
+        $siteTitle = 'My 14KB Site';
+    }
+    if (strlen($siteTitle) > 100) {
+        sendJson(400, ['error' => 'Site title must be 100 characters or less']);
+    }
+    
+    // Validate language (whitelist)
+    $allowedLanguages = ['en', 'de', 'es', 'fr', 'it', 'pt', 'ja', 'zh'];
+    if (!in_array($language, $allowedLanguages, true)) {
+        $language = 'en';
     }
     
     // Ensure data directories exist
@@ -210,14 +251,24 @@ if ($method === 'POST' && $path === '/initialize') {
     $salt = bin2hex(random_bytes(16));
     $apiToken = bin2hex(hash_pbkdf2('sha256', $password, $salt, ITERATIONS, KEY_LENGTH, true));
     
-    // Create instance.json
+    // Create instance.json atomically (fail if exists - prevent race condition)
+    $fp = @fopen(INSTANCE_FILE, 'x');
+    if ($fp === false) {
+        sendJson(409, ['error' => 'Setup already initialized']);
+    }
     $instance = [
         'salt' => $salt,
         'apiToken' => $apiToken,
         'createdAt' => date('c'),
     ];
-    file_put_contents(INSTANCE_FILE, json_encode($instance, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
-    chmod(INSTANCE_FILE, 0640);
+    $jsonData = json_encode($instance, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if (fwrite($fp, $jsonData) === false) {
+        fclose($fp);
+        @unlink(INSTANCE_FILE);
+        sendJson(500, ['error' => 'Failed to write instance file']);
+    }
+    fclose($fp);
+    @chmod(INSTANCE_FILE, 0600); // More restrictive: owner read-write only
     
     // Create settings.json with initial values
     $settings = [
@@ -308,19 +359,31 @@ if ($method === 'POST' && $path === '/initialize') {
         }
     }
     
-    // Create setup lock file
-    file_put_contents(SETUP_LOCK_FILE, date('c'), LOCK_EX);
+    // Don't create setup lock file yet - user needs to see webserver config first
+    // Lock file will be created when user clicks "Finish Setup"
     
     sendJson(200, [
         'success' => true,
         'message' => 'Setup completed successfully',
         'adminUrl' => '/admin/',
+        'newSetupToken' => $newToken, // Return rotated token
     ]);
 }
 
 // Route: GET /webserver-config - Get configuration snippets
 if ($method === 'GET' && $path === '/webserver-config') {
     $webserver = $_GET['type'] ?? 'apache';
+    
+    // Whitelist validation
+    $allowedTypes = ['apache', 'nginx', 'unknown'];
+    if (!in_array($webserver, $allowedTypes, true)) {
+        sendJson(400, ['error' => 'Invalid webserver type']);
+    }
+    
+    // Default to apache if unknown
+    if ($webserver === 'unknown') {
+        $webserver = 'apache';
+    }
     
     $configs = [
         'apache' => [
@@ -453,6 +516,53 @@ NGINX
     }
     
     sendJson(200, $configs[$webserver]);
+}
+
+// Route: POST /complete - Finalize setup (create lock file)
+if ($method === 'POST' && $path === '/complete') {
+    // Validate setup token
+    validateSetupToken();
+    
+    // Check if already completed (idempotent)
+    if (file_exists(SETUP_LOCK_FILE)) {
+        sendJson(200, [
+            'success' => true,
+            'message' => 'Setup already completed',
+            'redirectUrl' => '/admin/',
+        ]);
+    }
+    
+    // Verify instance.json exists (user completed initialization)
+    if (!file_exists(INSTANCE_FILE)) {
+        sendJson(400, ['error' => 'Setup not initialized']);
+    }
+    
+    // Create setup lock file atomically
+    $fp = @fopen(SETUP_LOCK_FILE, 'x');
+    if ($fp === false) {
+        // Race condition - another request completed it
+        sendJson(200, [
+            'success' => true,
+            'message' => 'Setup already completed',
+            'redirectUrl' => '/admin/',
+        ]);
+    }
+    if (fwrite($fp, date('c')) === false) {
+        fclose($fp);
+        @unlink(SETUP_LOCK_FILE);
+        sendJson(500, ['error' => 'Failed to write setup lock file']);
+    }
+    fclose($fp);
+    
+    // Invalidate setup token after successful completion
+    unset($_SESSION['setup_token']);
+    session_destroy();
+    
+    sendJson(200, [
+        'success' => true,
+        'message' => 'Setup completed successfully',
+        'redirectUrl' => '/admin/',
+    ]);
 }
 
 // 404 for unknown routes
