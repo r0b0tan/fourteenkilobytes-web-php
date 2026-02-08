@@ -71,8 +71,8 @@ function validateSetupToken(): void {
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['PATH_INFO'] ?? '/';
 
-// Block all routes if setup is complete (except status and webserver-config)
-if (isSetupComplete() && !in_array($path, ['/status', '/webserver-config'])) {
+// Block all routes if setup is complete (except status)
+if (isSetupComplete() && $path !== '/status') {
     sendJson(403, ['error' => 'Setup already completed', 'setupComplete' => true]);
 }
 
@@ -268,7 +268,10 @@ if ($method === 'POST' && $path === '/initialize') {
         sendJson(500, ['error' => 'Failed to write instance file']);
     }
     fclose($fp);
-    @chmod(INSTANCE_FILE, 0600); // More restrictive: owner read-write only
+    // SECURITY: Most restrictive permissions - owner read/write only
+    if (!@chmod(INSTANCE_FILE, 0600)) {
+        error_log('Warning: Could not set secure permissions on instance.json');
+    }
     
     // Create settings.json with initial values
     $settings = [

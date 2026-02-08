@@ -19,11 +19,11 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
+header('Content-Security-Policy: default-src \'none\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\'; frame-ancestors \'none\'; base-uri \'self\'; form-action \'self\'');
 
-// HSTS - enforce HTTPS (1 year, include subdomains)
+// HSTS - enforce HTTPS (1 year, include subdomains, preload ready)
 if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 }
 
 // Configuration
@@ -162,6 +162,34 @@ function isSetupComplete(): bool {
 function getApiToken(): ?string {
     $state = readInstanceState();
     return $state['apiToken'] ?? null;
+}
+
+/**
+ * Check data directory security
+ * Returns array of warning messages
+ */
+function checkDataDirectorySecurity(): array {
+    $warnings = [];
+    
+    // Check instance.json permissions
+    if (file_exists(INSTANCE_FILE)) {
+        $perms = fileperms(INSTANCE_FILE) & 0777;
+        if ($perms > 0600) {
+            $warnings[] = 'instance.json has too permissive permissions (' . 
+                         decoct($perms) . '), should be 0600';
+        }
+    }
+    
+    // Check sessions.json permissions
+    if (file_exists(SESSION_FILE)) {
+        $perms = fileperms(SESSION_FILE) & 0777;
+        if ($perms > 0600) {
+            $warnings[] = 'sessions.json has too permissive permissions (' . 
+                         decoct($perms) . '), should be 0600';
+        }
+    }
+    
+    return $warnings;
 }
 
 /**
@@ -386,7 +414,7 @@ function auditLog(string $action, array $details = []): void {
         'timestamp' => date('c'),
         'action' => $action,
         'ip' => getClientIp(),
-        'userAgent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 200),
+        'userAgent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100),
         'details' => $details,
     ];
 
@@ -396,15 +424,28 @@ function auditLog(string $action, array $details = []): void {
 
 /**
  * Get client IP address
+ * SECURITY: Only use X-Forwarded-For if behind a trusted reverse proxy
  */
 function getClientIp(): string {
-    // Check for forwarded IP (behind proxy/load balancer)
-    $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
-    if ($forwarded) {
-        // Take first IP in chain
-        $ips = explode(',', $forwarded);
-        return trim($ips[0]);
+    // SECURITY NOTE: Set this to true ONLY if behind a trusted reverse proxy
+    // (nginx, Apache, CloudFlare, etc.) that you control
+    $trustProxy = false; // TODO: Set to true if using reverse proxy
+    
+    if ($trustProxy) {
+        // Check for forwarded IP (behind proxy/load balancer)
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        if ($forwarded) {
+            // Take first IP in chain and validate format
+            $ips = explode(',', $forwarded);
+            $ip = trim($ips[0]);
+            // Validate IP format
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+        }
     }
+    
+    // Always fall back to REMOTE_ADDR (cannot be spoofed by client)
     return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 }
 
@@ -661,16 +702,18 @@ function saveManifest(array $manifest): void {
         sendJson(500, ['error' => 'Failed to encode manifest data']);
     }
     
-    // Write to temp file
+    // Write to temp file with exclusive lock
     if (file_put_contents($tmpFile, $jsonContent, LOCK_EX) === false) {
         @unlink($tmpFile);
         sendJson(500, ['error' => 'Failed to write manifest']);
     }
     
-    // Create backup before replacing
+    // Create backup before replacing (with proper error handling)
     if (file_exists(MANIFEST_FILE)) {
         $backup = MANIFEST_FILE . '.bak';
-        @copy(MANIFEST_FILE, $backup);
+        if (!@copy(MANIFEST_FILE, $backup)) {
+            error_log('Warning: Could not create manifest backup');
+        }
     }
     
     // Atomic move (rename is atomic on same filesystem)
@@ -679,6 +722,7 @@ function saveManifest(array $manifest): void {
         sendJson(500, ['error' => 'Failed to finalize manifest']);
     }
     
+    // Set secure permissions
     @chmod(MANIFEST_FILE, 0640);
 }
 
@@ -819,6 +863,25 @@ if ($method === 'GET' && $path === '/health') {
     sendJson(200, ['status' => 'ok']);
 }
 
+// Route: GET /security-status (protected)
+if ($method === 'GET' && $path === '/security-status') {
+    requireAuth();
+    
+    $warnings = checkDataDirectorySecurity();
+    $status = empty($warnings) ? 'ok' : 'warning';
+    
+    sendJson(200, [
+        'status' => $status,
+        'warnings' => $warnings,
+        'checks' => [
+            'instanceFilePermissions' => file_exists(INSTANCE_FILE) ? 
+                decoct(fileperms(INSTANCE_FILE) & 0777) : 'not_found',
+            'sessionFilePermissions' => file_exists(SESSION_FILE) ? 
+                decoct(fileperms(SESSION_FILE) & 0777) : 'not_found',
+        ]
+    ]);
+}
+
 // Route: GET /setup-status
 if ($method === 'GET' && $path === '/setup-status') {
     sendJson(200, ['setupComplete' => isSetupComplete()]);
@@ -910,8 +973,15 @@ if ($method === 'POST' && $path === '/login') {
 
     // Clear rate limit on successful login
     clearRateLimit($clientIp);
+    
+    // SECURITY: Invalidate any existing sessions before creating new one
+    // This prevents session fixation attacks
+    $oldSessionId = $_COOKIE['fkb_session'] ?? '';
+    if (!empty($oldSessionId)) {
+        destroySession($oldSessionId);
+    }
 
-    // Set auth cookie and create session
+    // Set auth cookie and create new session
     setAuthCookie($token);
     $sessionId = createSession($token);
     setSessionCookie($sessionId);
@@ -1047,10 +1117,14 @@ if ($method === 'POST' && $path === '/posts') {
 
         // Validate all pages
         $totalBytes = 0;
+        $hashes = [];
         foreach ($pages as $i => $page) {
             if (empty($page['slug']) || empty($page['html'])) {
                 sendJson(400, ['error' => "Page {$i} missing slug or html"]);
             }
+            
+            // SECURITY: Calculate hash server-side
+            $hashes[$i] = hash('sha256', $page['html']);
             
             // Enforce 14KB (14336 bytes) limit per page
             $pageBytes = strlen($page['html']);
@@ -1086,7 +1160,7 @@ if ($method === 'POST' && $path === '/posts') {
         $manifestEntry = [
             'slug' => $baseSlug,
             'status' => 'published',
-            'hash' => $pages[0]['hash'] ?? hash('sha256', $pages[0]['html']),
+            'hash' => $hashes[0],
             'title' => $title,
             'publishedAt' => $timestamp,
             'pageCount' => count($pages),
@@ -1136,7 +1210,8 @@ if ($method === 'POST' && $path === '/posts') {
         $html = $body['html'];
         $bytes = (int)$body['bytes'];
         $title = $body['title'] ?? $slug;
-        $hash = $body['hash'] ?? hash('sha256', $html);
+        // SECURITY: Always calculate hash server-side
+        $hash = hash('sha256', $html);
         $pageType = $body['pageType'] ?? 'post';
         $sourceData = $body['sourceData'] ?? null;
 
@@ -1436,6 +1511,18 @@ if ($method === 'POST' && $path === '/import') {
     if (($body['version'] ?? 0) !== 1) {
         sendJson(400, ['error' => 'Invalid or unsupported backup version']);
     }
+    
+    // SECURITY: Validate import size limits
+    $articleCount = count($body['articles'] ?? []);
+    if ($articleCount > 100) {
+        sendJson(400, ['error' => 'Too many articles (max 100 per import)']);
+    }
+    
+    // Validate total import size (max 10MB)
+    $totalSize = strlen(json_encode($body));
+    if ($totalSize > 10 * 1024 * 1024) {
+        sendJson(400, ['error' => 'Import data too large (max 10MB)']);
+    }
 
     $importSettings = $_GET['settings'] ?? 'true';
     $importArticles = $_GET['articles'] ?? 'true';
@@ -1685,11 +1772,18 @@ if ($method === 'GET' && $path === '/check-updates') {
         'http' => [
             'method' => 'GET',
             'header' => "User-Agent: FourteenKB/{$currentVersion}\r\n",
-            'timeout' => 5
+            'timeout' => 5,
+            'max_redirects' => 3,
+            'follow_location' => 1
         ]
     ]);
     
+    // SECURITY: Validate response size
     $response = @file_get_contents($githubUrl, false, $context);
+    if ($response !== false && strlen($response) > 1024 * 1024) {
+        // Response too large (max 1MB)
+        $response = false;
+    }
     
     if ($response === false) {
         // GitHub unreachable, return current version only
