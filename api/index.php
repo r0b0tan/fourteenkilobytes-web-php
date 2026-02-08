@@ -128,7 +128,7 @@ function getInstanceSalt(): string {
  */
 function deriveToken(string $password, string $salt): string {
     $key = hash_pbkdf2('sha256', $password, $salt, ITERATIONS, KEY_LENGTH, true);
-    return base64_encode($key);
+    return bin2hex($key);
 }
 
 /**
@@ -154,7 +154,7 @@ function isSetupComplete(): bool {
  */
 function getApiToken(): ?string {
     $state = readInstanceState();
-    return $state['token'] ?? null;
+    return $state['apiToken'] ?? null;
 }
 
 /**
@@ -175,10 +175,12 @@ function setAuthCookie(string $token): void {
  * Clear auth cookie
  */
 function clearAuthCookie(): void {
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     setcookie(COOKIE_NAME, '', [
         'expires' => time() - 3600,
         'path' => '/',
         'httponly' => true,
+        'secure' => $secure,
         'samesite' => 'Strict',
     ]);
 }
@@ -212,9 +214,12 @@ function setCsrfCookie(string $token): void {
  * Clear CSRF cookie
  */
 function clearCsrfCookie(): void {
+    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     setcookie(CSRF_COOKIE_NAME, '', [
         'expires' => time() - 3600,
         'path' => '/',
+        'httponly' => false,
+        'secure' => $secure,
         'samesite' => 'Strict',
     ]);
 }
@@ -526,6 +531,10 @@ function loadSettings(): array {
     }
     $content = file_get_contents(SETTINGS_FILE);
     $settings = json_decode($content, true);
+    // Ensure version is set
+    if (!isset($settings['version'])) {
+        $settings['version'] = 1;
+    }
     // Ensure cssMode has a default for existing settings
     if (!isset($settings['cssMode'])) {
         $settings['cssMode'] = 'default';
@@ -812,10 +821,18 @@ if ($method === 'POST' && $path === '/posts') {
             if (empty($page['slug']) || empty($page['html'])) {
                 sendJson(400, ['error' => "Page {$i} missing slug or html"]);
             }
-            if (strlen($page['html']) > 1048576) {
+            
+            // Enforce 14KB (14336 bytes) limit per page
+            $pageBytes = strlen($page['html']);
+            if ($pageBytes > 14336) {
+                sendJson(400, ['error' => "Page {$i} exceeds 14KB limit ({$pageBytes} bytes, max 14336)"]);
+            }
+            
+            // Fallback check for extremely large content
+            if ($pageBytes > 1048576) {
                 sendJson(400, ['error' => "Page {$i} HTML too large (max 1MB)"]);
             }
-            $totalBytes += strlen($page['html']);
+            $totalBytes += $pageBytes;
         }
 
         // Check for tombstone conflict on base slug
@@ -874,7 +891,14 @@ if ($method === 'POST' && $path === '/posts') {
             sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
         }
 
-        if (strlen($body['html']) > 1048576) {
+        // Enforce 14KB (14336 bytes) limit
+        $htmlBytes = strlen($body['html']);
+        if ($htmlBytes > 14336) {
+            sendJson(400, ['error' => "Page exceeds 14KB limit ({$htmlBytes} bytes, max 14336)"]);
+        }
+
+        // Fallback check for extremely large content
+        if ($htmlBytes > 1048576) {
             sendJson(400, ['error' => 'HTML content too large (max 1MB)']);
         }
 

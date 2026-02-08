@@ -6,6 +6,33 @@
 
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
+// Check if setup is complete
+$setupComplete = file_exists(__DIR__ . '/data/.setup-complete');
+
+// Redirect to setup if not complete (except for setup and api routes)
+if (!$setupComplete && !preg_match('/^\/(setup|api)/', $uri)) {
+    // Allow static files to load
+    if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $uri)) {
+        return false; // Let PHP serve the static file
+    }
+    header('Location: /setup/', true, 302);
+    return true;
+}
+
+// Setup wizard routes
+if (preg_match('/^\/setup\/api\.php/', $uri)) {
+    $_SERVER['SCRIPT_NAME'] = '/setup/api.php';
+    $_SERVER['PATH_INFO'] = preg_replace('/^\/setup\/api\.php/', '', $uri);
+    require __DIR__ . '/setup/api.php';
+    return true;
+}
+
+if ($uri === '/setup' || $uri === '/setup/') {
+    header('Content-Type: text/html; charset=utf-8');
+    require __DIR__ . '/setup/index.php';
+    return true;
+}
+
 // API requests
 if (preg_match('/^\/api\//', $uri)) {
     $_SERVER['SCRIPT_NAME'] = '/api/index.php';

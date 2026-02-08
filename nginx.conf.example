@@ -33,6 +33,31 @@ server {
         deny all;
     }
 
+    # Redirect to setup wizard if not completed
+    # This uses an internal variable to check file existence and redirect
+    set $setup_complete 0;
+    if (-f $document_root/data/.setup-complete) {
+        set $setup_complete 1;
+    }
+    
+    # Only redirect if not already in setup, api, or accessing static files
+    set $redirect_to_setup "${setup_complete}${uri}";
+    if ($redirect_to_setup ~* "^0(?!/setup)(?!/api).*$") {
+        return 302 /setup/;
+    }
+
+    # Setup wizard routing
+    location /setup/ {
+        try_files $uri /setup/index.php;
+    }
+    
+    location ~ ^/setup/api\.php {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        include fastcgi_params;
+    }
+
     # API requests -> api/index.php
     location /api/ {
         try_files $uri /api/index.php?$query_string;

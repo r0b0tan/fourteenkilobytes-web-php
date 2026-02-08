@@ -73,9 +73,23 @@ const App = (function() {
    * Logout (clears cookie)
    */
   async function logout() {
-    return apiFetch('/api/logout', {
+    // Call server logout
+    const result = await apiFetch('/api/logout', {
       method: 'POST',
     });
+    
+    // Also clear all fkb_* cookies client-side (version-agnostic)
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const name = cookie.split('=')[0].trim();
+      if (name.startsWith('fkb_')) {
+        // Delete with and without secure flag to cover all cases
+        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict`;
+        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure`;
+      }
+    }
+    
+    return result;
   }
 
   /**

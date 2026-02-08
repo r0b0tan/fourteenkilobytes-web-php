@@ -16,6 +16,17 @@ Options -Indexes
 
 RewriteEngine On
 
+# Redirect to setup wizard if not completed (except setup, api, and static files)
+RewriteCond %{REQUEST_URI} !^/setup
+RewriteCond %{REQUEST_URI} !^/api
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{DOCUMENT_ROOT}/data/.setup-complete !-f
+RewriteRule ^.*$ /setup/ [R=302,L]
+
+# Setup wizard routing
+RewriteRule ^setup/api\.php/(.*)$ setup/api.php [L,QSA,E=PATH_INFO:/$1]
+RewriteRule ^setup/?$ setup/index.php [L]
+
 # API requests -> /api/index.php
 RewriteRule ^api/(.*)$ api/index.php [L,QSA]
 
