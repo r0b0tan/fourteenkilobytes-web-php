@@ -14,6 +14,16 @@ if (strpos($uri, '..') !== false || strpos($uri, "\0") !== false) {
     return true;
 }
 
+// Serve language files from public/lang/
+if (preg_match('/^\/lang\/(.+\.json)$/', $uri, $matches)) {
+    $file = __DIR__ . '/public/lang/' . $matches[1];
+    if (file_exists($file)) {
+        header('Content-Type: application/json; charset=utf-8');
+        readfile($file);
+        return true;
+    }
+}
+
 // Check if setup is complete (both lock file AND instance.json must exist)
 $setupComplete = file_exists(__DIR__ . '/data/.setup-complete') 
     && file_exists(__DIR__ . '/data/instance.json');
