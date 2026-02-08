@@ -202,7 +202,7 @@ function setAuthCookie(string $token): void {
         'path' => '/',
         'httponly' => true,
         'secure' => $secure,
-        'samesite' => 'Strict',
+        'samesite' => 'Lax',
     ]);
 }
 
@@ -216,7 +216,7 @@ function setSessionCookie(string $sessionId): void {
         'path' => '/',
         'httponly' => true,
         'secure' => $secure,
-        'samesite' => 'Strict',
+        'samesite' => 'Lax',
     ]);
 }
 
@@ -230,7 +230,7 @@ function clearAuthCookie(): void {
         'path' => '/',
         'httponly' => true,
         'secure' => $secure,
-        'samesite' => 'Strict',
+        'samesite' => 'Lax',
     ]);
 }
 
@@ -335,10 +335,14 @@ function createSession(string $authToken): string {
         'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
     ];
 
-    // Clean up expired sessions
-    $sessions = array_filter($sessions, fn($s) =>
-        time() - $s['createdAt'] < SESSION_MAX_LIFETIME
-    );
+    // Clean up expired sessions (including grace period for rotated ones)
+    $sessions = array_filter($sessions, function($s) use ($now) {
+        if (isset($s['rotatedTo'])) {
+             // Keep rotated sessions for 60 seconds
+             return ($now - ($s['rotatedAt'] ?? 0) < 60);
+        }
+        return ($now - $s['createdAt'] < SESSION_MAX_LIFETIME);
+    });
 
     saveSessions($sessions);
     return $sessionId;
@@ -357,6 +361,22 @@ function validateSession(string $sessionId): ?array {
     $session = $sessions[$sessionId];
     $now = time();
 
+    // Check if this is an old session that was rotated (Grace period)
+    if (isset($session['rotatedTo'])) {
+         if ($now - ($session['rotatedAt'] ?? 0) < 60) {
+             // Within grace period, allow it but return the NEW session ID
+             return [
+                 'session' => $sessions[$session['rotatedTo']] ?? $session, 
+                 'newSessionId' => $session['rotatedTo']
+             ];
+         } else {
+             // Grace period over
+             unset($sessions[$sessionId]);
+             saveSessions($sessions);
+             return null;
+         }
+    }
+
     // Check max lifetime
     if ($now - $session['createdAt'] > SESSION_MAX_LIFETIME) {
         unset($sessions[$sessionId]);
@@ -369,8 +389,14 @@ function validateSession(string $sessionId): ?array {
         // Create new session ID, preserve session data
         $newSessionId = bin2hex(random_bytes(32));
         $session['lastRotation'] = $now;
+        
+        // New session
         $sessions[$newSessionId] = $session;
-        unset($sessions[$sessionId]);
+        
+        // Mark old session as rotated instead of deleting immediately
+        $sessions[$sessionId]['rotatedTo'] = $newSessionId;
+        $sessions[$sessionId]['rotatedAt'] = $now;
+        
         saveSessions($sessions);
 
         // Return new session ID for cookie update
