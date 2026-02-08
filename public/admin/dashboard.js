@@ -52,7 +52,7 @@ export async function init() {
   let isLoading = false;
 
   // Debounce helper
-  function debounce(fn, delay) {
+  function debounce(fn, delay = 300) {
     let timeout;
     return (...args) => {
       clearTimeout(timeout);

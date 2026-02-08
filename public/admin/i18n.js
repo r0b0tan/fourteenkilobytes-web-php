@@ -16,11 +16,16 @@ const i18n = {
   async init() {
     this.locale = localStorage.getItem('adminLanguage') || 'en';
     try {
-      const res = await fetch(`/admin/lang/${this.locale}.json`);
+      const res = await fetch(`/lang/${this.locale}.json`);
       if (!res.ok) {
         // Fallback to English if locale file not found
-        const fallback = await fetch('/admin/lang/en.json');
-        this.translations = await fallback.json();
+        const fallback = await fetch('/lang/en.json');
+        if (fallback.ok) {
+            this.translations = await fallback.json();
+        } else {
+            console.error('i18n: Fatal - Could not load English translations');
+            this.translations = {}; 
+        }
       } else {
         this.translations = await res.json();
       }

@@ -9,12 +9,13 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-# Deny access to data directory
-<DirectoryMatch "data/">
-    Require all denied
-</DirectoryMatch>
-
 RewriteEngine On
+
+# Allow access to new public language files
+RewriteRule ^lang/(.*)$ public/lang/$1 [L]
+
+# Deny access to data directory
+RewriteRule ^data/ - [F,L]
 
 # Redirect to setup wizard if not completed (except setup, api, and static files)
 RewriteCond %{REQUEST_URI} !^/setup
@@ -35,9 +36,8 @@ RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^public/admin/.*$ - [L]
 
 # Admin routes - prevent indexing
-<LocationMatch "^/admin">
-    Header set X-Robots-Tag "noindex, nofollow"
-</LocationMatch>
+SetEnvIf Request_URI "^/admin" ADMIN_REQ
+Header set X-Robots-Tag "noindex, nofollow" env=ADMIN_REQ
 RewriteRule ^admin/?$ public/admin/index.html [L]
 RewriteRule ^admin/(.+)$ public/admin/$1 [L]
 

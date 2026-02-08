@@ -121,21 +121,29 @@ const App = (function() {
     return posts;
   }
 
+  let settingsCache = null;
+
   /**
    * Get site settings
    */
-  async function getSettings() {
-    return apiFetch('/api/settings');
+  async function getSettings(force = false) {
+    if (settingsCache && !force) {
+      return settingsCache;
+    }
+    settingsCache = await apiFetch('/api/settings');
+    return settingsCache;
   }
 
   /**
    * Save site settings
    */
   async function saveSettings(settings) {
-    return apiFetch('/api/settings', {
+    const result = await apiFetch('/api/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
+    settingsCache = null; // Invalidate cache
+    return result;
   }
 
   /**
