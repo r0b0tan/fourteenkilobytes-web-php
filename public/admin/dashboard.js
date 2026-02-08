@@ -94,7 +94,7 @@ export async function init() {
   try {
     const status = await App.getSetupStatus();
     if (!status.setupComplete) {
-      window.location.href = '/admin/setup';
+      window.location.href = '/setup/';
       return;
     }
   } catch (err) {

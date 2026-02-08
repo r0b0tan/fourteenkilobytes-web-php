@@ -199,7 +199,7 @@ Copy to your local web server:
 ./deploy.sh local -p /Applications/XAMPP/htdocs/fourteenkilobytes
 ```
 
-Then visit http://localhost/fourteenkilobytes/admin/setup
+Then visit http://localhost/fourteenkilobytes/ (auto-redirects to setup wizard)
 
 ### Docker
 
@@ -213,7 +213,7 @@ Run with Docker for instant local environment:
 docker-compose up -d
 ```
 
-Access at http://localhost:8080/admin/setup
+Access at http://localhost:8080/ (auto-redirects to setup wizard)
 
 The Docker setup includes:
 - PHP 8.3 + Apache
@@ -227,7 +227,7 @@ The Docker setup includes:
 2. Upload `dist/` contents to your server
 3. Ensure `data/` is writable by web server
 4. Configure web server (copy .htaccess for Apache or nginx.conf.example for nginx)
-5. Visit `/admin/setup`
+5. Visit your site (auto-redirects to setup wizard)
 
 ## Usage
 

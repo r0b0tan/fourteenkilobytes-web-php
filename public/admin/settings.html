@@ -748,7 +748,7 @@
       // Check if setup is complete
       const status = await App.getSetupStatus();
       if (!status.setupComplete) {
-        window.location.href = '/admin/setup';
+        window.location.href = '/setup/';
         return;
       }
 
@@ -1971,8 +1971,8 @@
         try {
           await App.fullReset();
           Toast.success(t('settings.fullResetSuccess'));
-          // Redirect to setup page since password was deleted
-          setTimeout(() => window.location.href = '/admin/setup.html', 1500);
+          // Redirect to setup wizard since everything was deleted
+          setTimeout(() => window.location.href = '/setup/', 1500);
         } catch (err) {
           Toast.error(t('errors.generic', { error: err.message }));
           fullResetBtn.disabled = false;

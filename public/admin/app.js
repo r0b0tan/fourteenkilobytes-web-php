@@ -20,6 +20,15 @@ const App = (function() {
       ...options.headers,
     };
 
+    // Add CSRF token to all state-changing requests
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      const csrfToken = document.cookie.match(/fkb_csrf=([^;]+)/)?.[1];
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+
     const res = await fetch(path, {
       ...options,
       headers,

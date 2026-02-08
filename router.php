@@ -6,17 +6,31 @@
 
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
-// Check if setup is complete
-$setupComplete = file_exists(__DIR__ . '/data/.setup-complete');
-
-// Redirect to setup if not complete (except for setup and api routes)
-if (!$setupComplete && !preg_match('/^\/(setup|api)/', $uri)) {
-    // Allow static files to load
-    if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/', $uri)) {
-        return false; // Let PHP serve the static file
-    }
-    header('Location: /setup/', true, 302);
+// Path traversal protection: normalize path and block suspicious patterns
+$uri = str_replace('\\', '/', $uri); // Normalize backslashes
+if (strpos($uri, '..') !== false || strpos($uri, "\0") !== false) {
+    http_response_code(400);
+    echo '400 Bad Request';
     return true;
+}
+
+// Check if setup is complete (both lock file AND instance.json must exist)
+$setupComplete = file_exists(__DIR__ . '/data/.setup-complete') 
+    && file_exists(__DIR__ . '/data/instance.json');
+
+// Redirect to setup if not complete (except for setup, api, and admin static files)
+if (!$setupComplete && !preg_match('/^\/(setup|api)/', $uri)) {
+    // Allow static files to load (CSS, JS, fonts, etc.)
+    if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json)$/', $uri)) {
+        // Let admin files be handled by admin routing below
+        if (!preg_match('/^\/admin\//', $uri)) {
+            return false; // Let PHP serve the static file
+        }
+        // Fall through for /admin/ files
+    } else {
+        header('Location: /setup/', true, 302);
+        return true;
+    }
 }
 
 // Setup wizard routes

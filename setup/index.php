@@ -1,10 +1,24 @@
 <?php
-// Check if setup is already complete
+// Check if setup is already complete (both lock file AND instance.json must exist)
 $setupLockFile = dirname(__DIR__) . '/data/.setup-complete';
-if (file_exists($setupLockFile)) {
+$instanceFile = dirname(__DIR__) . '/data/instance.json';
+if (file_exists($setupLockFile) && file_exists($instanceFile)) {
     header('Location: /admin/');
     exit;
 }
+
+// Generate setup token to prevent unauthorized setup requests
+$secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+session_start([
+    'cookie_httponly' => true,
+    'cookie_samesite' => 'Strict',
+    'cookie_secure' => $secure,
+    'use_strict_mode' => true,
+]);
+if (!isset($_SESSION['setup_token'])) {
+    $_SESSION['setup_token'] = bin2hex(random_bytes(32));
+}
+$setupToken = $_SESSION['setup_token'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +50,7 @@ if (file_exists($setupLockFile)) {
     .wizard-logo {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       color: var(--accent);
       margin-bottom: 16px;
     }
@@ -47,7 +61,7 @@ if (file_exists($setupLockFile)) {
     }
 
     .wizard-logo-text {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.1;
       font-family: ui-monospace, monospace;
       font-weight: 600;
@@ -55,7 +69,7 @@ if (file_exists($setupLockFile)) {
     }
 
     .wizard-title {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 6px;
@@ -77,7 +91,7 @@ if (file_exists($setupLockFile)) {
     .progress-fill {
       height: 100%;
       background: var(--accent);
-      transition: width 0.3s ease;
+      transition: width 0.15s ease;
       width: 0%;
     }
 
@@ -116,7 +130,7 @@ if (file_exists($setupLockFile)) {
     }
 
     .check-item {
-      padding: 12px 14px;
+      padding: 12px 16px;
       margin-bottom: 8px;
       border-radius: 4px;
       background: var(--gray-100);
@@ -159,19 +173,19 @@ if (file_exists($setupLockFile)) {
       font-size: 11px;
       font-family: ui-monospace, monospace;
       margin-top: 4px;
-      padding: 3px 6px;
+      padding: 4px 8px;
       background: var(--gray-800);
       color: #10b981;
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .check-status {
       display: inline-flex;
       align-items: center;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 3px;
+      padding: 4px 8px;
+      border-radius: 4px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       flex-shrink: 0;
@@ -202,7 +216,7 @@ if (file_exists($setupLockFile)) {
 
     .password-strength-fill {
       height: 100%;
-      transition: width 0.3s, background 0.3s;
+      transition: width 0.15s, background 0.15s;
       width: 0%;
     }
 
@@ -253,14 +267,14 @@ if (file_exists($setupLockFile)) {
       display: flex;
       justify-content: space-between;
       margin-top: 24px;
-      padding-top: 20px;
+      padding-top: 24px;
       border-top: 1px solid var(--border);
       gap: 8px;
     }
 
     .alert ul {
       margin-top: 8px;
-      margin-left: 20px;
+      margin-left: 24px;
       font-size: 13px;
     }
 
@@ -311,30 +325,36 @@ if (file_exists($setupLockFile)) {
 
     .webserver-tabs {
       display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid var(--border);
+      gap: 0;
+      position: relative;
+      bottom: -1px;
+      margin-bottom: 0;
     }
 
     .webserver-tab {
       padding: 8px 16px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
+      background: var(--gray-100);
+      border: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
-      color: var(--text-secondary);
-      transition: color 0.15s, border-color 0.15s;
-    }
-
-    .webserver-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
+      border-radius: 4px 4px 0 0;
+      margin-right: -1px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
 
     .webserver-tab:hover {
+      background: var(--gray-200);
       color: var(--text-primary);
+    }
+
+    .webserver-tab.active {
+      background: var(--white);
+      color: var(--text-primary);
+      border-bottom-color: var(--white);
+      z-index: 1;
     }
 
     @media (max-width: 600px) {
@@ -343,7 +363,7 @@ if (file_exists($setupLockFile)) {
       }
       
       .wizard-body {
-        padding: 20px;
+        padding: 16px;
       }
     }
   </style>
@@ -471,7 +491,7 @@ if (file_exists($setupLockFile)) {
           <button class="webserver-tab" onclick="showWebserverConfig('nginx')">Nginx</button>
         </div>
 
-        <div id="webserverConfigContainer">
+        <div id="webserverConfigContainer" style="border: 1px solid var(--border); border-radius: 0 4px 4px 4px; background: var(--white); padding: 16px; margin-top: -1px;">
           <div class="check-item">
             <div class="check-label">Loading configuration...</div>
             <span class="spinner"></span>
@@ -513,6 +533,9 @@ if (file_exists($setupLockFile)) {
   </div>
 
   <script>
+    // Setup token for CSRF protection
+    const SETUP_TOKEN = '<?php echo $setupToken; ?>';
+    
     let currentStep = 1;
     const totalSteps = 6;
     let systemChecks = {};
@@ -653,7 +676,10 @@ if (file_exists($setupLockFile)) {
         
         const response = await fetch('/setup/api.php/initialize', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Setup-Token': SETUP_TOKEN
+          },
           body: JSON.stringify({ password, siteTitle, language }),
         });
         
@@ -713,8 +739,30 @@ if (file_exists($setupLockFile)) {
       return div.innerHTML;
     }
 
-    function completeSetup() {
-      nextStep();
+    async function completeSetup() {
+      try {
+        const response = await fetch('/setup/api.php/complete', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Setup-Token': SETUP_TOKEN
+          },
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to complete setup');
+        }
+        
+        // Show success message briefly, then redirect
+        nextStep();
+        setTimeout(() => {
+          window.location.href = '/admin/';
+        }, 1500);
+      } catch (error) {
+        showAlert('Failed to complete setup: ' + error.message, 'error');
+      }
     }
 
     updateProgress();

@@ -444,7 +444,7 @@
       // Check if setup is complete
       const status = await App.getSetupStatus();
       if (!status.setupComplete) {
-        window.location.href = '/admin/setup';
+        window.location.href = '/setup/';
         return;
       }
 
@@ -1024,11 +1024,19 @@
 
       const checkIcon = '<svg class="hint-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
 
+      // HTML escape function to prevent XSS
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
       function updateTitleOverrideHint() {
         const siteTitleEnabled = window.globalConfig?.siteTitleEnabled !== false;
         const siteTitleText = window.globalConfig?.siteTitle;
         if (siteTitleEnabled && siteTitleText) {
-          titleOverrideHint.innerHTML = `${checkIcon} <span>${t('editor.browserTabTitleHintWithSite').replace('Site Title', siteTitleText)}</span>`;
+          const escapedTitle = escapeHtml(siteTitleText);
+          titleOverrideHint.innerHTML = `${checkIcon} <span>${t('editor.browserTabTitleHintWithSite').replace('Site Title', escapedTitle)}</span>`;
         } else {
           titleOverrideHint.innerHTML = `${checkIcon} <span data-i18n="editor.browserTabTitleHint">${t('editor.browserTabTitleHint')}</span>`;
         }

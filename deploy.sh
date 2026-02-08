@@ -205,7 +205,7 @@ function deploy_local() {
         "$DIST_DIR/" "$PATH/"
     
     echo -e "${GREEN}✓ Local deployment complete!${NC}"
-    echo -e "${YELLOW}Visit http://localhost/admin/setup to begin${NC}"
+    echo -e "${YELLOW}Visit http://localhost/ to begin setup${NC}"
 }
 
 function deploy_docker() {
