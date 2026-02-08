@@ -104,11 +104,27 @@ if ($method === 'GET' && $path === '/check') {
     
     // Data directory writable
     $dataWritable = is_dir(DATA_DIR) && is_writable(DATA_DIR);
+    
+    // Auto-fix attempt: Try to set standard permissions if not writable
+    if (!$dataWritable && is_dir(DATA_DIR)) {
+        @chmod(DATA_DIR, 0755); // Try standard 755 first
+        clearstatcache();
+        $dataWritable = is_writable(DATA_DIR);
+        
+        if (!$dataWritable) {
+            @chmod(DATA_DIR, 0775); // Try group write
+            clearstatcache();
+            $dataWritable = is_writable(DATA_DIR);
+        }
+    }
+
     $checks['dataDir'] = [
         'label' => 'Data Directory',
         'status' => $dataWritable ? 'ok' : 'error',
         'message' => $dataWritable ? 'Writable' : 'Not writable',
-        'fix' => !$dataWritable ? "chmod 750 " . DATA_DIR : null,
+        'fix' => !$dataWritable ? 
+            'FTP: Set permissions to 755 (or 777 as last resort) for /data folder.<br>SSH: <code>chmod 775 data/</code><br><span style="color:var(--text-secondary)">Note: 777 is less secure on shared hosting. Ensure .htaccess works!</span>' 
+            : null,
         'required' => true,
     ];
     
@@ -198,15 +214,16 @@ if ($method === 'GET' && $path === '/check') {
     ]);
 }
 
-// Route: POST /initialize - Create initial files and admin account
-if ($method === 'POST' && $path === '/initialize') {
+// Route: POST /install - Perform full installation atomically
+if ($method === 'POST' && $path === '/install') {
     // Validate setup token
     validateSetupToken();
     
-    // Rotate setup token for additional security
-    $_SESSION['setup_token'] = bin2hex(random_bytes(32));
-    $newToken = $_SESSION['setup_token'];
-    
+    // Check if setup is already complete (Double check)
+    if (isSetupComplete()) {
+        sendJson(409, ['error' => 'Setup already completed']);
+    }
+
     $body = readJsonBody();
     
     $password = $body['password'] ?? '';
@@ -228,7 +245,7 @@ if ($method === 'POST' && $path === '/initialize') {
     }
     
     // Validate language (whitelist)
-    $allowedLanguages = ['en', 'de', 'es', 'fr', 'it', 'pt', 'ja', 'zh'];
+    $allowedLanguages = ['en', 'de', 'de', 'es', 'fr', 'it', 'pt', 'ja', 'zh'];
     if (!in_array($language, $allowedLanguages, true)) {
         $language = 'en';
     }
@@ -251,10 +268,12 @@ if ($method === 'POST' && $path === '/initialize') {
     $salt = bin2hex(random_bytes(16));
     $apiToken = bin2hex(hash_pbkdf2('sha256', $password, $salt, ITERATIONS, KEY_LENGTH, true));
     
-    // Create instance.json atomically (fail if exists - prevent race condition)
-    $fp = @fopen(INSTANCE_FILE, 'x');
+    // Create instance.json
+    // We use 'w' (write/truncate) to recover from partial/failed setups if lock file is missing.
+    // The security is guaranteed by isSetupComplete() check above.
+    $fp = @fopen(INSTANCE_FILE, 'w');
     if ($fp === false) {
-        sendJson(409, ['error' => 'Setup already initialized']);
+        sendJson(500, ['error' => 'Failed to write instance file. Check permissions.']);
     }
     $instance = [
         'salt' => $salt,
@@ -264,10 +283,10 @@ if ($method === 'POST' && $path === '/initialize') {
     $jsonData = json_encode($instance, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     if (fwrite($fp, $jsonData) === false) {
         fclose($fp);
-        @unlink(INSTANCE_FILE);
-        sendJson(500, ['error' => 'Failed to write instance file']);
+        sendJson(500, ['error' => 'Failed to write instance data']);
     }
     fclose($fp);
+    
     // SECURITY: Most restrictive permissions - owner read/write only
     if (!@chmod(INSTANCE_FILE, 0600)) {
         error_log('Warning: Could not set secure permissions on instance.json');
@@ -362,14 +381,22 @@ if ($method === 'POST' && $path === '/initialize') {
         }
     }
     
-    // Don't create setup lock file yet - user needs to see webserver config first
-    // Lock file will be created when user clicks "Finish Setup"
+    // Create setup lock file
+    // This is the FINAL step that marks installation as complete
+    if (file_put_contents(SETUP_LOCK_FILE, date('c')) === false) {
+         // Try to cleanup if lockfile fails to avoid zombie state?
+         // No, if we came this far, instance.json is valid.
+         sendJson(500, ['error' => 'Failed to finalize setup (lock file)']);
+    }
+
+    // Cleanup session
+    unset($_SESSION['setup_token']);
+    session_destroy();
     
     sendJson(200, [
         'success' => true,
-        'message' => 'Setup completed successfully',
-        'adminUrl' => '/admin/',
-        'newSetupToken' => $newToken, // Return rotated token
+        'message' => 'Installation successful',
+        'adminUrl' => '/admin/'
     ]);
 }
 
@@ -521,52 +548,6 @@ NGINX
     sendJson(200, $configs[$webserver]);
 }
 
-// Route: POST /complete - Finalize setup (create lock file)
-if ($method === 'POST' && $path === '/complete') {
-    // Validate setup token
-    validateSetupToken();
-    
-    // Check if already completed (idempotent)
-    if (file_exists(SETUP_LOCK_FILE)) {
-        sendJson(200, [
-            'success' => true,
-            'message' => 'Setup already completed',
-            'redirectUrl' => '/admin/',
-        ]);
-    }
-    
-    // Verify instance.json exists (user completed initialization)
-    if (!file_exists(INSTANCE_FILE)) {
-        sendJson(400, ['error' => 'Setup not initialized']);
-    }
-    
-    // Create setup lock file atomically
-    $fp = @fopen(SETUP_LOCK_FILE, 'x');
-    if ($fp === false) {
-        // Race condition - another request completed it
-        sendJson(200, [
-            'success' => true,
-            'message' => 'Setup already completed',
-            'redirectUrl' => '/admin/',
-        ]);
-    }
-    if (fwrite($fp, date('c')) === false) {
-        fclose($fp);
-        @unlink(SETUP_LOCK_FILE);
-        sendJson(500, ['error' => 'Failed to write setup lock file']);
-    }
-    fclose($fp);
-    
-    // Invalidate setup token after successful completion
-    unset($_SESSION['setup_token']);
-    session_destroy();
-    
-    sendJson(200, [
-        'success' => true,
-        'message' => 'Setup completed successfully',
-        'redirectUrl' => '/admin/',
-    ]);
-}
-
 // 404 for unknown routes
 sendJson(404, ['error' => 'Not found']);
+

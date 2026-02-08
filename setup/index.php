@@ -43,36 +43,54 @@ $setupToken = $_SESSION['setup_token'];
     }
 
     .wizard-header {
-      text-align: center;
-      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 32px;
+      text-align: left;
     }
 
     .wizard-logo {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      color: var(--accent);
-      margin-bottom: 16px;
+      
+      /* Dashboard Logo Styling */
+      background-color: rgba(16, 168, 155, 0.12);
+      border-radius: 16px;
+      padding: 8px 20px 8px 12px;
+      flex-shrink: 0;
+      color: #14b8a6;
+      margin-bottom: 0; /* Override previous margin */
     }
 
     .wizard-logo svg {
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
     }
 
     .wizard-logo-text {
-      font-size: 13px;
+      font-size: 18px;
       line-height: 1.1;
       font-family: ui-monospace, monospace;
       font-weight: 600;
       letter-spacing: 0.05em;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .wizard-title-group {
+      display: flex;
+      flex-direction: column;
     }
 
     .wizard-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 6px;
+      margin-bottom: 2px;
+      line-height: 1.2;
     }
 
     .wizard-subtitle {
@@ -133,7 +151,7 @@ $setupToken = $_SESSION['setup_token'];
       padding: 12px 16px;
       margin-bottom: 8px;
       border-radius: 4px;
-      background: var(--gray-100);
+      background: var(--white);
       border: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -142,13 +160,13 @@ $setupToken = $_SESSION['setup_token'];
     }
 
     .check-item.ok {
-      background: #f0fdf4;
-      border-color: #86efac;
+      background: var(--white);
+      border-color: var(--border);
     }
 
     .check-item.warning {
-      background: #fef9c3;
-      border-color: #fde047;
+      background: #fffbeb;
+      border-color: #fcd34d;
     }
 
     .check-item.error {
@@ -157,15 +175,14 @@ $setupToken = $_SESSION['setup_token'];
     }
 
     .check-label {
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-primary);
       font-size: 13px;
     }
 
     .check-message {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-secondary);
-      margin-top: 2px;
     }
 
     .check-item code {
@@ -174,8 +191,9 @@ $setupToken = $_SESSION['setup_token'];
       font-family: ui-monospace, monospace;
       margin-top: 4px;
       padding: 4px 8px;
-      background: var(--gray-800);
-      color: #10b981;
+      background: var(--white);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
       border-radius: 4px;
     }
 
@@ -184,50 +202,77 @@ $setupToken = $_SESSION['setup_token'];
       align-items: center;
       font-size: 11px;
       font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       flex-shrink: 0;
     }
 
     .check-status.ok {
-      background: #10b981;
-      color: white;
+      background: var(--accent-alpha-15);
+      color: var(--accent-hover);
     }
 
     .check-status.warning {
-      background: #f59e0b;
-      color: white;
+      background: #fef3c7;
+      color: #92400e;
     }
 
     .check-status.error {
-      background: #ef4444;
-      color: white;
+      background: #fee2e2;
+      color: #b91c1c;
     }
 
-    .password-strength {
-      margin-top: 6px;
-      height: 2px;
-      background: var(--gray-200);
-      border-radius: 2px;
-      overflow: hidden;
+    .password-wrapper {
+      position: relative;
     }
 
-    .password-strength-fill {
-      height: 100%;
-      transition: width 0.15s, background 0.15s;
-      width: 0%;
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .password-strength-fill.weak { width: 33%; background: #ef4444; }
-    .password-strength-fill.medium { width: 66%; background: #f59e0b; }
-    .password-strength-fill.strong { width: 100%; background: #10b981; }
+    .password-toggle:hover {
+      color: var(--text-primary);
+    }
+
+    /* Custom Strength Indicator as Bottom Border */
+    .strength-indicator {
+      position: absolute;
+      bottom: 1px;
+      left: 1px;
+      right: 1px;
+      width: auto;
+      height: 3px;
+      background: transparent;
+      transition: background-color 0.2s;
+      border-bottom-left-radius: 3px;
+      border-bottom-right-radius: 3px;
+      pointer-events: none;
+    }
+
+    .strength-indicator.weak { background-color: #ef4444; }
+    .strength-indicator.medium { background-color: #f59e0b; }
+    .strength-indicator.strong { background-color: #10b981; }
 
     .password-hint {
       font-size: 11px;
       color: var(--text-muted);
       margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .config-box {
@@ -266,16 +311,23 @@ $setupToken = $_SESSION['setup_token'];
     .wizard-actions {
       display: flex;
       justify-content: space-between;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
+      margin-top: 32px;
+      padding-top: 0;
+      border-top: none;
       gap: 8px;
+    }
+
+    .alert {
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     .alert ul {
       margin-top: 8px;
-      margin-left: 24px;
-      font-size: 13px;
+      margin-left: 18px;
     }
 
     .alert-error {
@@ -285,15 +337,15 @@ $setupToken = $_SESSION['setup_token'];
     }
 
     .alert-success {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #86efac;
+      background: var(--accent-alpha-15);
+      color: var(--accent-hover);
+      border: 1px solid var(--accent-alpha-15);
     }
 
     .alert-info {
-      background: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #93c5fd;
+      background: var(--accent-alpha-15);
+      color: var(--accent-hover);
+      border: 1px solid transparent;
     }
 
     .spinner {
@@ -372,11 +424,13 @@ $setupToken = $_SESSION['setup_token'];
   <div class="wizard-container">
     <div class="wizard-header">
       <div class="wizard-logo">
-        <svg viewBox="0 0 2560 2560" xmlns="http://www.w3.org/2000/svg"><path d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149 42 -158 162 -284 316 -331 l65 -20 3 -254 c3 -236 4 -256 23 -285 26 -39 82 -59 142 -50 49 7 99 47 122 96 16 34 18 76 21 505 l3 470 78 3 77 3 0 -476 c0 -451 1 -478 20 -520 25 -56 64 -86 128 -100 102 -23 199 40 224 145 7 28 10 173 8 413 l-3 371 73 6 c178 15 318 99 408 246 l47 76 3 557 c3 531 2 560 -17 620 -26 84 -98 192 -164 245 -100 82 -176 113 -304 124 -60 7 -399 10 -902 9 -720 -2 -816 -4 -878 -19z m1686 -230 c76 -37 143 -106 173 -177 25 -61 25 -1074 0 -1135 -30 -71 -97 -140 -173 -177 l-67 -33 -750 0 -750 0 -67 33 c-76 37 -143 106 -173 177 -25 61 -25 1074 0 1135 30 71 97 140 173 177 l67 33 750 0 750 0 67 -33z"/><path d="M782 1579 c-29 -11 -69 -56 -77 -87 -8 -34 16 -89 49 -110 34 -21 61 -21 87 2 42 37 46 109 8 145 -29 27 -36 28 -67 50z"/><path d="M1228 1578 c-32 -11 -58 -50 -58 -89 0 -55 29 -89 80 -94 90 -10 140 92 78 159 -28 31 -57 38 -100 24z"/><path d="M1658 1578 c-32 -11 -58 -50 -58 -89 0 -55 29 -89 80 -94 90 -10 140 92 78 159 -28 31 -57 38 -100 24z"/><path d="M787 1129 c-53 -31 -65 -106 -24 -154 34 -41 99 -45 140 -9 24 21 32 37 32 64 0 42 -27 79 -70 95 -39 15 -46 16 -78 4z"/><path d="M1220 1130 c-44 -24 -60 -52 -60 -105 0 -78 82 -125 155 -90 53 26 75 95 47 149 -25 48 -94 71 -142 46z"/><path d="M1657 1129 c-53 -31 -65 -106 -24 -154 34 -41 99 -45 140 -9 24 21 32 37 32 64 0 42 -27 79 -70 95 -39 15 -46 16 -78 4z"/><path d="M787 679 c-53 -31 -65 -106 -24 -154 34 -41 99 -45 140 -9 24 21 32 37 32 64 0 42 -27 79 -70 95 -39 15 -46 16 -78 4z"/><path d="M1220 680 c-44 -24 -60 -52 -60 -105 0 -78 82 -125 155 -90 53 26 75 95 47 149 -25 48 -94 71 -142 46z"/><path d="M1657 679 c-53 -31 -65 -106 -24 -154 34 -41 99 -45 140 -9 24 21 32 37 32 64 0 42 -27 79 -70 95 -39 15 -46 16 -78 4z"/></svg>
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"><path d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149 47 -176 194 -315 374 -353 61 -13 1058 -16 1066 -3 2 4 -22 29 -55 55 -67 54 -152 157 -220 265 -24 39 -46 71 -49 72 -3 0 -18 -21 -34 -46 -41 -65 -64 -78 -116 -64 -63 17 -74 3 -65 -82 5 -57 4 -69 -10 -74 -24 -10 -45 15 -45 54 0 34 -1 34 -19 18 -10 -9 -21 -31 -25 -47 -5 -26 -10 -30 -33 -27 -23 2 -29 8 -31 35 -3 27 1 35 22 44 26 12 40 35 30 50 -9 16 -22 10 -58 -27 -40 -41 -72 -40 -82 2 -8 31 5 46 54 59 49 14 52 37 7 54 -19 7 -40 9 -45 6 -29 -18 -54 47 -28 73 17 17 35 15 66 -8 15 -12 41 -22 57 -23 28 -2 30 0 27 28 -8 85 -7 89 12 93 24 5 46 -23 46 -58 0 -37 29 -60 75 -60 51 0 69 18 101 106 l27 74 -19 42 c-26 59 -98 111 -196 143 -68 23 -91 36 -129 75 -58 59 -82 121 -109 278 -33 194 -24 242 44 242 36 0 242 -68 310 -102 87 -43 125 -102 140 -218 9 -60 39 -108 79 -125 20 -8 76 -15 138 -16 57 -1 142 -8 188 -15 46 -8 87 -12 90 -9 9 10 1 84 -14 119 -8 20 -25 41 -37 47 -20 11 -25 8 -55 -27 -27 -33 -35 -37 -50 -28 -10 6 -19 22 -21 36 -2 20 5 30 33 47 45 26 37 45 -16 38 -44 -6 -75 18 -65 51 9 29 30 33 70 17 57 -24 63 -18 22 24 -40 41 -44 66 -13 85 24 15 49 -2 59 -41 4 -17 15 -36 23 -43 21 -18 31 12 17 56 -8 27 -7 37 5 49 36 37 68 5 59 -58 -5 -32 -3 -47 8 -56 11 -9 18 -6 35 16 40 54 41 54 62 42 28 -15 22 -60 -11 -76 -57 -28 -65 -87 -25 -201 28 -82 31 -131 10 -171 -16 -31 -33 -41 -71 -41 -14 0 -34 -5 -45 -11 -26 -13 -15 -27 61 -79 30 -21 91 -70 135 -109 44 -39 85 -71 92 -71 20 0 18 909 -2 1003 -15 73 -58 162 -106 221 -40 48 -135 112 -207 139 -55 21 -71 22 -587 23 -305 1 -551 -2 -579 -7z" /></g></svg>
         <span class="wizard-logo-text">14<br>KB</span>
       </div>
-      <h1 class="wizard-title">Setup Wizard</h1>
-      <p class="wizard-subtitle">Get your CMS up and running in minutes</p>
+      <div class="wizard-title-group">
+        <h1 class="wizard-title">First-Time Setup</h1>
+        <p class="wizard-subtitle">Configure the basics and finish installation</p>
+      </div>
     </div>
     <div class="progress-bar">
       <div class="progress-fill" id="progressFill"></div>
@@ -386,10 +440,11 @@ $setupToken = $_SESSION['setup_token'];
 
       <!-- Step 1: Welcome -->
       <div class="step active" data-step="1">
-        <h2 class="step-title">Welcome to fourteenkilobytes</h2>
+        <h2 class="step-title">First-Time Setup</h2>
         <p class="step-description">
-          This wizard will guide you through the initial setup process. It will take just a few minutes.
+          This process will guide you through the initial setup. It takes only a few minutes.
         </p>
+
         <div class="alert alert-info">
           <strong>What we'll do:</strong>
           <ul>
@@ -434,15 +489,32 @@ $setupToken = $_SESSION['setup_token'];
         <form id="adminForm" onsubmit="return false;">
           <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter a strong password" required>
-            <div class="password-strength">
-              <div class="password-strength-fill" id="passwordStrength"></div>
+            <div class="password-wrapper">
+              <input type="password" id="password" placeholder="Enter a strong password" required style="padding-right: 40px;">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password')" title="Show/Hide Password">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+              <div id="password-strength-border" class="strength-indicator"></div>
             </div>
-            <div class="password-hint" id="passwordHint">Minimum 8 characters</div>
+            <div class="password-hint">
+                <span id="passwordHint">Minimum 8 characters</span>
+                <span id="charCount" style="font-family: ui-monospace, monospace;">0 chars</span>
+            </div>
           </div>
           <div class="form-group">
             <label for="passwordConfirm">Confirm Password</label>
-            <input type="password" id="passwordConfirm" placeholder="Re-enter password" required>
+             <div class="password-wrapper">
+                <input type="password" id="passwordConfirm" placeholder="Re-enter password" required style="padding-right: 40px;">
+                 <button type="button" class="password-toggle" onclick="togglePasswordVisibility('passwordConfirm')" title="Show/Hide Password">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+             </div>
           </div>
         </form>
         <div class="wizard-actions">
@@ -472,9 +544,8 @@ $setupToken = $_SESSION['setup_token'];
         </form>
         <div class="wizard-actions">
           <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-          <button class="btn btn-primary" id="initButton" onclick="initializeSetup()">
-            <span id="initButtonText">Create Site</span>
-            <span id="initButtonSpinner" class="spinner" style="display: none; margin-left: 6px;"></span>
+          <button class="btn btn-primary" id="initButton" onclick="storeSiteData()">
+             Next
           </button>
         </div>
       </div>
@@ -483,7 +554,7 @@ $setupToken = $_SESSION['setup_token'];
       <div class="step" data-step="5">
         <h2 class="step-title">Webserver Configuration</h2>
         <p class="step-description">
-          Your CMS files are ready! For best results, configure URL rewriting:
+          Prepare your webserver. This step is optional but recommended.
         </p>
         
         <div class="webserver-tabs">
@@ -499,12 +570,15 @@ $setupToken = $_SESSION['setup_token'];
         </div>
 
         <div class="alert alert-info" style="margin-top: 16px;">
-          <strong>Optional:</strong> URL rewriting is recommended but not required. You can skip this step and configure it later.
+          <strong>Ready to Install:</strong> Click below to create your admin account, save settings, and finalize the installation.
         </div>
 
         <div class="wizard-actions">
           <button class="btn btn-secondary" onclick="prevStep()">Back</button>
-          <button class="btn btn-primary" onclick="completeSetup()">Finish Setup</button>
+          <button class="btn btn-primary" id="installButton" onclick="installAndFinish()">
+            <span id="installButtonText">Install & Finish</span>
+            <span id="installButtonSpinner" class="spinner" style="display: none; margin-left: 6px;"></span>
+          </button>
         </div>
       </div>
 
@@ -519,14 +593,15 @@ $setupToken = $_SESSION['setup_token'];
           <strong>What's next?</strong>
           <ul>
             <li>Log in with your password</li>
-            <li>Create your first page</li>
+            <li>Change, customise and recompile your startpage</li>
+            <li>Create your first blog entry</li>
             <li>Customize your site settings</li>
             <li>Start writing within the 14KB limit!</li>
           </ul>
         </div>
         <div class="wizard-actions">
           <div></div>
-          <a href="/admin/" class="btn btn-primary" style="text-decoration: none;">Go to Admin Panel</a>
+          <a href="/admin/login.html" class="btn btn-primary" style="text-decoration: none;">Log in</a>
         </div>
       </div>
     </div>
@@ -541,6 +616,13 @@ $setupToken = $_SESSION['setup_token'];
     let systemChecks = {};
     let canProceed = false;
     let detectedWebserver = 'apache';
+    
+    // Temporary storage for postponed installation
+    let installPayload = {
+        password: '',
+        siteTitle: '',
+        language: ''
+    };
 
     function updateProgress() {
       const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
@@ -590,30 +672,69 @@ $setupToken = $_SESSION['setup_token'];
       updateProgress();
     }
 
+    function togglePasswordVisibility(id) {
+        const input = document.getElementById(id);
+        const icon = input.nextElementSibling.querySelector('svg');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            // Eye off icon
+            icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            input.type = 'password';
+            // Eye icon
+            icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    }
+
     document.getElementById('password')?.addEventListener('input', (e) => {
       const password = e.target.value;
-      const strengthFill = document.getElementById('passwordStrength');
+      const strengthBorder = document.getElementById('password-strength-border');
       const hint = document.getElementById('passwordHint');
+      const charCount = document.getElementById('charCount');
       const continueBtn = document.getElementById('adminContinueBtn');
       
       let strength = 0;
+      
+      // Update char count
+      if(charCount) charCount.textContent = `${password.length} chars`;
+      
       if (password.length >= 8) strength++;
       if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
       if (password.match(/[0-9]/)) strength++;
       if (password.match(/[^a-zA-Z0-9]/)) strength++;
       
-      strengthFill.className = 'password-strength-fill';
-      if (strength === 0) {
-        hint.textContent = 'Too short';
+      if(strengthBorder) strengthBorder.className = 'strength-indicator';
+      
+      if (password.length === 0) {
+        if(hint) {
+            hint.textContent = 'Minimum 8 characters';
+            hint.style.color = 'var(--text-muted)';
+        }
+      } else if (password.length < 8) {
+        if(strengthBorder) strengthBorder.classList.add('weak');
+        if(hint) {
+            hint.textContent = 'Too short (min 8)';
+            hint.style.color = '#ef4444';
+        }
       } else if (strength <= 2) {
-        strengthFill.classList.add('weak');
-        hint.textContent = 'Weak password';
+        if(strengthBorder) strengthBorder.classList.add('weak');
+        if(hint) {
+            hint.textContent = 'Weak password';
+            hint.style.color = '#ef4444';
+        }
       } else if (strength === 3) {
-        strengthFill.classList.add('medium');
-        hint.textContent = 'Medium strength';
+        if(strengthBorder) strengthBorder.classList.add('medium');
+        if(hint) {
+            hint.textContent = 'Medium strength';
+            hint.style.color = '#f59e0b';
+        }
       } else {
-        strengthFill.classList.add('strong');
-        hint.textContent = 'Strong password';
+        if(strengthBorder) strengthBorder.classList.add('strong');
+        if(hint) {
+            hint.textContent = 'Strong password';
+            hint.style.color = '#10b981';
+        }
       }
       
       const passwordConfirm = document.getElementById('passwordConfirm').value;
@@ -644,9 +765,11 @@ $setupToken = $_SESSION['setup_token'];
           li.className = `check-item ${check.status}`;
           li.innerHTML = `
             <div>
-              <div class="check-label">${check.label}</div>
-              <div class="check-message">${check.message}</div>
-              ${check.fix ? `<code>${check.fix}</code>` : ''}
+              <div>
+                <span class="check-label">${check.label}:</span>
+                <span class="check-message">${check.message}</span>
+              </div>
+              ${check.fix ? `<div style="margin-top:4px; font-size:12px; color:#ef4444; background:#fef2f2; padding:8px; border-radius:4px;">${check.fix}</div>` : ''}
             </div>
             <span class="check-status ${check.status}">${check.status.toUpperCase()}</span>
           `;
@@ -660,40 +783,46 @@ $setupToken = $_SESSION['setup_token'];
       }
     }
 
-    async function initializeSetup() {
-      const button = document.getElementById('initButton');
-      const buttonText = document.getElementById('initButtonText');
-      const buttonSpinner = document.getElementById('initButtonSpinner');
+    function storeSiteData() {
+        installPayload.siteTitle = document.getElementById('siteTitle').value;
+        installPayload.language = document.getElementById('language').value;
+        nextStep();
+    }
+
+    async function installAndFinish() {
+      const button = document.getElementById('installButton');
+      const buttonText = document.getElementById('installButtonText');
+      const buttonSpinner = document.getElementById('installButtonSpinner');
       
       button.disabled = true;
-      buttonText.textContent = 'Creating...';
+      buttonText.textContent = 'Installing...';
       buttonSpinner.style.display = 'inline-block';
       
+      // Get password from step 3 (it is still in the DOM)
+      installPayload.password = document.getElementById('password').value;
+      
       try {
-        const password = document.getElementById('password').value;
-        const siteTitle = document.getElementById('siteTitle').value;
-        const language = document.getElementById('language').value;
-        
-        const response = await fetch('/setup/api.php/initialize', {
+        const response = await fetch('/setup/api.php/install', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
             'X-Setup-Token': SETUP_TOKEN
           },
-          body: JSON.stringify({ password, siteTitle, language }),
+          body: JSON.stringify(installPayload),
         });
         
         const data = await response.json();
         
         if (!response.ok) {
-          throw new Error(data.error || 'Setup failed');
+          throw new Error(data.error || 'Installation failed');
         }
         
+        // Show success message, no auto-redirect
         nextStep();
       } catch (error) {
-        showAlert('Setup failed: ' + error.message, 'error');
+        showAlert('Installation failed: ' + error.message, 'error');
         button.disabled = false;
-        buttonText.textContent = 'Create Site';
+        buttonText.textContent = 'Install & Finish';
         buttonSpinner.style.display = 'none';
       }
     }
@@ -739,31 +868,7 @@ $setupToken = $_SESSION['setup_token'];
       return div.innerHTML;
     }
 
-    async function completeSetup() {
-      try {
-        const response = await fetch('/setup/api.php/complete', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'X-Setup-Token': SETUP_TOKEN
-          },
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to complete setup');
-        }
-        
-        // Show success message briefly, then redirect
-        nextStep();
-        setTimeout(() => {
-          window.location.href = '/admin/';
-        }, 1500);
-      } catch (error) {
-        showAlert('Failed to complete setup: ' + error.message, 'error');
-      }
-    }
+
 
     updateProgress();
   </script>

@@ -49,9 +49,20 @@ Is this practical for every use case? No. But for blogs, portfolios, documentati
    cd fourteenkilobytes-web-php
    ```
 
-2. Ensure the `data/` directory is writable:
+2. **Set permissions (Crucial Step):**
+   
+   The webserver needs write access to the `data/` directory.
+   
+   **Option A: Use the helper script (Recommended)**
    ```bash
-   chmod 750 data/
+   # Replace www-data with your webserver user/group if different
+   sudo ./fix-permissions.sh www-data www-data
+   ```
+
+   **Option B: Manual setup**
+   ```bash
+   sudo chown -R www-data:www-data data/
+   sudo chmod -R 750 data/
    ```
 
 3. Point your webserver to the project directory

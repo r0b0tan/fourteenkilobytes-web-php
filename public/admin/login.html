@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,20 +8,134 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="stylesheet" href="/admin/style.css">
   <script src="/admin/i18n.js"></script>
+  <style>
+    body {
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* Override generic auth-container for vertical stacking */
+    .auth-container {
+      flex-direction: column !important;
+      justify-content: center;
+      min-height: auto;
+    }
+
+    .auth-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .auth-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+
+      /* Dashboard Logo Styling */
+      background-color: rgba(16, 168, 155, 0.12);
+      border-radius: 16px;
+      padding: 8px 20px 8px 12px;
+      color: #14b8a6;
+      transition: color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .auth-logo svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .auth-logo-text {
+      font-size: 18px;
+      line-height: 1.1;
+      font-family: ui-monospace, monospace;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .auth-title-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .auth-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+      line-height: 1.2;
+    }
+
+    .auth-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .separator-line {
+      height: 1px;
+      width: 100%;
+      background: var(--gray-300);
+      margin-bottom: 32px;
+      border-radius: 2px;
+    }
+
+    /* Match Setup Wizard Card Style */
+    .auth-card {
+      min-width: 400px;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    .auth-card .card-body {
+      padding: 32px;
+    }
+
+    .auth-card .form-group:last-of-type {
+      margin-bottom: 32px !important;
+    }
+  </style>
 </head>
+
 <body>
   <div class="auth-container">
-    <div class="editor-card auth-card">
-      <div class="card-header">
-        <h2 class="card-title" data-i18n="pages.login">Login</h2>
+    <div class="auth-header">
+      <div class="auth-logo">
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 191.000000 191.000000"
+          preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+            <path
+              d="M406 1889 c-175 -35 -325 -178 -371 -356 -21 -81 -22 -1071 -1 -1149 47 -176 194 -315 374 -353 61 -13 1058 -16 1066 -3 2 4 -22 29 -55 55 -67 54 -152 157 -220 265 -24 39 -46 71 -49 72 -3 0 -18 -21 -34 -46 -41 -65 -64 -78 -116 -64 -63 17 -74 3 -65 -82 5 -57 4 -69 -10 -74 -24 -10 -45 15 -45 54 0 34 -1 34 -19 18 -10 -9 -21 -31 -25 -47 -5 -26 -10 -30 -33 -27 -23 2 -29 8 -31 35 -3 27 1 35 22 44 26 12 40 35 30 50 -9 16 -22 10 -58 -27 -40 -41 -72 -40 -82 2 -8 31 5 46 54 59 49 14 52 37 7 54 -19 7 -40 9 -45 6 -29 -18 -54 47 -28 73 17 17 35 15 66 -8 15 -12 41 -22 57 -23 28 -2 30 0 27 28 -8 85 -7 89 12 93 24 5 46 -23 46 -58 0 -37 29 -60 75 -60 51 0 69 18 101 106 l27 74 -19 42 c-26 59 -98 111 -196 143 -68 23 -91 36 -129 75 -58 59 -82 121 -109 278 -33 194 -24 242 44 242 36 0 242 -68 310 -102 87 -43 125 -102 140 -218 9 -60 39 -108 79 -125 20 -8 76 -15 138 -16 57 -1 142 -8 188 -15 46 -8 87 -12 90 -9 9 10 1 84 -14 119 -8 20 -25 41 -37 47 -20 11 -25 8 -55 -27 -27 -33 -35 -37 -50 -28 -10 6 -19 22 -21 36 -2 20 5 30 33 47 45 26 37 45 -16 38 -44 -6 -75 18 -65 51 9 29 30 33 70 17 57 -24 63 -18 22 24 -40 41 -44 66 -13 85 24 15 49 -2 59 -41 4 -17 15 -36 23 -43 21 -18 31 12 17 56 -8 27 -7 37 5 49 36 37 68 5 59 -58 -5 -32 -3 -47 8 -56 11 -9 18 -6 35 16 40 54 41 54 62 42 28 -15 22 -60 -11 -76 -57 -28 -65 -87 -25 -201 28 -82 31 -131 10 -171 -16 -31 -33 -41 -71 -41 -14 0 -34 -5 -45 -11 -26 -13 -15 -27 61 -79 30 -21 91 -70 135 -109 44 -39 85 -71 92 -71 20 0 18 909 -2 1003 -15 73 -58 162 -106 221 -40 48 -135 112 -207 139 -55 21 -71 22 -587 23 -305 1 -551 -2 -579 -7z" />
+          </g>
+        </svg>
+        <span class="auth-logo-text">14<br>KB</span>
       </div>
+      <div class="auth-title-group">
+        <h1 class="auth-title">Login</h1>
+        <p class="auth-subtitle">Enter your admin password</p>
+      </div>
+    </div>
+    <div class="separator-line"></div>
+    <div class="editor-card auth-card">
       <div class="card-body">
         <form id="login-form" novalidate>
           <div class="form-group">
-            <label for="password" data-i18n="auth.password">Password</label>
-            <input type="password" id="password" required autocomplete="current-password" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="Enter password" aria-describedby="login-error">
+            <label for="password" data-i18n="auth.password">Admin Password</label>
+            <input type="password" id="password" required autocomplete="current-password"
+              data-i18n-placeholder="auth.passwordPlaceholder" placeholder="Enter password"
+              aria-describedby="login-error">
           </div>
-          <button type="submit" id="login-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.login">Log in</button>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" id="login-btn" class="btn btn-primary build-publish-btn" data-i18n="auth.login">Log
+              in</button>
+          </div>
           <p id="login-error" class="message error hidden mt-1" role="alert" aria-live="polite"></p>
         </form>
       </div>
@@ -29,7 +144,7 @@
 
   <script type="module" src="app.js"></script>
   <script type="module">
-    (async function() {
+    (async function () {
       // Wait for i18n to be ready
       await i18nReady();
 
@@ -105,4 +220,5 @@
     })();
   </script>
 </body>
+
 </html>
