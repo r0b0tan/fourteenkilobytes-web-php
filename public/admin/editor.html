@@ -2335,7 +2335,7 @@
       cssEditor.classList.remove('hidden');
       cssRules.disabled = true;
 
-      function debounce(fn, delay) {
+      function debounce(fn, delay = 300) {
         let timeout;
         return (...args) => {
           clearTimeout(timeout);
