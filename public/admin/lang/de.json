@@ -185,7 +185,7 @@
     "logsLoading": "Lade Logs...",
     "logsEmpty": "Keine Logs vorhanden",
     "logsError": "Fehler beim Laden der Logs",
-    "logsCountDisplay": "{{filtered}} von {{total}} Einträgen",
+    "logsCountDisplay": "{{shown}} von {{total}} Einträgen",
     "logsClearConfirm": "Audit-Logs wirklich löschen?\n\nEine Sicherungskopie wird automatisch erstellt.",
     "logsClearSuccess": "Logs erfolgreich gelöscht",
     "logsActionLoginSuccess": "Login erfolgreich",

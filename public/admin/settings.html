@@ -956,7 +956,56 @@
         chip.className = 'nav-chip';
         chip.dataset.href = href;
         chip.textContent = text;
-        chip.addEventListener('click', () => editLink(chip));
+        chip.draggable = true;
+        
+        // Click to edit
+        chip.addEventListener('click', (e) => {
+          if (!chip.classList.contains('dragging')) {
+            editLink(chip);
+          }
+        });
+        
+        // Drag start
+        chip.addEventListener('dragstart', (e) => {
+          chip.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/html', chip.innerHTML);
+        });
+        
+        // Drag end
+        chip.addEventListener('dragend', () => {
+          chip.classList.remove('dragging');
+          document.querySelectorAll('.nav-chip').forEach(c => c.classList.remove('drag-over'));
+        });
+        
+        // Drag over
+        chip.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          const dragging = headerLinks.querySelector('.dragging');
+          if (dragging && dragging !== chip) {
+            chip.classList.add('drag-over');
+            const rect = chip.getBoundingClientRect();
+            const midpoint = rect.left + rect.width / 2;
+            if (e.clientX < midpoint) {
+              chip.parentNode.insertBefore(dragging, chip);
+            } else {
+              chip.parentNode.insertBefore(dragging, chip.nextSibling);
+            }
+          }
+        });
+        
+        // Drag leave
+        chip.addEventListener('dragleave', () => {
+          chip.classList.remove('drag-over');
+        });
+        
+        // Drop
+        chip.addEventListener('drop', (e) => {
+          e.preventDefault();
+          chip.classList.remove('drag-over');
+          markAsChanged();
+        });
+        
         return chip;
       }
 

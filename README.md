@@ -49,19 +49,20 @@ Is this practical for every use case? No. But for blogs, portfolios, documentati
    cd fourteenkilobytes-web-php
    ```
 
-2. Build the distribution:
+2. Ensure the `data/` directory is writable:
    ```bash
-   ./build.sh
+   chmod 750 data/
    ```
 
-3. Copy `dist/` contents to your web server's document root
+3. Point your webserver to the project directory
 
-4. Ensure the `data/` directory is owned by the web server user (e.g., `www-data` for nginx/Apache):
-   ```bash
-   sudo chown -R www-data:www-data data/
-   ```
+4. **Visit your site** - you'll be automatically redirected to the Setup Wizard!
 
-5. Visit `/admin/setup` to create your admin password
+The Setup Wizard will:
+- ✅ Check system requirements
+- ✅ Guide you through creating an admin account
+- ✅ Help configure your webserver
+- ✅ Get you up and running in minutes
 
 ### Development Server
 
@@ -71,7 +72,7 @@ For local development, use PHP's built-in server:
 php -S localhost:8000 router.php
 ```
 
-Then open http://localhost:8000/admin/ in your browser.
+Then open http://localhost:8000/ in your browser (auto-redirects to setup wizard on first run).
 
 ## Project Structure
 

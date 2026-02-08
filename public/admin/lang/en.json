@@ -184,7 +184,7 @@
     "logsLoading": "Loading logs...",
     "logsEmpty": "No logs available",
     "logsError": "Error loading logs",
-    "logsCountDisplay": "{{filtered}} of {{total}} entries",
+    "logsCountDisplay": "{{shown}} of {{total}} entries",
     "logsClearConfirm": "Really delete audit logs?\n\nA backup will be created automatically.",
     "logsClearSuccess": "Logs cleared successfully",
     "logsActionLoginSuccess": "Login successful",
