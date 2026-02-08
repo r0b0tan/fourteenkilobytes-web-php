@@ -19,8 +19,16 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default web server user/group (can be overridden)
-WEB_USER="${1:-www-data}"
-WEB_GROUP="${2:-www-data}"
+if [ "$EUID" -eq 0 ]; then
+    DEFAULT_USER="www-data"
+    DEFAULT_GROUP="www-data"
+else
+    DEFAULT_USER="$(id -un)"
+    DEFAULT_GROUP="$(id -gn)"
+fi
+
+WEB_USER="${1:-$DEFAULT_USER}"
+WEB_GROUP="${2:-$DEFAULT_GROUP}"
 
 echo -e "${GREEN}=== fourteenkilobytes Security Hardening ===${NC}"
 echo "Web user: ${WEB_USER}"
@@ -30,9 +38,13 @@ echo ""
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
-    echo -e "${RED}ERROR: This script must be run as root${NC}"
-    echo "Usage: sudo $0 [web-user] [web-group]"
-    exit 1
+    if [ "$WEB_USER" != "$(id -un)" ]; then
+        echo -e "${RED}ERROR: This script must be run as root to change ownership to another user${NC}"
+        echo "Usage: sudo $0 [web-user] [web-group]"
+        exit 1
+    else
+         echo -e "${YELLOW}Running in Development Mode (current user)...${NC}"
+    fi
 fi
 
 # Check if web user exists

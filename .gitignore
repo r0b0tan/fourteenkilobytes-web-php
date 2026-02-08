@@ -34,4 +34,15 @@ data/manifest.json
 data/settings.json
 data/page-types.json
 data/posts/
-data/sources/*.json
+data/sources/
+data/sessions.json
+data/rate-limits.json
+data/global-rate-limits.json
+data/audit.log
+data/.setup-complete
+
+# Backups
+*.bak
+*.backup
+setup/*.backup
+
