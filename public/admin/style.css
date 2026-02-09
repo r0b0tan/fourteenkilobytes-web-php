@@ -1547,6 +1547,190 @@ button:disabled {
   color: var(--text-muted);
 }
 
+/* Section blocks */
+.block-section {
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 0;
+}
+
+.block-section > .block-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--accent);
+}
+
+.section-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.section-controls label {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.section-controls input[type="color"] {
+  width: 32px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px;
+  cursor: pointer;
+  background: none;
+}
+
+.section-controls select {
+  font-size: 12px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--input-bg);
+}
+
+.section-preview {
+  padding: 16px;
+  border-radius: 0 0 6px 6px;
+  min-height: 60px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.section-blocks {
+  min-height: 40px;
+}
+
+.section-blocks .block-item {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.section-blocks .block-item .block-content {
+  color: inherit;
+}
+
+.section-blocks .block-item .block-content h1,
+.section-blocks .block-item .block-content h2,
+.section-blocks .block-item .block-content h3,
+.section-blocks .block-item .block-content h4,
+.section-blocks .block-item .block-content h5,
+.section-blocks .block-item .block-content h6 {
+  color: inherit;
+} 
+
+.section-blocks .block-item .block-header {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Force standard appearance for controls inside sections for readability */
+.section-blocks .block-type-select {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #d1d5db;
+  opacity: 1;
+}
+
+.section-blocks .block-type-label {
+  color: inherit;
+  opacity: 0.9;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.section-blocks .block-format-buttons button {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+}
+.section-blocks .block-format-buttons button:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.section-blocks .block-item-actions button {
+  background-color: #ffffff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  opacity: 1;
+}
+
+.section-blocks .block-item-actions button:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+  border-color: #9ca3af;
+}
+
+.section-blocks .block-item-actions button:last-child:hover {
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.section-add-row {
+  position: relative;
+}
+
+.section-add-block {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.section-add-block:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+/* Fix for inner block content background on focus */
+.section-blocks .block-item .block-content:focus {
+  background: rgba(255,255,255,0.05);
+  color: inherit;
+}
+
+/* Define section-preview vars */
+.section-preview {
+  --pc: rgba(128,128,128,0.13); 
+}
+
+/* Editor Patterns */
+.section-preview { position: relative; isolation: isolate; }
+.section-preview > * { position: relative; z-index: 1; }
+.section-preview::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+
+.p-dots::before { background-image: radial-gradient(circle, var(--pc) 1px, transparent 1px); background-size: 20px 20px; }
+.p-grid::before { background-image: linear-gradient(var(--pc) 1px, transparent 1px), linear-gradient(90deg, var(--pc) 1px, transparent 1px); background-size: 24px 24px; }
+.p-str::before { background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--pc) 10px, var(--pc) 11px); }
+.p-crs::before { background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--pc) 10px, var(--pc) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, var(--pc) 10px, var(--pc) 11px); }
+.p-hex::before { 
+  background-color: var(--pc);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
+}
+
+.section-add-block:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.section-add-row .add-block-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+}
+
 /* Block too large warning */
 .block-item.block-too-large {
   border: 2px solid #dc2626;

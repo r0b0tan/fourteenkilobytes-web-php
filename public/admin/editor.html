@@ -243,6 +243,7 @@
             <button type="button" data-type="list" data-list-type="unordered" data-i18n="editor.blockList">List</button>
             <button type="button" data-type="divider" data-i18n="editor.blockDivider">Divider</button>
             <button type="button" data-type="bloglist" data-i18n="editor.blockBloglist">Bloglist</button>
+            <button type="button" data-type="section" data-i18n="editor.blockSection">Section</button>
           </div>
         </div>
       </div>
@@ -745,45 +746,97 @@
         slugInput.value = sourceData.slug || '';
         pageTypeSelect.value = sourceData.pageType || 'post';
 
+        // Helper to create a block element from source data
+        function blockElFromSource(block) {
+          if (block.type === 'bloglist') {
+            return createBlockElement('bloglist');
+          }
+          if (block.type === 'divider') {
+            return createBlockElement('divider');
+          }
+          if (block.type === 'codeblock') {
+            return createBlockElement('codeblock', null, block.content || '');
+          }
+          if (block.type === 'unordered-list' || block.type === 'ordered-list') {
+            const listType = block.type === 'ordered-list' ? 'ordered' : 'unordered';
+            const el = createBlockElement('list', null, '', listType);
+            const listEl = el.querySelector('.editable-list');
+            if (listEl && block.items) {
+              listEl.innerHTML = '';
+              block.items.forEach(item => {
+                const li = document.createElement('li');
+                li.contentEditable = 'true';
+                li.innerHTML = inlineNodesToHtml(item.children);
+                listEl.appendChild(li);
+              });
+              setupListKeyHandlers(listEl);
+            }
+            return el;
+          }
+          if (block.type === 'section') {
+            const el = createBlockElement('section');
+            // Set properties
+            el.dataset.background = block.background || '#1a1a1a';
+            el.dataset.color = block.color || '#ffffff';
+            el.dataset.pattern = block.pattern || '';
+            el.dataset.patternColor = block.patternColor || '#ffffff';
+            el.dataset.patternOpacity = block.patternOpacity || '0.1';
+
+            // Update UI controls
+            const bgInput = el.querySelector('.section-controls input[type="color"]');
+            if (bgInput) bgInput.value = block.background || '#1a1a1a';
+            
+            const colorInputs = el.querySelectorAll('.section-controls input[type="color"]');
+            // 0=background, 1=text, 2=pattern
+            if (colorInputs[1]) colorInputs[1].value = block.color || '#ffffff';
+            if (colorInputs[2]) colorInputs[2].value = block.patternColor || '#ffffff';
+
+            const patternSelect = el.querySelector('.section-pattern-select');
+            if (patternSelect) patternSelect.value = block.pattern || '';
+            
+            const opacityInput = el.querySelector('.section-controls input[type="range"]');
+            if (opacityInput) opacityInput.value = block.patternOpacity || '0.1';
+
+            // Update preview colors
+            const preview = el.querySelector('.section-preview');
+            if (preview) {
+              preview.style.backgroundColor = block.background || '#1a1a1a';
+              preview.style.color = block.color || '#ffffff';
+              const pClass = Compiler.getPatternClass(block.pattern || '');
+              preview.className = 'section-preview sc ' + pClass;
+              
+              // Set PC var
+              const opacity = parseFloat(block.patternOpacity || '0.1');
+              const hex = block.patternColor || '#ffffff';
+              const r = parseInt(hex.substring(1,3), 16);
+              const g = parseInt(hex.substring(3,5), 16);
+              const b = parseInt(hex.substring(5,7), 16);
+              preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
+            }
+            // Load child blocks
+            if (block.children && block.children.length > 0) {
+              const sectionBlocks = el.querySelector('.section-blocks');
+              block.children.forEach(child => {
+                sectionBlocks.appendChild(blockElFromSource(child));
+              });
+            }
+            return el;
+          }
+          if (block.type === 'heading') {
+            return createBlockElement('heading', block.level, inlineNodesToHtml(block.children));
+          }
+          if (block.type === 'blockquote') {
+            return createBlockElement('blockquote', null, inlineNodesToHtml(block.children));
+          }
+          // paragraph
+          return createBlockElement('paragraph', null, inlineNodesToHtml(block.children));
+        }
+
         // Restore blocks from content array
         blockEditor.innerHTML = '';
         if (sourceData.content && sourceData.content.length > 0) {
           sourceData.content.forEach(block => {
-            let blockEl;
-            if (block.type === 'bloglist') {
-              // Bloglist options are now configured globally in Settings → Bloglist
-              blockEl = createBlockElement('bloglist');
-            } else if (block.type === 'divider') {
-              blockEl = createBlockElement('divider');
-            } else if (block.type === 'codeblock') {
-              blockEl = createBlockElement('codeblock', null, block.content || '');
-            } else if (block.type === 'unordered-list' || block.type === 'ordered-list') {
-              const listType = block.type === 'ordered-list' ? 'ordered' : 'unordered';
-              blockEl = createBlockElement('list', null, '', listType);
-              // Populate list items
-              const listEl = blockEl.querySelector('.editable-list');
-              if (listEl && block.items) {
-                listEl.innerHTML = '';
-                block.items.forEach(item => {
-                  const li = document.createElement('li');
-                  li.contentEditable = 'true';
-                  li.innerHTML = inlineNodesToHtml(item.children);
-                  listEl.appendChild(li);
-                });
-                setupListKeyHandlers(listEl);
-              }
-            } else if (block.type === 'heading') {
-              const html = inlineNodesToHtml(block.children);
-              blockEl = createBlockElement('heading', block.level, html);
-            } else if (block.type === 'blockquote') {
-              const html = inlineNodesToHtml(block.children);
-              blockEl = createBlockElement('blockquote', null, html);
-            } else {
-              // paragraph
-              const html = inlineNodesToHtml(block.children);
-              blockEl = createBlockElement('paragraph', null, html);
-            }
-            blockEditor.appendChild(blockEl);
+            blockEditor.appendChild(blockElFromSource(block));
           });
         } else {
           // Add empty paragraph if no content
@@ -1175,12 +1228,244 @@
         });
       }
 
+      // Helper: create inner add-block dropdown for sections (no nesting allowed)
+      function createInnerAddBlock(sectionBlock) {
+        const row = document.createElement('div');
+        row.className = 'section-add-row';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-secondary section-add-block';
+        btn.setAttribute('data-i18n', 'editor.sectionAddBlock');
+        btn.textContent = '+ Add Inner Block';
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'add-block-dropdown hidden';
+
+        const innerTypes = [
+          { type: 'paragraph', i18n: 'editor.blockParagraph', label: 'Paragraph' },
+          { type: 'heading', i18n: 'editor.blockHeading', label: 'Heading', level: '2' },
+          { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
+          { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' }
+        ];
+
+        innerTypes.forEach(t => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = t.label;
+          b.setAttribute('data-i18n', t.i18n);
+          b.dataset.type = t.type;
+          if (t.level) b.dataset.level = t.level;
+          if (t.listType) b.dataset.listType = t.listType;
+          dropdown.appendChild(b);
+        });
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('hidden');
+        });
+
+        dropdown.addEventListener('click', (e) => {
+          const clicked = e.target.closest('button');
+          if (!clicked) return;
+          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType);
+          const sectionBlocks = sectionBlock.querySelector('.section-blocks');
+          sectionBlocks.appendChild(childBlock);
+          const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
+          if (focusTarget) focusTarget.focus();
+          dropdown.classList.add('hidden');
+          debouncedPreview();
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.section-add-row')) {
+            dropdown.classList.add('hidden');
+          }
+        });
+
+        row.appendChild(btn);
+        row.appendChild(dropdown);
+        return row;
+      }
+
       function createBlockElement(type, level, initialHtml = '', listType = null) {
         const block = document.createElement('div');
         block.className = 'block-item';
         block.dataset.type = type;
         if (level) block.dataset.level = level;
         if (listType) block.dataset.listType = listType;
+
+        // Section block: completely different DOM structure
+        if (type === 'section') {
+          block.className = 'block-item block-section';
+          block.dataset.background = '#1a1a1a';
+          block.dataset.color = '#ffffff';
+          block.dataset.pattern = '';
+
+          // Header with label and actions
+          const header = document.createElement('div');
+          header.className = 'block-header';
+
+          const label = document.createElement('span');
+          label.className = 'block-type-label';
+          label.setAttribute('data-i18n', 'editor.blockSection');
+          label.textContent = 'Section';
+          header.appendChild(label);
+
+          const actions = document.createElement('div');
+          actions.className = 'block-item-actions';
+          const upBtn = document.createElement('button');
+          upBtn.type = 'button';
+          upBtn.textContent = '↑';
+          upBtn.title = 'Move up';
+          upBtn.addEventListener('click', () => moveBlock(block, -1));
+          actions.appendChild(upBtn);
+          const downBtn = document.createElement('button');
+          downBtn.type = 'button';
+          downBtn.textContent = '↓';
+          downBtn.title = 'Move down';
+          downBtn.addEventListener('click', () => moveBlock(block, 1));
+          actions.appendChild(downBtn);
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.textContent = '×';
+          deleteBtn.title = 'Delete';
+          deleteBtn.addEventListener('click', () => { block.remove(); debouncedPreview(); });
+          actions.appendChild(deleteBtn);
+          header.appendChild(actions);
+          block.appendChild(header);
+
+          // Controls row: color pickers + pattern selector
+          const controls = document.createElement('div');
+          controls.className = 'section-controls';
+
+          const bgLabel = document.createElement('label');
+          bgLabel.innerHTML = '<span data-i18n="editor.sectionBackground">Background</span>';
+          const bgInput = document.createElement('input');
+          bgInput.type = 'color';
+          bgInput.value = '#1a1a1a';
+          bgInput.addEventListener('input', () => {
+            block.dataset.background = bgInput.value;
+            preview.style.backgroundColor = bgInput.value;
+            updateCostRail();
+            debouncedPreview();
+          });
+          bgLabel.appendChild(bgInput);
+          controls.appendChild(bgLabel);
+
+          const colorLabel = document.createElement('label');
+          colorLabel.innerHTML = '<span data-i18n="editor.sectionTextColor">Text Color</span>';
+          const colorInput = document.createElement('input');
+          colorInput.type = 'color';
+          colorInput.value = '#ffffff';
+          colorInput.addEventListener('input', () => {
+            block.dataset.color = colorInput.value;
+            preview.style.color = colorInput.value;
+            updateCostRail();
+            debouncedPreview();
+          });
+          colorLabel.appendChild(colorInput);
+          controls.appendChild(colorLabel);
+
+          const patternLabel = document.createElement('label');
+          patternLabel.innerHTML = '<span data-i18n="editor.sectionPattern">Pattern</span>';
+          const patternSelect = document.createElement('select');
+          patternSelect.className = 'section-pattern-select';
+          const patternOptions = [
+            { value: '', i18n: 'editor.sectionPatternNone', label: 'No Pattern' },
+            { value: 'dots', i18n: 'editor.sectionPatternDots', label: 'Dots' },
+            { value: 'grid', i18n: 'editor.sectionPatternGrid', label: 'Grid' },
+            { value: 'stripes', i18n: 'editor.sectionPatternStripes', label: 'Stripes' },
+            { value: 'cross', i18n: 'editor.sectionPatternCross', label: 'Crosshatch' },
+            { value: 'hexagons', i18n: 'editor.sectionPatternHexagons', label: 'Hexagons' }
+          ];
+          patternOptions.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.label;
+            o.setAttribute('data-i18n', opt.i18n);
+            patternSelect.appendChild(o);
+          });
+          patternSelect.addEventListener('change', () => {
+            block.dataset.pattern = patternSelect.value;
+            const patternClass = Compiler.getPatternClass(patternSelect.value);
+            preview.className = 'section-preview sc ' + patternClass;
+            updateCostRail();
+            debouncedPreview();
+          });
+          patternLabel.appendChild(patternSelect);
+          controls.appendChild(patternLabel);
+
+          // Pattern Color
+          const pcLabel = document.createElement('label');
+          pcLabel.innerHTML = '<span data-i18n="editor.sectionPatternColor">Pattern Color</span>';
+          const pcInput = document.createElement('input');
+          pcInput.type = 'color';
+          pcInput.value = '#ffffff';
+          pcInput.addEventListener('input', () => {
+            block.dataset.patternColor = pcInput.value;
+            // Update CSS var on preview
+            const opacity = parseFloat(block.dataset.patternOpacity || '0.1');
+            const hex = pcInput.value;
+            const r = parseInt(hex.substring(1,3), 16);
+            const g = parseInt(hex.substring(3,5), 16);
+            const b = parseInt(hex.substring(5,7), 16);
+            preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
+            updateCostRail();
+            debouncedPreview();
+          });
+          pcLabel.appendChild(pcInput);
+          controls.appendChild(pcLabel);
+
+          // Pattern Opacity
+          const poLabel = document.createElement('label');
+          poLabel.innerHTML = '<span data-i18n="editor.sectionPatternOpacity">Opacity</span>';
+          const poInput = document.createElement('input');
+          poInput.type = 'range';
+          poInput.min = '0';
+          poInput.max = '1';
+          poInput.step = '0.05';
+          poInput.value = '0.1';
+          poInput.style.width = '60px';
+          poInput.addEventListener('input', () => {
+            block.dataset.patternOpacity = poInput.value;
+             const opacity = parseFloat(poInput.value);
+            const hex = block.dataset.patternColor || '#ffffff';
+            const r = parseInt(hex.substring(1,3), 16);
+            const g = parseInt(hex.substring(3,5), 16);
+            const b = parseInt(hex.substring(5,7), 16);
+            preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
+            updateCostRail();
+            debouncedPreview();
+          });
+          poLabel.appendChild(poInput);
+          controls.appendChild(poLabel);
+
+          block.appendChild(controls);
+
+          // Preview area with section background
+          const preview = document.createElement('div');
+          preview.className = 'section-preview';
+          preview.style.backgroundColor = '#1a1a1a';
+          preview.style.color = '#ffffff';
+
+          const sectionBlocks = document.createElement('div');
+          sectionBlocks.className = 'section-blocks';
+          preview.appendChild(sectionBlocks);
+
+          // Inner add-block button
+          preview.appendChild(createInnerAddBlock(block));
+
+          block.appendChild(preview);
+
+          // Byte indicator
+          const byteIndicator = document.createElement('div');
+          byteIndicator.className = 'block-byte-indicator';
+          byteIndicator.textContent = '0 B';
+          block.appendChild(byteIndicator);
+
+          return block;
+        }
 
         // Block header with type selector and actions
         const header = document.createElement('div');
@@ -1800,65 +2085,76 @@
         return nodes;
       }
 
-      function getContentFromBlocks() {
-        const blocks = blockEditor.querySelectorAll('.block-item');
-        const content = [];
+      function serializeBlock(block) {
+        const type = block.dataset.type;
 
-        for (const block of blocks) {
-          const type = block.dataset.type;
-
-          if (type === 'bloglist') {
-            // Bloglist options are configured globally in Settings → Bloglist
-            // Just store the block type, options will be applied from settings during compile
-            content.push({ type: 'bloglist' });
-          } else if (type === 'divider') {
-            content.push({
-              type: 'divider'
-            });
-          } else if (type === 'codeblock') {
-            const contentEl = block.querySelector('.block-content');
-            content.push({
-              type: 'codeblock',
-              content: contentEl.textContent || ''
-            });
-          } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-            const listEl = block.querySelector('.editable-list');
-            const items = [];
-            for (const li of listEl.querySelectorAll('li')) {
-              items.push({
-                children: parseInlineNodes(li)
-              });
-            }
-            // Convert to compiler format: unordered-list or ordered-list
-            const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
-            content.push({
-              type: listType === 'ordered' ? 'ordered-list' : 'unordered-list',
-              items
-            });
-          } else {
-            const contentEl = block.querySelector('.block-content');
-            const children = parseInlineNodes(contentEl);
-
-            if (type === 'heading') {
-              content.push({
-                type: 'heading',
-                level: parseInt(block.dataset.level, 10),
-                children
-              });
-            } else if (type === 'blockquote') {
-              content.push({
-                type: 'blockquote',
-                children
-              });
-            } else {
-              content.push({
-                type: 'paragraph',
-                children
-              });
-            }
+        if (type === 'section') {
+          const sectionBlocks = block.querySelector('.section-blocks');
+          const children = [];
+          for (const childBlock of sectionBlocks.querySelectorAll(':scope > .block-item')) {
+            children.push(serializeBlock(childBlock));
           }
+          return {
+            type: 'section',
+            background: block.dataset.background,
+            color: block.dataset.color,
+            pattern: block.dataset.pattern || null,
+            patternColor: block.dataset.patternColor || null,
+            patternOpacity: block.dataset.patternOpacity || null,
+            children
+          };
         }
 
+        if (type === 'bloglist') {
+          return { type: 'bloglist' };
+        }
+        if (type === 'divider') {
+          return { type: 'divider' };
+        }
+        if (type === 'codeblock') {
+          const contentEl = block.querySelector('.block-content');
+          return {
+            type: 'codeblock',
+            content: contentEl.textContent || ''
+          };
+        }
+        if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
+          const listEl = block.querySelector('.editable-list');
+          const items = [];
+          for (const li of listEl.querySelectorAll('li')) {
+            items.push({
+              children: parseInlineNodes(li)
+            });
+          }
+          const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
+          return {
+            type: listType === 'ordered' ? 'ordered-list' : 'unordered-list',
+            items
+          };
+        }
+
+        const contentEl = block.querySelector('.block-content');
+        const children = parseInlineNodes(contentEl);
+
+        if (type === 'heading') {
+          return {
+            type: 'heading',
+            level: parseInt(block.dataset.level, 10),
+            children
+          };
+        }
+        if (type === 'blockquote') {
+          return { type: 'blockquote', children };
+        }
+        return { type: 'paragraph', children };
+      }
+
+      function getContentFromBlocks() {
+        const blocks = blockEditor.querySelectorAll(':scope > .block-item');
+        const content = [];
+        for (const block of blocks) {
+          content.push(serializeBlock(block));
+        }
         return content;
       }
 
