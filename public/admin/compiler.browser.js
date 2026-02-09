@@ -36,6 +36,64 @@ function createPageMeasurement(slug, breakdown) {
 function totalFromBreakdown(breakdown) {
   return breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.pagination + breakdown.icons + breakdown.content;
 }
+function sanitizeHtml(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const allowedTags = ["a", "b", "strong", "i", "em", "u", "br", "p", "span", "small", "code", "ul", "ol", "li"];
+  function sanitizeNode(node) {
+    if (node.nodeType === 3)
+      return document.createTextNode(node.textContent || "");
+    if (node.nodeType !== 1)
+      return document.createTextNode("");
+    const element = node;
+    const tagName = element.tagName.toLowerCase();
+    if (["script", "style", "img", "iframe", "object", "embed", "form"].includes(tagName)) {
+      return document.createTextNode("");
+    }
+    if (allowedTags.includes(tagName)) {
+      const newNode = document.createElement(tagName);
+      for (const attr of Array.from(element.attributes)) {
+        const name = attr.name.toLowerCase();
+        if (["href", "target", "rel", "title", "class"].includes(name) || name.startsWith("aria-")) {
+          if (name === "href" && (attr.value.trim().toLowerCase().startsWith("javascript:") || attr.value.trim().toLowerCase().startsWith("data:"))) {
+            continue;
+          }
+          newNode.setAttribute(name, attr.value);
+        }
+      }
+      let child2 = node.firstChild;
+      while (child2) {
+        const sanitizedChild = sanitizeNode(child2);
+        if (sanitizedChild) {
+          newNode.appendChild(sanitizedChild);
+        }
+        child2 = child2.nextSibling;
+      }
+      return newNode;
+    } else {
+      const fragment = document.createDocumentFragment();
+      let child2 = node.firstChild;
+      while (child2) {
+        const sanitizedChild = sanitizeNode(child2);
+        if (sanitizedChild) {
+          fragment.appendChild(sanitizedChild);
+        }
+        child2 = child2.nextSibling;
+      }
+      return fragment;
+    }
+  }
+  const result = document.createElement("div");
+  let child = doc.body.firstChild;
+  while (child) {
+    const sanitizedChild = sanitizeNode(child);
+    if (sanitizedChild) {
+      result.appendChild(sanitizedChild);
+    }
+    child = child.nextSibling;
+  }
+  return result.innerHTML;
+}
 
 // src/icons.ts
 var ICON_SVG = {
@@ -574,7 +632,7 @@ ${navItems}
   }
   let footer = "";
   if (input.footer !== null) {
-    footer = `<footer>${escapeHtml(input.footer.content)}</footer>`;
+    footer = `<footer>${sanitizeHtml(input.footer.content)}</footer>`;
     breakdown.footer = measureBytes(footer);
   }
   const contentBlocks = [];

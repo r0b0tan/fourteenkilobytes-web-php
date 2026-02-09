@@ -3,21 +3,29 @@
     "title": "",
     "content": [
         {
-            "type": "heading",
-            "level": 1,
+            "type": "section",
+            "background": "#1a1a1a",
+            "color": "#ffffff",
+            "pattern": "hexagons",
             "children": [
                 {
-                    "type": "text",
-                    "text": "Welcome"
-                }
-            ]
-        },
-        {
-            "type": "paragraph",
-            "children": [
+                    "type": "heading",
+                    "level": 1,
+                    "children": [
+                        {
+                            "type": "text",
+                            "text": "Welcome"
+                        }
+                    ]
+                },
                 {
-                    "type": "text",
-                    "text": "This is a landing page template with a hero section."
+                    "type": "paragraph",
+                    "children": [
+                        {
+                            "type": "text",
+                            "text": "This is a landing page template with a hero section."
+                        }
+                    ]
                 }
             ]
         },
@@ -32,11 +40,9 @@
             ]
         },
         {
-            "type": "list",
-            "ordered": false,
-            "children": [
+            "type": "unordered-list",
+            "items": [
                 {
-                    "type": "list-item",
                     "children": [
                         {
                             "type": "text",
@@ -45,7 +51,6 @@
                     ]
                 },
                 {
-                    "type": "list-item",
                     "children": [
                         {
                             "type": "text",
@@ -54,7 +59,6 @@
                     ]
                 },
                 {
-                    "type": "list-item",
                     "children": [
                         {
                             "type": "text",
