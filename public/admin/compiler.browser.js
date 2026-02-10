@@ -246,7 +246,7 @@ function validateContent(blocks) {
 }
 function validateContentBlock(block, path) {
   const blockType = block.type;
-  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider"];
+  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "section"];
   if (!allowedBlockTypes.includes(blockType)) {
     return {
       valid: false,
@@ -326,6 +326,16 @@ function validateContentBlock(block, path) {
     const bloglistResult = validateBloglistBlock(block, path);
     if (!bloglistResult.valid)
       return bloglistResult;
+    return { valid: true };
+  }
+  if (blockType === "section") {
+    if (block.children) {
+      for (let i = 0; i < block.children.length; i++) {
+        const result = validateContentBlock(block.children[i], `${path}.children[${i}]`);
+        if (!result.valid)
+          return result;
+      }
+    }
     return { valid: true };
   }
   for (let i = 0; i < block.children.length; i++) {
@@ -593,9 +603,29 @@ function flatten(input) {
   }
   const titleHtml = `<title>${escapeHtml(finalTitle)}</title>`;
   breakdown.title = measureBytes(titleHtml);
+  const usedPatterns = getUsedPatterns(input.content);
+  const hasAnySections = usedPatterns.size > 0 || input.content.some((b) => b.type === "section");
+  let patternCss = "";
+  if (hasAnySections) {
+    patternCss += "html{overflow-x:hidden}.section{margin-left:calc(-50vw + 50%);width:100vw;box-sizing:border-box;padding:3rem calc((100vw - 100%)/2 + 1rem)}.section *{color:inherit}";
+  }
+  if (usedPatterns.size > 0) {
+    if (usedPatterns.has("dots"))
+      patternCss += ".bg-pattern-dots{background-image:radial-gradient(var(--pc) 1px,transparent 1px);background-size:20px 20px;--pc:rgba(255,255,255,0.1)}";
+    if (usedPatterns.has("grid"))
+      patternCss += ".bg-pattern-grid{background-image:linear-gradient(var(--pc) 1px,transparent 1px),linear-gradient(90deg,var(--pc) 1px,transparent 1px);background-size:20px 20px;--pc:rgba(255,255,255,0.1)}";
+    if (usedPatterns.has("stripes"))
+      patternCss += ".bg-pattern-stripes{background-image:repeating-linear-gradient(45deg,var(--pc),var(--pc) 10px,transparent 10px,transparent 20px);--pc:rgba(255,255,255,0.1)}";
+    if (usedPatterns.has("cross"))
+      patternCss += ".bg-pattern-cross{background-image:radial-gradient(var(--pc) 2px,transparent 2px),radial-gradient(var(--pc) 2px,transparent 2px);background-size:20px 20px;background-position:0 0,10px 10px;--pc:rgba(255,255,255,0.1)}";
+    if (usedPatterns.has("hexagons"))
+      patternCss += ".bg-pattern-hexagons{background-image:radial-gradient(var(--pc) 2px,transparent 2px);--pc:rgba(255,255,255,0.1)}";
+  }
   let cssHtml = "";
-  if (input.css !== null) {
-    cssHtml = `<style>${input.css.rules}</style>`;
+  const baseCss = input.css ? input.css.rules : "";
+  const finalCss = (baseCss + patternCss).trim();
+  if (finalCss) {
+    cssHtml = `<style>${finalCss}</style>`;
     breakdown.css = measureBytes(cssHtml);
   }
   let faviconHtml = "";
@@ -708,6 +738,37 @@ function flattenContentBlock(block, icons, posts) {
     return `<${tag}>
 ${items}
 </${tag}>`;
+  }
+  if (block.type === "section") {
+    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
+    const styles = [];
+    if (block.background)
+      styles.push(`background-color:${block.background}`);
+    if (block.color)
+      styles.push(`color:${block.color}`);
+    if (block.patternColor && block.patternOpacity) {
+      const hex = block.patternColor;
+      const opacity = block.patternOpacity;
+      const r = parseInt(hex.substring(1, 3), 16);
+      const g = parseInt(hex.substring(3, 5), 16);
+      const b = parseInt(hex.substring(5, 7), 16);
+      styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
+    }
+    const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
+    const classes = ["section"];
+    if (block.pattern) {
+      if (block.pattern === "dots")
+        classes.push("bg-pattern-dots");
+      if (block.pattern === "grid")
+        classes.push("bg-pattern-grid");
+      if (block.pattern === "stripes")
+        classes.push("bg-pattern-stripes");
+      if (block.pattern === "cross")
+        classes.push("bg-pattern-cross");
+      if (block.pattern === "hexagons")
+        classes.push("bg-pattern-hexagons");
+    }
+    return `<div class="${classes.join(" ")}"${styleAttr}>${childrenHtml}</div>`;
   }
   const inlineHtml = flattenInlineNodes(block.children, icons, "content");
   if (block.type === "heading") {
@@ -837,6 +898,19 @@ function assemblePageWithContent(page, contentHtml, paginationHtml) {
   }
   parts.push(page.bodyClose, page.htmlClose);
   return normalizeLineEndings(parts.join("\n"));
+}
+function getUsedPatterns(blocks, patterns = /* @__PURE__ */ new Set()) {
+  for (const block of blocks) {
+    if (block.type === "section") {
+      if (block.pattern) {
+        patterns.add(block.pattern);
+      }
+      if (block.children) {
+        getUsedPatterns(block.children, patterns);
+      }
+    }
+  }
+  return patterns;
 }
 
 // src/paginate.ts
@@ -1270,6 +1344,22 @@ ${JSON.stringify(result.error, null, 2)}`;
   }
   return lines.join("\n");
 }
+function getPatternClass(pattern) {
+  switch (pattern) {
+    case "dots":
+      return "bg-pattern-dots";
+    case "grid":
+      return "bg-pattern-grid";
+    case "stripes":
+      return "bg-pattern-stripes";
+    case "cross":
+      return "bg-pattern-cross";
+    case "hexagons":
+      return "bg-pattern-hexagons";
+    default:
+      return "";
+  }
+}
 
 // src/manifest.core.ts
 function createEmptyManifest() {
@@ -1455,6 +1545,7 @@ export {
   getIcon,
   getIconBytes,
   getIconSvg,
+  getPatternClass,
   getPublishedEntries,
   getTombstonedEntries,
   isValidIconId,

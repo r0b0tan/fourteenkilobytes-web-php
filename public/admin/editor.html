@@ -803,7 +803,7 @@
               preview.style.backgroundColor = block.background || '#1a1a1a';
               preview.style.color = block.color || '#ffffff';
               const pClass = Compiler.getPatternClass(block.pattern || '');
-              preview.className = 'section-preview sc ' + pClass;
+              preview.className = 'section-preview ' + pClass;
               
               // Set PC var
               const opacity = parseFloat(block.patternOpacity || '0.1');
@@ -1389,7 +1389,7 @@
           patternSelect.addEventListener('change', () => {
             block.dataset.pattern = patternSelect.value;
             const patternClass = Compiler.getPatternClass(patternSelect.value);
-            preview.className = 'section-preview sc ' + patternClass;
+            preview.className = 'section-preview ' + patternClass;
             updateCostRail();
             debouncedPreview();
           });
