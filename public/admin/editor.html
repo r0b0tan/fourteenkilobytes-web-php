@@ -783,6 +783,7 @@
             el.dataset.patternColor = block.patternColor || '#ffffff';
             el.dataset.patternOpacity = block.patternOpacity || '0.1';
             el.dataset.width = block.width || '';
+            el.dataset.align = block.align || '';
 
             // Update UI controls
             const bgInput = el.querySelector('.section-controls input[type="color"]');
@@ -802,11 +803,15 @@
             const widthInput = el.querySelector('.section-width-input');
             if (widthInput) widthInput.value = block.width || '';
 
+            const alignSelect = el.querySelector('.section-align-select');
+            if (alignSelect) alignSelect.value = block.align || '';
+
             // Update preview colors
             const preview = el.querySelector('.section-preview');
             if (preview) {
               preview.style.backgroundColor = block.background || '#1a1a1a';
               preview.style.color = block.color || '#ffffff';
+              preview.style.textAlign = block.align || '';
               const pClass = Compiler.getPatternClass(block.pattern || '');
               preview.className = 'section-preview ' + pClass;
               
@@ -1307,6 +1312,7 @@
           block.dataset.color = '#ffffff';
           block.dataset.pattern = '';
           block.dataset.width = '';
+          block.dataset.align = '';
 
           // Header with label and actions
           const header = document.createElement('div');
@@ -1393,6 +1399,32 @@
           });
           swLabel.appendChild(swInput);
           controls.appendChild(swLabel);
+
+          // Section Align
+          const alLabel = document.createElement('label');
+          alLabel.innerHTML = '<span data-i18n="editor.sectionAlign">Align</span>:';
+          const alSelect = document.createElement('select');
+          alSelect.className = 'section-align-select';
+          const alOptions = [
+            { value: '', label: 'Default' },
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' }
+          ];
+          alOptions.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.label;
+            alSelect.appendChild(o);
+          });
+          alSelect.addEventListener('change', () => {
+             block.dataset.align = alSelect.value;
+             preview.style.textAlign = alSelect.value;
+             updateCostRail();
+             debouncedPreview();
+          });
+          alLabel.appendChild(alSelect);
+          controls.appendChild(alLabel);
 
           const patternLabel = document.createElement('label');
           patternLabel.innerHTML = '<span data-i18n="editor.sectionPattern">Pattern</span>:';
@@ -2131,6 +2163,7 @@
             patternColor: block.dataset.patternColor || null,
             patternOpacity: block.dataset.patternOpacity || null,
             width: block.dataset.width || null,
+            align: block.dataset.align || null,
             children
           };
         }
