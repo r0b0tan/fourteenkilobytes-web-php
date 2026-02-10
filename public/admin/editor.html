@@ -1341,12 +1341,17 @@
           header.appendChild(actions);
           block.appendChild(header);
 
+          // Wrapper for content (controls + preview) to match other blocks like bloglist
+          const contentWrapper = document.createElement('div');
+          contentWrapper.className = 'section-inner-wrapper';
+          block.appendChild(contentWrapper);
+
           // Controls row: color pickers + pattern selector
           const controls = document.createElement('div');
           controls.className = 'section-controls';
-
+          
           const bgLabel = document.createElement('label');
-          bgLabel.innerHTML = '<span data-i18n="editor.sectionBackground">Background</span>';
+          bgLabel.innerHTML = '<span data-i18n="editor.sectionBackground">Background</span>:';
           const bgInput = document.createElement('input');
           bgInput.type = 'color';
           bgInput.value = '#1a1a1a';
@@ -1360,7 +1365,7 @@
           controls.appendChild(bgLabel);
 
           const colorLabel = document.createElement('label');
-          colorLabel.innerHTML = '<span data-i18n="editor.sectionTextColor">Text Color</span>';
+          colorLabel.innerHTML = '<span data-i18n="editor.sectionTextColor">Text Color</span>:';
           const colorInput = document.createElement('input');
           colorInput.type = 'color';
           colorInput.value = '#ffffff';
@@ -1373,8 +1378,24 @@
           colorLabel.appendChild(colorInput);
           controls.appendChild(colorLabel);
 
+          // Section Width (moved to first row)
+          const swLabel = document.createElement('label');
+          swLabel.innerHTML = '<span data-i18n="editor.sectionWidth">Width</span>:';
+          const swInput = document.createElement('input');
+          swInput.type = 'text';
+          swInput.className = 'section-width-input';
+          swInput.placeholder = '100%';
+          swInput.value = '';
+          swInput.addEventListener('input', () => {
+            block.dataset.width = swInput.value.trim();
+            updateCostRail();
+            debouncedPreview();
+          });
+          swLabel.appendChild(swInput);
+          controls.appendChild(swLabel);
+
           const patternLabel = document.createElement('label');
-          patternLabel.innerHTML = '<span data-i18n="editor.sectionPattern">Pattern</span>';
+          patternLabel.innerHTML = '<span data-i18n="editor.sectionPattern">Pattern</span>:';
           const patternSelect = document.createElement('select');
           patternSelect.className = 'section-pattern-select';
           const patternOptions = [
@@ -1404,7 +1425,7 @@
 
           // Pattern Color
           const pcLabel = document.createElement('label');
-          pcLabel.innerHTML = '<span data-i18n="editor.sectionPatternColor">Pattern Color</span>';
+          pcLabel.innerHTML = '<span data-i18n="editor.sectionPatternColor">Pattern Color</span>:';
           const pcInput = document.createElement('input');
           pcInput.type = 'color';
           pcInput.value = '#ffffff';
@@ -1425,7 +1446,7 @@
 
           // Pattern Opacity
           const poLabel = document.createElement('label');
-          poLabel.innerHTML = '<span data-i18n="editor.sectionPatternOpacity">Opacity</span>';
+          poLabel.innerHTML = '<span data-i18n="editor.sectionPatternOpacity">Opacity</span>:';
           const poInput = document.createElement('input');
           poInput.type = 'range';
           poInput.min = '0';
@@ -1446,24 +1467,10 @@
           });
           poLabel.appendChild(poInput);
           controls.appendChild(poLabel);
+          
+          contentWrapper.appendChild(controls);
 
-          // Section Width
-          const swLabel = document.createElement('label');
-          swLabel.innerHTML = '<span data-i18n="editor.sectionWidth">Width</span>';
-          const swInput = document.createElement('input');
-          swInput.type = 'text';
-          swInput.className = 'section-width-input';
-          swInput.placeholder = '100%';
-          swInput.value = '';
-          swInput.addEventListener('input', () => {
-            block.dataset.width = swInput.value.trim();
-            updateCostRail();
-            debouncedPreview();
-          });
-          swLabel.appendChild(swInput);
-          controls.appendChild(swLabel);
-
-          block.appendChild(controls);
+          contentWrapper.appendChild(controls);
 
           // Preview area with section background
           const preview = document.createElement('div');
@@ -1478,7 +1485,7 @@
           // Inner add-block button
           preview.appendChild(createInnerAddBlock(block));
 
-          block.appendChild(preview);
+          contentWrapper.appendChild(preview);
 
           // Byte indicator
           const byteIndicator = document.createElement('div');
@@ -2323,46 +2330,64 @@
       }
 
       function updateCostRail() {
-        const blocks = blockEditor.querySelectorAll('.block-item');
         let totalContentBytes = 0;
 
-        blocks.forEach((block, index) => {
-          const content = block.querySelector('.block-content');
-          const byteIndicator = block.querySelector('.block-byte-indicator');
-          const type = block.dataset.type;
-          const level = block.dataset.level;
-          const text = content ? content.textContent.trim() : '';
+        // Recursive helper to calculate bytes for a block and its children
+        function processBlock(block) {
+            const type = block.dataset.type;
+            const level = block.dataset.level;
+            const listType = block.dataset.listType;
+            let bytes = 0;
+            let label = 'Block';
 
-          // Rough byte estimation (real calculation happens server-side)
-          const bytes = new TextEncoder().encode(text).length + 50; // +50 for markup
-          totalContentBytes += bytes;
+            if (type === 'section') {
+                label = 'Section';
+                // Estimate overhead for section wrapper, styles, attributes
+                bytes = 150; 
 
-          // Determine semantic label
-          let label = 'Paragraph';
-          const listType = block.dataset.listType;
-          if (type === 'heading') {
-            label = `H${level}`;
-          } else if (type === 'bloglist') {
-            label = 'Bloglist';
-          } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-            // Handle both old format (unordered-list/ordered-list) and new format (list + listType)
-            if (listType === 'ordered' || type === 'ordered-list') {
-              label = 'OL';
+                // Sum children bytes recursively
+                const childrenWrapper = block.querySelector('.section-blocks');
+                if (childrenWrapper) {
+                    const children = childrenWrapper.querySelectorAll(':scope > .block-item');
+                    children.forEach(child => {
+                        bytes += processBlock(child);
+                    });
+                }
             } else {
-              label = 'UL';
-            }
-          } else if (type === 'blockquote') {
-            label = 'Quote';
-          } else if (type === 'codeblock') {
-            label = 'Code';
-          } else if (type === 'divider') {
-            label = 'HR';
-          }
+                // Standard text/content block
+                const content = block.querySelector('.block-content');
+                const text = content ? content.textContent.trim() : '';
+                bytes = new TextEncoder().encode(text).length + 40; // +markup overhead
 
-          // Update inline byte indicator
-          if (byteIndicator) {
-            byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
-          }
+                // Labels
+                if (type === 'heading') label = `H${level}`;
+                else if (type === 'paragraph') label = 'Paragraph';
+                else if (type === 'bloglist') label = 'Bloglist';
+                else if (type === 'list' || type === 'unordered-list') {
+                   // Legacy check or explicit type
+                   if (listType === 'ordered' || type === 'ordered-list') label = 'OL';
+                   else label = 'UL';
+                }
+                else if (type === 'blockquote') label = 'Quote';
+                else if (type === 'codeblock') label = 'Code';
+                else if (type === 'divider') label = 'HR';
+            }
+
+            // Update this block's indicator
+            // We use :scope > to ensure we target THIS block's indicator, not a child's
+            let byteIndicator = block.querySelector(':scope > .block-byte-indicator');
+            if (byteIndicator) {
+                byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
+            }
+
+            return bytes;
+        }
+
+        // Only iterate TOP-LEVEL blocks in the editor
+        // We use :scope to prevent double-counting children found by querySelectorAll
+        const topLevelBlocks = blockEditor.querySelectorAll(':scope > .block-item');
+        topLevelBlocks.forEach(block => {
+             totalContentBytes += processBlock(block);
         });
 
         // Update content total
