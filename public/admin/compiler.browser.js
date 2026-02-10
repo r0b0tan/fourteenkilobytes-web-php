@@ -735,6 +735,8 @@ ${items}
       const b = parseInt(hex.substring(5, 7), 16);
       styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
     }
+    if (block.width)
+      styles.push(`--sw:${block.width}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
     const classes = ["section"];
     if (block.pattern) {
