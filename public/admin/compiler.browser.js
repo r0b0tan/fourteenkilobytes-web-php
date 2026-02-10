@@ -610,16 +610,17 @@ function flatten(input) {
     patternCss += "html{overflow-x:hidden}.section{margin-left:calc(-50vw + 50%);width:100vw;box-sizing:border-box;padding:3rem calc((100vw - 100%)/2 + 1rem)}.section *{color:inherit}";
   }
   if (usedPatterns.size > 0) {
+    patternCss += ".section{position:relative;isolation:isolate;--pc:rgba(255,255,255,0.1)}.section>*{position:relative;z-index:1}.section::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none}";
     if (usedPatterns.has("dots"))
-      patternCss += ".bg-pattern-dots{background-image:radial-gradient(var(--pc) 1px,transparent 1px);background-size:20px 20px;--pc:rgba(255,255,255,0.1)}";
+      patternCss += ".bg-pattern-dots::before{background-image:radial-gradient(circle,var(--pc) 1px,transparent 1px);background-size:20px 20px}";
     if (usedPatterns.has("grid"))
-      patternCss += ".bg-pattern-grid{background-image:linear-gradient(var(--pc) 1px,transparent 1px),linear-gradient(90deg,var(--pc) 1px,transparent 1px);background-size:20px 20px;--pc:rgba(255,255,255,0.1)}";
+      patternCss += ".bg-pattern-grid::before{background-image:linear-gradient(var(--pc) 1px,transparent 1px),linear-gradient(90deg,var(--pc) 1px,transparent 1px);background-size:24px 24px}";
     if (usedPatterns.has("stripes"))
-      patternCss += ".bg-pattern-stripes{background-image:repeating-linear-gradient(45deg,var(--pc),var(--pc) 10px,transparent 10px,transparent 20px);--pc:rgba(255,255,255,0.1)}";
+      patternCss += ".bg-pattern-stripes::before{background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px)}";
     if (usedPatterns.has("cross"))
-      patternCss += ".bg-pattern-cross{background-image:radial-gradient(var(--pc) 2px,transparent 2px),radial-gradient(var(--pc) 2px,transparent 2px);background-size:20px 20px;background-position:0 0,10px 10px;--pc:rgba(255,255,255,0.1)}";
+      patternCss += ".bg-pattern-cross::before{background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px),repeating-linear-gradient(-45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px)}";
     if (usedPatterns.has("hexagons"))
-      patternCss += ".bg-pattern-hexagons{background-image:radial-gradient(var(--pc) 2px,transparent 2px);--pc:rgba(255,255,255,0.1)}";
+      patternCss += ".bg-pattern-hexagons::before{background-color:var(--pc);-webkit-mask-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\");mask-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\")}";
   }
   let cssHtml = "";
   const baseCss = input.css ? input.css.rules : "";
