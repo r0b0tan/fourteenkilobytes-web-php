@@ -1565,7 +1565,7 @@ button:disabled {
 
 .section-controls {
   display: grid;
-  grid-template-columns: repeat(3, max-content);
+  grid-template-columns: repeat(4, max-content);
   justify-content: start;
   gap: 12px 32px;
   padding: 12px;

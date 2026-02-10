@@ -737,6 +737,8 @@ ${items}
     }
     if (block.width)
       styles.push(`--sw:${block.width}`);
+    if (block.align)
+      styles.push(`text-align:${block.align}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
     const classes = ["section"];
     if (block.pattern) {
@@ -882,6 +884,7 @@ function assemblePageWithContent(page, contentHtml, paginationHtml) {
   parts.push(page.bodyClose, page.htmlClose);
   return normalizeLineEndings(parts.join("\n"));
 }
+
 // src/paginate.ts
 function generatePaginationNav(baseSlug, currentPage, totalPages) {
   if (totalPages <= 1) {
