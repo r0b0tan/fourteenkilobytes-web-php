@@ -1587,12 +1587,17 @@ button:disabled {
   background: none;
 }
 
-.section-controls select {
+.section-controls select,
+.section-controls .section-width-input {
   font-size: 12px;
   padding: 2px 4px;
   border: 1px solid var(--border);
   border-radius: 3px;
   background: var(--input-bg);
+}
+
+.section-controls .section-width-input {
+  width: 64px;
 }
 
 .section-preview {

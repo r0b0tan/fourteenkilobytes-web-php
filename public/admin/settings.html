@@ -400,6 +400,13 @@
   margin: 0 auto;
 }"></textarea>
             </div>
+
+            <!-- Page Width -->
+            <div class="form-group" style="margin-top: 1rem;">
+              <label for="page-width" data-i18n="settings.pageWidth">Page Width</label>
+              <p class="text-small text-muted mb-1" data-i18n="settings.pageWidthHint">Override body max-width (e.g. 42rem, 800px, 90%)</p>
+              <input type="text" id="page-width" placeholder="42rem" maxlength="20" style="max-width: 12rem;">
+            </div>
           </div>
         </div>
       </div>
@@ -785,6 +792,7 @@
       const cssPreviewFilename = document.getElementById('css-preview-filename');
       const cssCustomEditor = document.getElementById('css-custom-editor');
       const globalCss = document.getElementById('global-css');
+      const pageWidth = document.getElementById('page-width');
       const metaEnabled = document.getElementById('meta-enabled');
       const metaEditor = document.getElementById('meta-editor');
       const siteTitleEnabled = document.getElementById('site-title-enabled');
@@ -1235,6 +1243,10 @@
         updateOverhead();
         markAsChanged();
       }, 300));
+      pageWidth.addEventListener('input', debounce(() => {
+        updateOverhead();
+        markAsChanged();
+      }, 300));
 
       // ============ META EDITOR ============
 
@@ -1283,6 +1295,7 @@
           cssEnabled: cssEnabled.checked,
           cssMode: cssMode.value,
           globalCss: globalCss.value.trim(),
+          pageWidth: pageWidth.value.trim() || null,
           header: {
             enabled: headerEnabled.checked,
             links: getHeaderLinks(),
@@ -1363,6 +1376,7 @@
           cssEnabled: settings.cssEnabled,
           cssMode: settings.cssMode,
           globalCss: settings.globalCss,
+          pageWidth: settings.pageWidth,
           header: settings.header,
           footer: settings.footer,
           meta: settings.meta,
@@ -1457,6 +1471,7 @@
           cssEditor.classList.toggle('hidden', !cssEnabled.checked);
           cssMode.value = settings.cssMode || 'default';
           globalCss.value = settings.globalCss || '';
+          pageWidth.value = settings.pageWidth || '';
           updateCssModeUI();
 
           // Meta (default: enabled)

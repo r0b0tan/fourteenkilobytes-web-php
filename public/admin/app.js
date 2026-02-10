@@ -271,6 +271,11 @@ const App = (function() {
       }
     }
 
+    // Page width override: append after preset CSS to override preset max-width
+    if (settings.pageWidth && mergedInput.css) {
+      mergedInput.css = { rules: mergedInput.css.rules + '\nbody{max-width:' + settings.pageWidth + '}' };
+    }
+
     // Section CSS: prepend if content has sections
     if (contentHasSections(mergedInput.content)) {
       const sectionCss = await loadSectionCSS();

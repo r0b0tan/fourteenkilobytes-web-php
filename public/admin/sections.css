@@ -5,13 +5,14 @@
  * This is the single source of truth for section layout and patterns.
  */
 
-/* Full-width breakout + color inheritance */
+/* Section layout with variable width (--sw) */
 html { overflow-x: hidden }
 .section {
-  margin-left: calc(-50vw + 50%);
-  width: 100vw;
+  width: var(--sw, 100%);
+  margin-left: calc((var(--sw, 100%) - 100%) / -2);
+  max-width: 100vw;
   box-sizing: border-box;
-  padding: 3rem calc((100vw - 100%) / 2 + 1rem);
+  padding: 3rem calc(max((var(--sw, 100%) - 100%) / 2, 0px) + 1rem);
   position: relative;
   isolation: isolate;
   --pc: rgba(255, 255, 255, 0.1);

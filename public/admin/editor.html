@@ -782,6 +782,7 @@
             el.dataset.pattern = block.pattern || '';
             el.dataset.patternColor = block.patternColor || '#ffffff';
             el.dataset.patternOpacity = block.patternOpacity || '0.1';
+            el.dataset.width = block.width || '';
 
             // Update UI controls
             const bgInput = el.querySelector('.section-controls input[type="color"]');
@@ -797,6 +798,9 @@
             
             const opacityInput = el.querySelector('.section-controls input[type="range"]');
             if (opacityInput) opacityInput.value = block.patternOpacity || '0.1';
+
+            const widthInput = el.querySelector('.section-width-input');
+            if (widthInput) widthInput.value = block.width || '';
 
             // Update preview colors
             const preview = el.querySelector('.section-preview');
@@ -1302,6 +1306,7 @@
           block.dataset.background = '#1a1a1a';
           block.dataset.color = '#ffffff';
           block.dataset.pattern = '';
+          block.dataset.width = '';
 
           // Header with label and actions
           const header = document.createElement('div');
@@ -1441,6 +1446,22 @@
           });
           poLabel.appendChild(poInput);
           controls.appendChild(poLabel);
+
+          // Section Width
+          const swLabel = document.createElement('label');
+          swLabel.innerHTML = '<span data-i18n="editor.sectionWidth">Width</span>';
+          const swInput = document.createElement('input');
+          swInput.type = 'text';
+          swInput.className = 'section-width-input';
+          swInput.placeholder = '100%';
+          swInput.value = '';
+          swInput.addEventListener('input', () => {
+            block.dataset.width = swInput.value.trim();
+            updateCostRail();
+            debouncedPreview();
+          });
+          swLabel.appendChild(swInput);
+          controls.appendChild(swLabel);
 
           block.appendChild(controls);
 
@@ -2102,6 +2123,7 @@
             pattern: block.dataset.pattern || null,
             patternColor: block.dataset.patternColor || null,
             patternOpacity: block.dataset.patternOpacity || null,
+            width: block.dataset.width || null,
             children
           };
         }
