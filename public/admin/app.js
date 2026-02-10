@@ -153,6 +153,34 @@ const App = (function() {
   let cssPresetsCache = null;
 
   /**
+   * Section CSS - loaded from file, cached
+   */
+  let sectionCssCache = null;
+
+  async function loadSectionCSS() {
+    if (sectionCssCache !== null) return sectionCssCache;
+    try {
+      const res = await fetch('/admin/sections.css');
+      if (res.ok) {
+        sectionCssCache = await res.text();
+      } else {
+        sectionCssCache = '';
+      }
+    } catch (e) {
+      console.warn('Failed to load section CSS:', e);
+      sectionCssCache = '';
+    }
+    return sectionCssCache;
+  }
+
+  /**
+   * Check if content blocks contain any section blocks
+   */
+  function contentHasSections(content) {
+    return content?.some(block => block.type === 'section') || false;
+  }
+
+  /**
    * Load all CSS presets from files
    */
   async function loadCssPresets() {
@@ -240,6 +268,18 @@ const App = (function() {
       const globalCss = await getPresetCSS(settings.cssMode || 'default', settings.globalCss);
       if (globalCss) {
         mergedInput.css = { rules: globalCss + '\n' + input.css.rules };
+      }
+    }
+
+    // Section CSS: prepend if content has sections
+    if (contentHasSections(mergedInput.content)) {
+      const sectionCss = await loadSectionCSS();
+      if (sectionCss) {
+        if (mergedInput.css) {
+          mergedInput.css = { rules: sectionCss + '\n' + mergedInput.css.rules };
+        } else {
+          mergedInput.css = { rules: sectionCss };
+        }
       }
     }
 
