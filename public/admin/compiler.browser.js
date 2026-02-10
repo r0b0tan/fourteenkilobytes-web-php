@@ -603,30 +603,10 @@ function flatten(input) {
   }
   const titleHtml = `<title>${escapeHtml(finalTitle)}</title>`;
   breakdown.title = measureBytes(titleHtml);
-  const usedPatterns = getUsedPatterns(input.content);
-  const hasAnySections = usedPatterns.size > 0 || input.content.some((b) => b.type === "section");
-  let patternCss = "";
-  if (hasAnySections) {
-    patternCss += "html{overflow-x:hidden}.section{margin-left:calc(-50vw + 50%);width:100vw;box-sizing:border-box;padding:3rem calc((100vw - 100%)/2 + 1rem)}.section *{color:inherit}";
-  }
-  if (usedPatterns.size > 0) {
-    patternCss += ".section{position:relative;isolation:isolate;--pc:rgba(255,255,255,0.1)}.section>*{position:relative;z-index:1}.section::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none}";
-    if (usedPatterns.has("dots"))
-      patternCss += ".bg-pattern-dots::before{background-image:radial-gradient(circle,var(--pc) 1px,transparent 1px);background-size:20px 20px}";
-    if (usedPatterns.has("grid"))
-      patternCss += ".bg-pattern-grid::before{background-image:linear-gradient(var(--pc) 1px,transparent 1px),linear-gradient(90deg,var(--pc) 1px,transparent 1px);background-size:24px 24px}";
-    if (usedPatterns.has("stripes"))
-      patternCss += ".bg-pattern-stripes::before{background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px)}";
-    if (usedPatterns.has("cross"))
-      patternCss += ".bg-pattern-cross::before{background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px),repeating-linear-gradient(-45deg,transparent,transparent 10px,var(--pc) 10px,var(--pc) 11px)}";
-    if (usedPatterns.has("hexagons"))
-      patternCss += ".bg-pattern-hexagons::before{background-color:var(--pc);-webkit-mask-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\");mask-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E\")}";
-  }
   let cssHtml = "";
-  const baseCss = input.css ? input.css.rules : "";
-  const finalCss = (baseCss + patternCss).trim();
-  if (finalCss) {
-    cssHtml = `<style>${finalCss}</style>`;
+  const cssRules = input.css ? input.css.rules.trim() : "";
+  if (cssRules) {
+    cssHtml = `<style>${cssRules}</style>`;
     breakdown.css = measureBytes(cssHtml);
   }
   let faviconHtml = "";
@@ -900,20 +880,6 @@ function assemblePageWithContent(page, contentHtml, paginationHtml) {
   parts.push(page.bodyClose, page.htmlClose);
   return normalizeLineEndings(parts.join("\n"));
 }
-function getUsedPatterns(blocks, patterns = /* @__PURE__ */ new Set()) {
-  for (const block of blocks) {
-    if (block.type === "section") {
-      if (block.pattern) {
-        patterns.add(block.pattern);
-      }
-      if (block.children) {
-        getUsedPatterns(block.children, patterns);
-      }
-    }
-  }
-  return patterns;
-}
-
 // src/paginate.ts
 function generatePaginationNav(baseSlug, currentPage, totalPages) {
   if (totalPages <= 1) {

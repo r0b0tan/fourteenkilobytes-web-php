@@ -1701,13 +1701,9 @@ button:disabled {
   color: inherit;
 }
 
-/* Define section-preview vars */
+/* Editor section-preview: pattern overlay setup */
 .section-preview {
   --pc: rgba(128, 128, 128, 0.13);
-}
-
-/* Editor Patterns */
-.section-preview {
   position: relative;
   isolation: isolate;
 }
@@ -1722,48 +1718,7 @@ button:disabled {
   z-index: -1;
   pointer-events: none;
 }
-
-.bg-pattern-dots::before {
-  background-image: radial-gradient(circle, var(--pc) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-.bg-pattern-grid::before {
-  background-image:
-    linear-gradient(var(--pc) 1px, transparent 1px),
-    linear-gradient(90deg, var(--pc) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.bg-pattern-stripes::before {
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    var(--pc) 10px,
-    var(--pc) 11px
-  );
-}
-.bg-pattern-cross::before {
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 10px,
-      var(--pc) 10px,
-      var(--pc) 11px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 10px,
-      var(--pc) 10px,
-      var(--pc) 11px
-    );
-}
-.bg-pattern-hexagons::before {
-  background-color: var(--pc);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49'%3E%3Cpath d='M14 0L0 8v16l14 8 14-8V8z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E");
-}
+/* Pattern classes (.bg-pattern-*::before) are defined in sections.css */
 
 .section-add-block:hover {
   opacity: 1;
