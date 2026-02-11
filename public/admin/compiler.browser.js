@@ -636,9 +636,9 @@ ${headContent}
   let navigation = "";
   if (input.navigation !== null) {
     const navItems = input.navigation.items.map((item) => `<a href="${escapeHtml(item.href)}">${escapeHtml(item.text)}</a>`).join("\n");
-    navigation = `<nav>
+    navigation = `<header><nav>
 ${navItems}
-</nav>`;
+</nav></header>`;
     breakdown.navigation = measureBytes(navigation);
   }
   let footer = "";
@@ -669,13 +669,15 @@ ${navItems}
   const doctype = "<!DOCTYPE html>";
   const htmlOpen = '<html lang="en">';
   const bodyOpen = "<body>";
+  const mainOpen = "<main>";
+  const mainClose = "</main>";
   const bodyClose = "</body>";
   const htmlClose = "</html>";
   const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (faviconHtml ? measureBytes("\n") : 0) + // newline between title and favicon
   (metaHtml ? measureBytes("\n") : 0) + // newline between favicon/title and meta
   (cssHtml ? measureBytes("\n") : 0) + // newline between meta/title and css
   measureBytes("\n</head>");
-  breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + headStructureBytes + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);
+  breakdown.base = measureBytes(doctype) + measureBytes("\n") + measureBytes(htmlOpen) + measureBytes("\n") + headStructureBytes + measureBytes("\n") + measureBytes(bodyOpen) + measureBytes("\n") + measureBytes(mainOpen) + measureBytes("\n") + measureBytes(mainClose) + measureBytes("\n") + measureBytes(bodyClose) + measureBytes("\n") + measureBytes(htmlClose);
   if (navigation)
     breakdown.base += measureBytes("\n");
   if (contentHtml)
@@ -688,7 +690,9 @@ ${navItems}
     head,
     bodyOpen,
     navigation,
+    mainOpen,
     content: contentHtml,
+    mainClose,
     footer,
     bodyClose,
     htmlClose
@@ -874,12 +878,14 @@ function assemblePageWithContent(page, contentHtml, paginationHtml) {
   if (page.navigation) {
     parts.push(page.navigation);
   }
+  parts.push(page.mainOpen);
   if (contentHtml) {
     parts.push(contentHtml);
   }
   if (paginationHtml) {
     parts.push(paginationHtml);
   }
+  parts.push(page.mainClose);
   if (page.footer) {
     parts.push(page.footer);
   }
