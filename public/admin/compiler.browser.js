@@ -244,9 +244,9 @@ function validateContent(blocks) {
   }
   return { valid: true };
 }
-function validateContentBlock(block, path) {
+function validateContentBlock(block, path, disallowNesting = false) {
   const blockType = block.type;
-  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "section"];
+  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "section", "layout"];
   if (!allowedBlockTypes.includes(blockType)) {
     return {
       valid: false,
@@ -254,6 +254,17 @@ function validateContentBlock(block, path) {
         code: "CONTENT_INVALID_ELEMENT",
         element: blockType,
         allowed: allowedBlockTypes,
+        path
+      }
+    };
+  }
+  if (disallowNesting && (blockType === "section" || blockType === "layout")) {
+    return {
+      valid: false,
+      error: {
+        code: "CONTENT_INVALID_ELEMENT",
+        element: blockType,
+        allowed: ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider"],
         path
       }
     };
@@ -326,6 +337,63 @@ function validateContentBlock(block, path) {
     const bloglistResult = validateBloglistBlock(block, path);
     if (!bloglistResult.valid)
       return bloglistResult;
+    return { valid: true };
+  }
+  if (blockType === "layout") {
+    if (typeof block.columns !== "number" || block.columns < 1 || block.columns > 12) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `layout with columns ${block.columns}`,
+          allowed: ["layout with columns 1-12"],
+          path
+        }
+      };
+    }
+    if (block.rows !== null && block.rows !== void 0) {
+      if (typeof block.rows !== "number" || block.rows < 1) {
+        return {
+          valid: false,
+          error: {
+            code: "CONTENT_INVALID_ELEMENT",
+            element: `layout with rows ${block.rows}`,
+            allowed: ["layout with rows >= 1 or null for auto"],
+            path
+          }
+        };
+      }
+    }
+    if (!block.cells || !Array.isArray(block.cells)) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "layout without cells array",
+          allowed: ["layout with cells array"],
+          path
+        }
+      };
+    }
+    for (let i = 0; i < block.cells.length; i++) {
+      const cell = block.cells[i];
+      if (!cell.children || !Array.isArray(cell.children)) {
+        return {
+          valid: false,
+          error: {
+            code: "CONTENT_INVALID_ELEMENT",
+            element: "layout cell without children array",
+            allowed: ["layout cell with children array"],
+            path: `${path}.cells[${i}]`
+          }
+        };
+      }
+      for (let j = 0; j < cell.children.length; j++) {
+        const result = validateContentBlock(cell.children[j], `${path}.cells[${i}].children[${j}]`, true);
+        if (!result.valid)
+          return result;
+      }
+    }
     return { valid: true };
   }
   if (blockType === "section") {
@@ -724,6 +792,31 @@ function flattenContentBlock(block, icons, posts) {
     return `<${tag}>
 ${items}
 </${tag}>`;
+  }
+  if (block.type === "layout") {
+    const cellsHtml = block.cells.map((cell) => {
+      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
+      return `<div class="cell">${cellContent}</div>`;
+    }).join("\n");
+    const styles = [];
+    styles.push(`display:grid`);
+    styles.push(`grid-template-columns:repeat(${block.columns},1fr)`);
+    if (block.rows) {
+      styles.push(`grid-template-rows:repeat(${block.rows},auto)`);
+    }
+    const rowGap = block.rowGap || "0";
+    const colGap = block.columnGap || "0";
+    if (rowGap === colGap) {
+      styles.push(`gap:${rowGap}`);
+    } else {
+      styles.push(`gap:${rowGap} ${colGap}`);
+    }
+    const styleAttr = ` style="${styles.join(";")}"`;
+    const classes = ["layout"];
+    if (block.className) {
+      classes.push(block.className);
+    }
+    return `<div class="${classes.join(" ")}"${styleAttr}>${cellsHtml}</div>`;
   }
   if (block.type === "section") {
     const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");

@@ -439,6 +439,9 @@
     // Import compiler (browser bundle)
     import * as Compiler from './compiler.browser.js';
 
+    // Declare early to avoid initialization order issues
+    let debouncedPreview;
+
     (async function () {
       // Wait for i18n to be ready
       await i18nReady();
@@ -835,6 +838,89 @@
                 sectionBlocks.appendChild(blockElFromSource(child));
               });
             }
+            return el;
+          }
+          if (block.type === 'layout') {
+            const el = createBlockElement('layout');
+            const cols = block.columns || 2;
+            const rows = block.cells ? Math.ceil(block.cells.length / cols) : 2;
+            
+            el.dataset.columns = cols;
+            el.dataset.rows = rows;
+
+            // Get cell grid and populate
+            const cellsGrid = el.querySelector('.layout-cells-grid');
+            if (cellsGrid && block.cells && block.cells.length > 0) {
+              // Clear existing cells (keep controls)
+              cellsGrid.querySelectorAll(':scope > .layout-cell').forEach(c => c.remove());
+              
+              // Recreate cells from data
+              block.cells.forEach(cellData => {
+                const cellEl = document.createElement('div');
+                cellEl.className = 'layout-cell';
+
+                const cellBlocks = document.createElement('div');
+                cellBlocks.className = 'layout-cell-blocks';
+                if (cellData.children && cellData.children.length > 0) {
+                  cellData.children.forEach(child => {
+                    cellBlocks.appendChild(blockElFromSource(child));
+                  });
+                }
+                cellEl.appendChild(cellBlocks);
+
+                // Add block button
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.className = 'layout-cell-add-btn';
+                addBtn.textContent = '+';
+                addBtn.title = 'Add block';
+                
+                const dropdown = document.createElement('div');
+                dropdown.className = 'add-block-dropdown hidden';
+                const innerTypes = [
+                  { type: 'paragraph', label: 'Paragraph' },
+                  { type: 'heading', label: 'Heading', level: '2' },
+                  { type: 'list', label: 'List', listType: 'unordered' },
+                  { type: 'divider', label: 'Divider' },
+                  { type: 'bloglist', label: 'Bloglist' }
+                ];
+                innerTypes.forEach(t => {
+                  const b = document.createElement('button');
+                  b.type = 'button';
+                  b.textContent = t.label;
+                  b.dataset.type = t.type;
+                  if (t.level) b.dataset.level = t.level;
+                  if (t.listType) b.dataset.listType = t.listType;
+                  dropdown.appendChild(b);
+                });
+
+                addBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  dropdown.classList.toggle('hidden');
+                });
+
+                dropdown.addEventListener('click', (e) => {
+                  const clicked = e.target.closest('button');
+                  if (!clicked) return;
+                  const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType);
+                  cellBlocks.appendChild(childBlock);
+                  const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
+                  if (focusTarget) focusTarget.focus();
+                  dropdown.classList.add('hidden');
+                  debouncedPreview();
+                });
+
+                cellEl.appendChild(addBtn);
+                cellEl.appendChild(dropdown);
+
+                cellsGrid.appendChild(cellEl);
+              });
+
+              // Update grid styling
+              cellsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+              cellsGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            }
+
             return el;
           }
           if (block.type === 'heading') {
@@ -1252,7 +1338,7 @@
         btn.type = 'button';
         btn.className = 'btn btn-secondary section-add-block';
         btn.setAttribute('data-i18n', 'editor.sectionAddBlock');
-        btn.textContent = '+ Add Inner Block';
+        btn.textContent = '+ Add Block';
 
         const dropdown = document.createElement('div');
         dropdown.className = 'add-block-dropdown hidden';
@@ -1261,7 +1347,8 @@
           { type: 'paragraph', i18n: 'editor.blockParagraph', label: 'Paragraph' },
           { type: 'heading', i18n: 'editor.blockHeading', label: 'Heading', level: '2' },
           { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
-          { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' }
+          { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' },
+          { type: 'layout', i18n: 'editor.blockLayout', label: 'Layout' }
         ];
 
         innerTypes.forEach(t => {
@@ -1542,6 +1629,208 @@
           preview.appendChild(createInnerAddBlock(block));
 
           contentWrapper.appendChild(preview);
+
+          // Byte indicator
+          const byteIndicator = document.createElement('div');
+          byteIndicator.className = 'block-byte-indicator';
+          byteIndicator.textContent = '0 B';
+          block.appendChild(byteIndicator);
+
+          return block;
+        }
+
+        // Layout block: Simple grid container with dashed lines
+        if (type === 'layout') {
+          block.className = 'block-item block-layout';
+          block.dataset.columns = '2';
+          block.dataset.rows = '2';
+
+          // Header with label and actions
+          const header = document.createElement('div');
+          header.className = 'block-header';
+
+          const label = document.createElement('span');
+          label.className = 'block-type-label';
+          label.setAttribute('data-i18n', 'editor.blockLayout');
+          label.textContent = 'Layout';
+          header.appendChild(label);
+
+          const actions = document.createElement('div');
+          actions.className = 'block-item-actions';
+          const upBtn = document.createElement('button');
+          upBtn.type = 'button';
+          upBtn.textContent = '↑';
+          upBtn.title = 'Move up';
+          upBtn.addEventListener('click', () => moveBlock(block, -1));
+          actions.appendChild(upBtn);
+          const downBtn = document.createElement('button');
+          downBtn.type = 'button';
+          downBtn.textContent = '↓';
+          downBtn.title = 'Move down';
+          downBtn.addEventListener('click', () => moveBlock(block, 1));
+          actions.appendChild(downBtn);
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.textContent = '×';
+          deleteBtn.title = 'Delete';
+          deleteBtn.addEventListener('click', () => { block.remove(); debouncedPreview(); });
+          actions.appendChild(deleteBtn);
+          header.appendChild(actions);
+          block.appendChild(header);
+
+          // Cells grid (direct child, no wrapper needed - .layout-grid uses display:contents)
+          const cellsGrid = document.createElement('div');
+          cellsGrid.className = 'layout-cells-grid';
+
+          // Column controls (absolutely positioned inside cellsGrid)
+          const colControls = document.createElement('div');
+          colControls.className = 'layout-col-controls';
+          const removeColBtn = document.createElement('button');
+          removeColBtn.type = 'button';
+          removeColBtn.className = 'layout-control-btn';
+          removeColBtn.textContent = '−';
+          removeColBtn.title = 'Remove column';
+          removeColBtn.addEventListener('click', () => {
+            const cols = parseInt(block.dataset.columns);
+            if (cols > 1) {
+              block.dataset.columns = cols - 1;
+              rebuildGrid();
+            }
+          });
+          const addColBtn = document.createElement('button');
+          addColBtn.type = 'button';
+          addColBtn.className = 'layout-control-btn';
+          addColBtn.textContent = '+';
+          addColBtn.title = 'Add column';
+          addColBtn.addEventListener('click', () => {
+            const cols = parseInt(block.dataset.columns);
+            block.dataset.columns = Math.min(cols + 1, 6);
+            rebuildGrid();
+          });
+          colControls.appendChild(removeColBtn);
+          colControls.appendChild(addColBtn);
+          cellsGrid.appendChild(colControls);
+
+          // Row controls (absolutely positioned inside cellsGrid)
+          const rowControls = document.createElement('div');
+          rowControls.className = 'layout-row-controls';
+          const removeRowBtn = document.createElement('button');
+          removeRowBtn.type = 'button';
+          removeRowBtn.className = 'layout-control-btn';
+          removeRowBtn.textContent = '−';
+          removeRowBtn.title = 'Remove row';
+          removeRowBtn.addEventListener('click', () => {
+            const rows = parseInt(block.dataset.rows);
+            if (rows > 1) {
+              block.dataset.rows = rows - 1;
+              rebuildGrid();
+            }
+          });
+          const addRowBtn = document.createElement('button');
+          addRowBtn.type = 'button';
+          addRowBtn.className = 'layout-control-btn';
+          addRowBtn.textContent = '+';
+          addRowBtn.title = 'Add row';
+          addRowBtn.addEventListener('click', () => {
+            const rows = parseInt(block.dataset.rows);
+            block.dataset.rows = Math.min(rows + 1, 6);
+            rebuildGrid();
+          });
+          rowControls.appendChild(removeRowBtn);
+          rowControls.appendChild(addRowBtn);
+          cellsGrid.appendChild(rowControls);
+
+          block.appendChild(cellsGrid);
+
+          // Rebuild grid based on rows/cols
+          function rebuildGrid() {
+            const cols = parseInt(block.dataset.columns);
+            const rows = parseInt(block.dataset.rows);
+            cellsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            cellsGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+            const totalCells = cols * rows;
+            const currentCells = cellsGrid.querySelectorAll(':scope > .layout-cell');
+
+            // Remove excess cells
+            if (currentCells.length > totalCells) {
+              for (let i = totalCells; i < currentCells.length; i++) {
+                currentCells[i].remove();
+              }
+            }
+
+            // Add missing cells
+            while (cellsGrid.querySelectorAll(':scope > .layout-cell').length < totalCells) {
+              cellsGrid.appendChild(createLayoutCell());
+            }
+
+            updateCostRail();
+            if (debouncedPreview) {
+              debouncedPreview();
+            }
+          }
+
+          // Create cell helper function
+          function createLayoutCell() {
+            const cell = document.createElement('div');
+            cell.className = 'layout-cell';
+
+            const cellBlocks = document.createElement('div');
+            cellBlocks.className = 'layout-cell-blocks';
+            cell.appendChild(cellBlocks);
+
+            // Add block button
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'layout-cell-add-btn';
+            addBtn.textContent = '+';
+            addBtn.title = 'Add block';
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'add-block-dropdown hidden';
+            const innerTypes = [
+              { type: 'paragraph', label: 'Paragraph' },
+              { type: 'heading', label: 'Heading', level: '2' },
+              { type: 'list', label: 'List', listType: 'unordered' },
+              { type: 'divider', label: 'Divider' },
+              { type: 'bloglist', label: 'Bloglist' }
+            ];
+            innerTypes.forEach(t => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = t.label;
+              b.dataset.type = t.type;
+              if (t.level) b.dataset.level = t.level;
+              if (t.listType) b.dataset.listType = t.listType;
+              dropdown.appendChild(b);
+            });
+
+            addBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              dropdown.classList.toggle('hidden');
+            });
+
+            dropdown.addEventListener('click', (e) => {
+              const clicked = e.target.closest('button');
+              if (!clicked) return;
+              const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType);
+              cellBlocks.appendChild(childBlock);
+              const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
+              if (focusTarget) focusTarget.focus();
+              dropdown.classList.add('hidden');
+              if (debouncedPreview) {
+                debouncedPreview();
+              }
+            });
+
+            cell.appendChild(addBtn);
+            cell.appendChild(dropdown);
+
+            return cell;
+          }
+
+          // Create initial 2x2 grid
+          rebuildGrid();
 
           // Byte indicator
           const byteIndicator = document.createElement('div');
@@ -2190,6 +2479,24 @@
             padding: block.dataset.padding || null,
             align: block.dataset.align || null,
             children
+          };
+        }
+
+        if (type === 'layout') {
+          const cellsGrid = block.querySelector('.layout-cells-grid');
+          const cells = [];
+          for (const cell of cellsGrid.querySelectorAll('.layout-cell')) {
+            const cellBlocks = cell.querySelector('.layout-cell-blocks');
+            const children = [];
+            for (const childBlock of cellBlocks.querySelectorAll(':scope > .block-item')) {
+              children.push(serializeBlock(childBlock));
+            }
+            cells.push({ children });
+          }
+          return {
+            type: 'layout',
+            columns: parseInt(block.dataset.columns || '2'),
+            cells
           };
         }
 
@@ -2982,7 +3289,7 @@
       updateTitleBytes();
 
       // Auto-update byte counter on content changes
-      const debouncedPreview = debounce(async () => {
+      debouncedPreview = debounce(async () => {
         saveToLocalStorage(); // Safety backup to localStorage (works in both modes)
         try {
           const input = await buildInput();
