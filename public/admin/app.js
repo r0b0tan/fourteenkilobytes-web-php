@@ -153,6 +153,13 @@ const App = (function() {
   let cssPresetsCache = null;
 
   /**
+   * Strip CSS comments to save bytes in compiled output
+   */
+  function stripCssComments(css) {
+    return css.replace(/\/\*[\s\S]*?\*\//g, '');
+  }
+
+  /**
    * Section CSS - loaded from file, cached
    */
   let sectionCssCache = null;
@@ -162,7 +169,7 @@ const App = (function() {
     try {
       const res = await fetch('/admin/sections.css');
       if (res.ok) {
-        sectionCssCache = await res.text();
+        sectionCssCache = stripCssComments(await res.text()).trim();
       } else {
         sectionCssCache = '';
       }
@@ -193,7 +200,7 @@ const App = (function() {
       try {
         const res = await fetch(`/admin/presets/${name}.css`);
         if (res.ok) {
-          presets[name] = await res.text();
+          presets[name] = stripCssComments(await res.text()).trim();
         }
       } catch (e) {
         console.warn(`Failed to load preset ${name}:`, e);
