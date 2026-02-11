@@ -46,3 +46,4 @@ data/.setup-complete
 *.backup
 setup/*.backup
 
+COMPILER_WORKFLOW.md

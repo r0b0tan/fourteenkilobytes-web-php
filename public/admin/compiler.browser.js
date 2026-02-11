@@ -629,6 +629,7 @@ function flatten(input) {
     }
   }
   const headContent = `<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 ${titleHtml}${faviconHtml ? "\n" + faviconHtml : ""}${metaHtml ? "\n" + metaHtml : ""}${cssHtml ? "\n" + cssHtml : ""}`;
   const head = `<head>
 ${headContent}
@@ -673,7 +674,7 @@ ${navItems}
   const mainClose = "</main>";
   const bodyClose = "</body>";
   const htmlClose = "</html>";
-  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n') + (faviconHtml ? measureBytes("\n") : 0) + // newline between title and favicon
+  const headStructureBytes = measureBytes('<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n') + (faviconHtml ? measureBytes("\n") : 0) + // newline between title and favicon
   (metaHtml ? measureBytes("\n") : 0) + // newline between favicon/title and meta
   (cssHtml ? measureBytes("\n") : 0) + // newline between meta/title and css
   measureBytes("\n</head>");

@@ -62,13 +62,13 @@ h6 {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: clamp(1.75rem, 5vw, 3rem);
 }
 h2 {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 3vw, 1.25rem);
 }
 h3 {
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
 }
 
 /* Navigation */
@@ -76,8 +76,9 @@ nav {
   display: flex;
   justify-content: center;
   gap: 4px;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem clamp(0.5rem, 3vw, 1rem);
   border-bottom: 1px solid #d4d4d4;
+  flex-wrap: wrap;
 }
 
 nav a {
