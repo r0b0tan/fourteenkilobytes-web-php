@@ -783,6 +783,7 @@
             el.dataset.patternColor = block.patternColor || '#ffffff';
             el.dataset.patternOpacity = block.patternOpacity || '0.1';
             el.dataset.width = block.width || '';
+            el.dataset.padding = block.padding || '';
             el.dataset.align = block.align || '';
 
             // Update UI controls
@@ -803,6 +804,9 @@
             const widthInput = el.querySelector('.section-width-input');
             if (widthInput) widthInput.value = block.width || '';
 
+            const paddingInput = el.querySelector('.section-padding-input');
+            if (paddingInput) paddingInput.value = block.padding || '';
+
             const alignSelect = el.querySelector('.section-align-select');
             if (alignSelect) alignSelect.value = block.align || '';
 
@@ -812,6 +816,7 @@
               preview.style.backgroundColor = block.background || '#1a1a1a';
               preview.style.color = block.color || '#ffffff';
               preview.style.textAlign = block.align || '';
+              if (block.padding) preview.style.setProperty('--sp', block.padding);
               const pClass = Compiler.getPatternClass(block.pattern || '');
               preview.className = 'section-preview ' + pClass;
               
@@ -1312,6 +1317,7 @@
           block.dataset.color = '#ffffff';
           block.dataset.pattern = '';
           block.dataset.width = '';
+          block.dataset.padding = '';
           block.dataset.align = '';
 
           // Header with label and actions
@@ -1399,6 +1405,24 @@
           });
           swLabel.appendChild(swInput);
           controls.appendChild(swLabel);
+
+          // Section Padding
+          const spLabel = document.createElement('label');
+          spLabel.innerHTML = '<span data-i18n="editor.sectionPadding">Padding</span>:';
+          const spInput = document.createElement('input');
+          spInput.type = 'text';
+          spInput.className = 'section-padding-input';
+          spInput.placeholder = '3rem';
+          spInput.value = '';
+          spInput.addEventListener('input', () => {
+            block.dataset.padding = spInput.value.trim();
+            // Update preview style var
+            preview.style.setProperty('--sp', spInput.value.trim());
+            updateCostRail();
+            debouncedPreview();
+          });
+          spLabel.appendChild(spInput);
+          controls.appendChild(spLabel);
 
           // Section Align
           const alLabel = document.createElement('label');
@@ -2163,6 +2187,7 @@
             patternColor: block.dataset.patternColor || null,
             patternOpacity: block.dataset.patternOpacity || null,
             width: block.dataset.width || null,
+            padding: block.dataset.padding || null,
             align: block.dataset.align || null,
             children
           };
