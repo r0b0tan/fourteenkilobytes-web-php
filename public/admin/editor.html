@@ -2710,57 +2710,62 @@
             true
           );
 
-          // Clear all fields after publish
-          titleInput.value = '';
-          slugInput.value = '';
-          blockEditor.innerHTML = '';
+          // Only clear fields if NOT in edit mode
+          // In edit mode, preserve the form so user can continue iterating
+          if (!isEditMode) {
+            // Clear all fields after publish
+            titleInput.value = '';
+            slugInput.value = '';
+            blockEditor.innerHTML = '';
 
-          // Add one empty paragraph block
-          const emptyBlock = createBlockElement('paragraph');
-          blockEditor.appendChild(emptyBlock);
+            // Add one empty paragraph block
+            const emptyBlock = createBlockElement('paragraph');
+            blockEditor.appendChild(emptyBlock);
 
-          // Reset title override
-          titleOverrideEnabled.checked = false;
-          titleOverrideEnabled.dispatchEvent(new Event('change'));
-          titleOverrideInput.value = '';
+            // Reset title override
+            titleOverrideEnabled.checked = false;
+            titleOverrideEnabled.dispatchEvent(new Event('change'));
+            titleOverrideInput.value = '';
 
-          // Reset navigation
-          navEnabled.checked = false;
-          navEnabled.dispatchEvent(new Event('change'));
-          loadGlobalNavigation();
+            // Reset navigation
+            navEnabled.checked = false;
+            navEnabled.dispatchEvent(new Event('change'));
+            loadGlobalNavigation();
 
-          // Reset footer
-          footerEnabled.checked = false;
-          footerEnabled.dispatchEvent(new Event('change'));
-          footerText.value = '';
+            // Reset footer
+            footerEnabled.checked = false;
+            footerEnabled.dispatchEvent(new Event('change'));
+            footerText.value = '';
 
-          // Reset meta
-          metaEnabled.checked = false;
-          metaEnabled.dispatchEvent(new Event('change'));
-          metaDescription.value = '';
-          metaAuthor.value = '';
+            // Reset meta
+            metaEnabled.checked = false;
+            metaEnabled.dispatchEvent(new Event('change'));
+            metaDescription.value = '';
+            metaAuthor.value = '';
 
-          // Reset CSS
-          cssEnabled.checked = false;
-          cssEnabled.dispatchEvent(new Event('change'));
-          cssRules.value = '';
-          liveCSS.textContent = '';
+            // Reset CSS
+            cssEnabled.checked = false;
+            cssEnabled.dispatchEvent(new Event('change'));
+            cssRules.value = '';
+            liveCSS.textContent = '';
 
-          // Reset page type
-          pageTypeSelect.value = 'post';
-          pageTypeHint.textContent = '';
+            // Reset page type
+            pageTypeSelect.value = 'post';
+            pageTypeHint.textContent = '';
 
-          // Clear auto-save
-          clearAutoSave();
+            // Clear auto-save
+            clearAutoSave();
 
-          // Reset byte counter
-          updateByteCounter(0, 0);
-          updateCostRail();
-          updateTitleBytes();
+            // Reset byte counter
+            updateByteCounter(0, 0);
+            updateCostRail();
+            updateTitleBytes();
+          }
 
           // Re-enable publish button
           publishBtn.disabled = false;
-          publishBtn.textContent = t('editor.buildPublish');
+          // Set appropriate button text based on mode
+          publishBtn.textContent = isEditMode ? t('editor.recompile') : t('editor.buildPublish');
         } catch (err) {
           Modal.error(err.message);
           console.error(err);
@@ -2913,6 +2918,10 @@
         pageTitle.innerHTML = `Recompile <span style="font-weight: 400; color: var(--text-secondary);">/ ${editingSlug}</span>`;
         pageSubtitle.textContent = 'Editing source · requires rebuild';
         pageSubtitle.style.display = 'block';
+        
+        // Change button text to "Recompile" in edit mode
+        publishBtn.setAttribute('data-i18n', 'editor.recompile');
+        publishBtn.textContent = t('editor.recompile');
       }
 
       // ============ CLEAR ALL BUTTON ============

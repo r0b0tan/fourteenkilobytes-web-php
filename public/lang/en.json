@@ -299,6 +299,7 @@
     "limit": "Limit",
     "overLimit": "Over limit!",
     "buildPublish": "Compile & Publish",
+    "recompile": "Recompile",
     "buildConfirm": "Execute build and publish?",
     "buildSuccess": "Published successfully!",
     "buildError": "Build failed: {{error}}",

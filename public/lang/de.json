@@ -300,6 +300,7 @@
     "limit": "Limit",
     "overLimit": "Über Limit!",
     "buildPublish": "Kompilieren & Veröffentlichen",
+    "recompile": "Rekompilieren",
     "buildConfirm": "Build ausführen und veröffentlichen?",
     "buildSuccess": "Erfolgreich veröffentlicht!",
     "buildError": "Build fehlgeschlagen: {{error}}",
