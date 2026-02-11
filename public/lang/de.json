@@ -290,6 +290,7 @@
     "sectionPatternCross": "Kreuzschraffur",
     "sectionPatternHexagons": "Hexagone",
     "sectionWidth": "Breite",
+    "sectionPadding": "Padding",
     "sectionAlign": "Ausrichtung",
     "sectionAddBlock": "+ Inneren Block hinzufügen",
     "bloglistPlaceholder": "Blog-Posts werden hier automatisch aufgelistet",

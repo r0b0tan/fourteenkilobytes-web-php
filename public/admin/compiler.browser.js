@@ -724,9 +724,9 @@ ${items}
     const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
     const styles = [];
     if (block.background)
-      styles.push(`background-color:${block.background}`);
+      styles.push(`--sb:${block.background}`);
     if (block.color)
-      styles.push(`color:${block.color}`);
+      styles.push(`--sc:${block.color}`);
     if (block.patternColor && block.patternOpacity) {
       const hex = block.patternColor;
       const opacity = block.patternOpacity;
@@ -737,8 +737,10 @@ ${items}
     }
     if (block.width)
       styles.push(`--sw:${block.width}`);
+    if (block.padding)
+      styles.push(`--sp:${block.padding}`);
     if (block.align)
-      styles.push(`text-align:${block.align}`);
+      styles.push(`--sa:${block.align}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
     const classes = ["section"];
     if (block.pattern) {
