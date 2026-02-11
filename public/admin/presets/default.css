@@ -28,6 +28,13 @@ body {
   line-height: 1.6;
   color: var(--text-main);
   background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
 }
 
 a {
@@ -95,7 +102,7 @@ footer {
   background-color: var(--footer-bg);
   font-size: 0.9rem;
   color: var(--footer-text);
-  margin-top: 4rem;
+  margin-top: auto;
 }
 
 /* Blog list */
