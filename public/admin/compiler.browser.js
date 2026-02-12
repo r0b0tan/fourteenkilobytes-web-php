@@ -796,7 +796,8 @@ ${items}
   if (block.type === "layout") {
     const cellsHtml = block.cells.map((cell) => {
       const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
-      return `<div class="cell">${cellContent}</div>`;
+      const cellStyle = cell.textAlign ? ` style="text-align:${cell.textAlign}"` : "";
+      return `<div class="cell"${cellStyle}>${cellContent}</div>`;
     }).join("\n");
     const styles = [];
     styles.push(`display:grid`);

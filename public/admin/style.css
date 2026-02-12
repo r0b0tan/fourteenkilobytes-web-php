@@ -1767,52 +1767,69 @@ button:disabled {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #6b7280;
 }
 
 .layout-grid {
   display: contents;
 }
 
-/* Column/row controls - hover only */
+/* Column/row controls - hover only, grouped in a visible container */
 .layout-col-controls,
 .layout-row-controls {
   position: absolute;
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s;
   z-index: 5;
+  background: #fff;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 4px;
+  padding: 3px 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-.block-layout:hover .layout-col-controls,
-.block-layout:hover .layout-row-controls {
+.layout-cells-grid:hover .layout-col-controls,
+.layout-cells-grid:hover .layout-row-controls {
   opacity: 1;
   pointer-events: auto;
 }
 
 .layout-col-controls {
-  top: 4px;
+  bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
   flex-direction: row;
 }
 
 .layout-row-controls {
-  right: 4px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   flex-direction: column;
 }
 
+.layout-control-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 2px;
+  user-select: none;
+}
+
 .layout-control-btn {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(128, 128, 128, 0.3);
-  color: var(--text-muted);
-  padding: 1px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #6b7280;
+  padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: bold;
   transition: all 0.15s;
   min-width: 22px;
@@ -1829,35 +1846,34 @@ button:disabled {
   border-color: var(--accent);
 }
 
-/* Grid with collapsed dashed borders */
+/* Grid with collapsed dashed borders — fixed neutral gray, visible on any background */
 .layout-cells-grid {
   display: grid;
   gap: 0;
   background: transparent;
-  border-top: 1px dashed rgba(128, 128, 128, 0.35);
-  border-left: 1px dashed rgba(128, 128, 128, 0.35);
+  border-top: 1px dashed rgba(128, 128, 128, 0.5);
+  border-left: 1px dashed rgba(128, 128, 128, 0.5);
   border-radius: 4px;
   overflow: visible;
-  min-height: 120px;
+  min-height: 80px;
   position: relative;
 }
 
 .layout-cell {
   position: relative;
   border: none;
-  border-right: 1px dashed rgba(128, 128, 128, 0.35);
-  border-bottom: 1px dashed rgba(128, 128, 128, 0.35);
+  border-right: 1px dashed rgba(128, 128, 128, 0.5);
+  border-bottom: 1px dashed rgba(128, 128, 128, 0.5);
   padding: 12px;
-  min-height: 60px;
+  min-height: 50px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: inherit;
   transition: background 0.15s;
 }
 
 .layout-cell:hover {
-  background: rgba(128, 128, 128, 0.04);
+  background: rgba(128, 128, 128, 0.06);
 }
 
 .layout-cell-blocks {
@@ -1865,19 +1881,110 @@ button:disabled {
 }
 
 .layout-cell-blocks .block-item {
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: 13px;
 }
 
-.layout-cell-blocks .block-item:last-child {
-  margin-bottom: 0;
+/* Hide block header inside layout cells — only show × delete on hover */
+.layout-cell-blocks .block-header {
+  display: none;
 }
 
-/* Add block button - hover only */
+/* Per-cell alignment controls — hover only */
+.layout-cell-align {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 3;
+  background: #fff;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 3px;
+  padding: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.layout-cell:hover .layout-cell-align {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.layout-align-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #9ca3af;
+  padding: 1px 5px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 18px;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.layout-align-btn:hover {
+  color: #374151;
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.layout-align-btn.active {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb, 139, 92, 246), 0.1);
+  border-color: rgba(var(--accent-rgb, 139, 92, 246), 0.2);
+}
+
+.layout-cell-blocks .block-item {
+  position: relative;
+}
+
+.layout-cell-blocks .block-item .block-cell-delete {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(128, 128, 128, 0.15);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  color: #6b7280;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.15s;
+  z-index: 2;
+}
+
+.layout-cell:hover .block-cell-delete {
+  opacity: 0.6;
+  pointer-events: auto;
+}
+
+.layout-cell:hover .block-cell-delete:hover {
+  opacity: 1;
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Add block button - hover only, hidden when cell has content */
 .layout-cell-add-btn {
   background: transparent;
   border: 1px dashed rgba(128, 128, 128, 0.3);
-  color: var(--text-muted);
+  color: #6b7280;
   padding: 4px 10px;
   border-radius: 3px;
   cursor: pointer;
@@ -1899,56 +2006,63 @@ button:disabled {
   color: var(--accent);
 }
 
-.layout-cell .add-block-dropdown {
+/* Hide + button when cell already has a block */
+.layout-cell-blocks:not(:empty) ~ .layout-cell-add-btn {
+  display: none;
+}
+
+/* Type picker dropdown for + button — above with arrow */
+.layout-cell .layout-cell-dropdown {
   position: absolute;
   bottom: 36px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  gap: 2px;
 }
 
-/* Section context: use inherited colors for dashed lines */
-.section-blocks .layout-cells-grid {
-  border-color: currentColor;
-  opacity: 0.4;
+.layout-cell .layout-cell-dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--white);
 }
 
-.section-blocks .layout-cells-grid:hover {
-  opacity: 0.6;
+.layout-cell .layout-cell-dropdown::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: var(--border);
 }
 
-.section-blocks .layout-cell {
-  border-color: currentColor;
+.layout-cell .layout-cell-dropdown button {
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
-.section-blocks .layout-control-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: inherit;
+.layout-cell .layout-cell-dropdown button:hover {
+  background: var(--gray-100);
+  border-color: var(--border);
 }
 
-.section-blocks .layout-control-btn:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.section-blocks .layout-cell-add-btn {
-  border-color: currentColor;
-  color: inherit;
-}
-
-/* Top-level context */
-.block-editor > .block-layout .layout-cells-grid {
-  opacity: 1;
-}
-
-.block-editor > .block-layout .layout-cell-add-btn {
-  color: var(--text-muted);
-}
-
-.block-editor > .block-layout .layout-cell:hover .layout-cell-add-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
 
 /* Block too large warning */
 .block-item.block-too-large {
