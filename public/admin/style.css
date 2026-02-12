@@ -1799,17 +1799,17 @@ button:disabled {
 }
 
 .layout-col-controls {
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: row;
-}
-
-.layout-row-controls {
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
   flex-direction: column;
+}
+
+.layout-row-controls {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row;
 }
 
 .layout-control-label {
@@ -1885,18 +1885,21 @@ button:disabled {
   font-size: 13px;
 }
 
-/* Hide block header inside layout cells — only show × delete on hover */
-.layout-cell-blocks .block-header {
+/* Hide block header and byte indicator inside layout cells */
+.layout-cell-blocks .block-header,
+.layout-cell-blocks .block-byte-indicator {
   display: none;
 }
 
-/* Per-cell alignment controls — hover only */
-.layout-cell-align {
+/* Per-cell toolbar — hover only */
+.layout-cell-toolbar {
   position: absolute;
   top: 3px;
   left: 3px;
+  right: 3px;
   display: flex;
-  gap: 1px;
+  align-items: center;
+  gap: 6px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s;
@@ -1904,24 +1907,27 @@ button:disabled {
   background: #fff;
   border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 3px;
-  padding: 1px;
+  padding: 2px 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.layout-cell:hover .layout-cell-align {
+.layout-cell:hover .layout-cell-toolbar {
   opacity: 1;
   pointer-events: auto;
+}
+
+.layout-toolbar-group {
+  display: flex;
+  gap: 1px;
 }
 
 .layout-align-btn {
   background: transparent;
   border: 1px solid transparent;
   color: #9ca3af;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 10px;
-  font-weight: 700;
   line-height: 1;
   min-width: 18px;
   min-height: 18px;
@@ -1942,42 +1948,55 @@ button:disabled {
   border-color: rgba(var(--accent-rgb, 139, 92, 246), 0.2);
 }
 
-.layout-cell-blocks .block-item {
-  position: relative;
+.layout-toolbar-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 600;
 }
 
-.layout-cell-blocks .block-item .block-cell-delete {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background: rgba(128, 128, 128, 0.15);
+.layout-toolbar-input span {
+  user-select: none;
+}
+
+.layout-toolbar-input input {
+  width: 40px;
   border: 1px solid rgba(128, 128, 128, 0.2);
-  color: #6b7280;
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
+  border-radius: 2px;
+  padding: 1px 3px;
+  font-size: 10px;
+  color: #374151;
+  background: transparent;
+  outline: none;
+}
+
+.layout-toolbar-input input:focus {
+  border-color: var(--accent);
+}
+
+.layout-toolbar-delete {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #9ca3af;
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.15s;
-  z-index: 2;
+  transition: all 0.1s;
 }
 
-.layout-cell:hover .block-cell-delete {
-  opacity: 0.6;
-  pointer-events: auto;
-}
-
-.layout-cell:hover .block-cell-delete:hover {
-  opacity: 1;
+.layout-toolbar-delete:hover {
   color: #dc2626;
-  border-color: #dc2626;
   background: #fef2f2;
+  border-color: #fecaca;
 }
 
 /* Add block button - hover only, hidden when cell has content */
