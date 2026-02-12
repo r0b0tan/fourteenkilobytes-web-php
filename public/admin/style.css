@@ -1350,6 +1350,37 @@ button:disabled {
   font-weight: 400;
 }
 
+.block-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.block-selector-row label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.block-selector-input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.block-selector-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .block-content:focus {
   border-color: var(--accent);
   background: var(--bg);
