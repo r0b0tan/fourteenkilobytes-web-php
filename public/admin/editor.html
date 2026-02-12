@@ -243,6 +243,7 @@
             <button type="button" data-type="heading" data-level="2" data-i18n="editor.blockHeading">Heading</button>
             <button type="button" data-type="list" data-list-type="unordered" data-i18n="editor.blockList">List</button>
             <button type="button" data-type="divider" data-i18n="editor.blockDivider">Divider</button>
+            <button type="button" data-type="spacer" data-i18n="editor.blockSpacer">Spacer</button>
             <button type="button" data-type="bloglist" data-i18n="editor.blockBloglist">Bloglist</button>
             <button type="button" data-type="section" data-i18n="editor.blockSection">Section</button>
           </div>
@@ -795,6 +796,9 @@
           if (block.type === 'divider') {
             return createBlockElement('divider');
           }
+          if (block.type === 'spacer') {
+            return createBlockElement('spacer', null, '', null, block.height || '1rem');
+          }
           if (block.type === 'codeblock') {
             return createBlockElement('codeblock', null, block.content || '');
           }
@@ -1002,7 +1006,8 @@
                   { type: 'paragraph', label: 'Paragraph' },
                   { type: 'heading', label: 'Heading', level: '2' },
                   { type: 'list', label: 'List', listType: 'unordered' },
-                  { type: 'divider', label: 'Divider' }
+                  { type: 'divider', label: 'Divider' },
+                  { type: 'spacer', label: 'Spacer' }
                 ];
                 innerTypes.forEach(t => {
                   const b = document.createElement('button');
@@ -1010,7 +1015,7 @@
                   b.textContent = t.label;
                   b.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const newBlock = createBlockElement(t.type, t.level, '', t.listType);
+                    const newBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight);
                     cellBlocks.appendChild(newBlock);
                     dropdown.classList.add('hidden');
                     const focusTarget = newBlock.querySelector('li[contenteditable="true"]') || newBlock.querySelector('.block-content');
@@ -1464,6 +1469,7 @@
           { type: 'heading', i18n: 'editor.blockHeading', label: 'Heading', level: '2' },
           { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
           { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' },
+          { type: 'spacer', i18n: 'editor.blockSpacer', label: 'Spacer' },
           { type: 'layout', i18n: 'editor.blockLayout', label: 'Layout' }
         ];
 
@@ -1486,7 +1492,7 @@
         dropdown.addEventListener('click', (e) => {
           const clicked = e.target.closest('button');
           if (!clicked) return;
-          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType);
+          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType, clicked.dataset.spacerHeight);
           const sectionBlocks = sectionBlock.querySelector('.section-blocks');
           sectionBlocks.appendChild(childBlock);
           const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
@@ -1506,12 +1512,13 @@
         return row;
       }
 
-      function createBlockElement(type, level, initialHtml = '', listType = null) {
+      function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null) {
         const block = document.createElement('div');
         block.className = 'block-item';
         block.dataset.type = type;
         if (level) block.dataset.level = level;
         if (listType) block.dataset.listType = listType;
+        if (type === 'spacer') block.dataset.height = spacerHeight || '1rem';
 
         // Section block: completely different DOM structure
         if (type === 'section') {
@@ -2012,7 +2019,8 @@
               { type: 'paragraph', label: 'Paragraph' },
               { type: 'heading', label: 'Heading', level: '2' },
               { type: 'list', label: 'List', listType: 'unordered' },
-              { type: 'divider', label: 'Divider' }
+              { type: 'divider', label: 'Divider' },
+              { type: 'spacer', label: 'Spacer' }
             ];
             innerTypes.forEach(t => {
               const b = document.createElement('button');
@@ -2020,7 +2028,7 @@
               b.textContent = t.label;
               b.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const childBlock = createBlockElement(t.type, t.level, '', t.listType);
+                const childBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight);
                 cellBlocks.appendChild(childBlock);
                 dropdown.classList.add('hidden');
                 const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
@@ -2156,15 +2164,24 @@
           });
           header.appendChild(typeSelect);
         } else {
-          // Bloglist or Divider - just a label
+          // Bloglist, Divider or Spacer - just a label
           const label = document.createElement('span');
           label.className = 'block-type-label';
-          label.textContent = type === 'divider' ? 'Divider' : 'Bloglist';
+          if (type === 'divider') {
+            label.setAttribute('data-i18n', 'editor.blockDivider');
+            label.textContent = 'Divider';
+          } else if (type === 'spacer') {
+            label.setAttribute('data-i18n', 'editor.blockSpacer');
+            label.textContent = 'Spacer';
+          } else {
+            label.setAttribute('data-i18n', 'editor.blockBloglist');
+            label.textContent = 'Bloglist';
+          }
           header.appendChild(label);
         }
 
-        // Format buttons (nur für rich-text Blöcke, nicht für bloglist, divider, codeblock)
-        if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock') {
+        // Format buttons (nur für rich-text Blöcke)
+        if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock' && type !== 'spacer') {
           const formatBtns = document.createElement('div');
           formatBtns.className = 'block-format-buttons';
 
@@ -2285,6 +2302,39 @@
           content.contentEditable = 'false';
           content.className = 'block-content block-divider';
           content.innerHTML = '<hr>';
+        } else if (type === 'spacer') {
+          content.contentEditable = 'false';
+          content.className = 'block-content block-spacer';
+
+          const spacerPreview = document.createElement('div');
+          spacerPreview.className = 'spacer-preview';
+          spacerPreview.style.height = block.dataset.height || '1rem';
+
+          const spacerControls = document.createElement('div');
+          spacerControls.className = 'spacer-controls';
+
+          const spacerLabel = document.createElement('label');
+          spacerLabel.setAttribute('data-i18n', 'editor.spacerHeight');
+          spacerLabel.textContent = 'Height';
+
+          const spacerInput = document.createElement('input');
+          spacerInput.type = 'text';
+          spacerInput.className = 'spacer-height-input';
+          spacerInput.placeholder = '1rem';
+          spacerInput.value = block.dataset.height || '1rem';
+
+          spacerInput.addEventListener('input', () => {
+            const value = spacerInput.value.trim() || '1rem';
+            block.dataset.height = value;
+            spacerPreview.style.height = value;
+            updateCostRail();
+            debouncedPreview();
+          });
+
+          spacerLabel.appendChild(spacerInput);
+          spacerControls.appendChild(spacerLabel);
+          spacerPreview.appendChild(spacerControls);
+          content.appendChild(spacerPreview);
         } else if (type === 'codeblock') {
           content.contentEditable = 'true';
           content.className = 'block-content block-codeblock';
@@ -2329,7 +2379,7 @@
           content.dataset.placeholder = 'Quote...';
         } else if (type === 'codeblock') {
           content.dataset.placeholder = 'Code...';
-        } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list') {
+        } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list' && type !== 'spacer') {
           content.dataset.placeholder = 'Enter text...';
         }
       }
@@ -2624,7 +2674,8 @@
         const type = btn.dataset.type;
         const level = btn.dataset.level;
         const listType = btn.dataset.listType;
-        const block = createBlockElement(type, level, '', listType);
+        const spacerHeight = btn.dataset.spacerHeight;
+        const block = createBlockElement(type, level, '', listType, spacerHeight);
         blockEditor.appendChild(block);
         // Focus on first editable element
         const focusTarget = block.querySelector('li[contenteditable="true"]') || block.querySelector('.block-content');
@@ -2749,6 +2800,12 @@
         }
         if (type === 'divider') {
           return { type: 'divider' };
+        }
+        if (type === 'spacer') {
+          return {
+            type: 'spacer',
+            height: block.dataset.height || '1rem'
+          };
         }
         if (type === 'codeblock') {
           const contentEl = block.querySelector('.block-content');
@@ -2951,6 +3008,9 @@
           if (blockData.type === 'divider') {
             return '<hr>';
           }
+          if (blockData.type === 'spacer') {
+            return `<div style="height:${blockData.height || '1rem'}"></div>`;
+          }
           if (blockData.type === 'codeblock') {
             return `<pre><code>${escapeHtml(blockData.content || '')}</code></pre>`;
           }
@@ -3082,6 +3142,7 @@
                 else if (type === 'blockquote') label = 'Quote';
                 else if (type === 'codeblock') label = 'Code';
                 else if (type === 'divider') label = 'HR';
+                else if (type === 'spacer') label = 'Spacer';
             }
 
             // Update this block's indicator
