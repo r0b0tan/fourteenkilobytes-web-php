@@ -1548,14 +1548,6 @@ button:disabled {
 }
 
 /* Section blocks */
-.block-section {
-  /* Inherit standard block-item padding and background */
-}
-
-.block-section > .block-header {
-  /* Standard header styling */
-}
-
 .section-inner-wrapper {
   background: var(--gray-200);
   border: 1px solid var(--gray-400);
@@ -1732,21 +1724,22 @@ button:disabled {
 }
 
 .section-add-block {
-  background: none;
-  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px dashed var(--accent);
   border-radius: 4px;
   padding: 6px 12px;
   cursor: pointer;
-  color: inherit;
-  opacity: 0.6;
+  color: var(--accent);
+  opacity: 1;
   font-size: 12px;
-  width: 100%;
+  width: auto;
   margin-top: 8px;
+  transition: all 0.15s;
 }
 
 .section-add-block:hover {
-  background: rgba(255, 255, 255, 0.1);
-  opacity: 1;
+  background: #fff;
+  border-style: solid;
 }
 
 /* Fix for inner block content background on focus */
@@ -2053,14 +2046,16 @@ button:disabled {
 }
 
 .layout-cell:hover .layout-cell-add-btn {
-  opacity: 0.5;
+  opacity: 1;
   pointer-events: auto;
+  background: rgba(255, 255, 255, 0.75);
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .layout-cell:hover .layout-cell-add-btn:hover {
   opacity: 1;
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 /* Hide + button when cell already has a block */
