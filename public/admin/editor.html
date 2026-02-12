@@ -1880,7 +1880,7 @@
           addRowBtn.title = 'Add row';
           addRowBtn.addEventListener('click', () => {
             const rows = parseInt(block.dataset.rows);
-            block.dataset.rows = Math.min(rows + 1, 6);
+            block.dataset.rows = rows + 1;
             rebuildGrid();
           });
           rowControls.appendChild(removeRowBtn);
