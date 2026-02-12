@@ -807,7 +807,9 @@ ${items}
       return `<div class="cell"${cellStyle}>${cellContent}</div>`;
     }).join("\n");
     const styles = [];
-    styles.push(`display:grid`);
+    styles.push(`display:inline-grid`);
+    styles.push(`width:fit-content`);
+    styles.push(`max-width:100%`);
     styles.push(`grid-template-columns:repeat(${block.columns},1fr)`);
     if (block.rows) {
       styles.push(`grid-template-rows:repeat(${block.rows},auto)`);
