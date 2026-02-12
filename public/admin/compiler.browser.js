@@ -796,7 +796,14 @@ ${items}
   if (block.type === "layout") {
     const cellsHtml = block.cells.map((cell) => {
       const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
-      const cellStyle = cell.textAlign ? ` style="text-align:${cell.textAlign}"` : "";
+      const cellStyles = [];
+      if (cell.textAlign)
+        cellStyles.push(`text-align:${cell.textAlign}`);
+      if (cell.padding)
+        cellStyles.push(`padding:${cell.padding}`);
+      if (cell.margin)
+        cellStyles.push(`margin:${cell.margin}`);
+      const cellStyle = cellStyles.length ? ` style="${cellStyles.join(";")}"` : "";
       return `<div class="cell"${cellStyle}>${cellContent}</div>`;
     }).join("\n");
     const styles = [];
