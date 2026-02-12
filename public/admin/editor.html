@@ -818,22 +818,23 @@
         pageTypeSelect.value = sourceData.pageType || 'post';
 
         // Helper to create a block element from source data
-        blockElFromSource = function(block) {
+        blockElFromSource = function(block, depth = 0) {
+          const isNested = depth > 0;
           if (block.type === 'bloglist') {
-            return applySelectorToBlockElement(createBlockElement('bloglist'), block);
+            return applySelectorToBlockElement(createBlockElement('bloglist', null, '', null, null, isNested), block);
           }
           if (block.type === 'divider') {
-            return applySelectorToBlockElement(createBlockElement('divider'), block);
+            return applySelectorToBlockElement(createBlockElement('divider', null, '', null, null, isNested), block);
           }
           if (block.type === 'spacer') {
-            return applySelectorToBlockElement(createBlockElement('spacer', null, '', null, block.height || '1rem'), block);
+            return applySelectorToBlockElement(createBlockElement('spacer', null, '', null, block.height || '1rem', isNested), block);
           }
           if (block.type === 'codeblock') {
-            return applySelectorToBlockElement(createBlockElement('codeblock', null, block.content || ''), block);
+            return applySelectorToBlockElement(createBlockElement('codeblock', null, block.content || '', null, null, isNested), block);
           }
           if (block.type === 'unordered-list' || block.type === 'ordered-list') {
             const listType = block.type === 'ordered-list' ? 'ordered' : 'unordered';
-            const el = createBlockElement('list', null, '', listType);
+            const el = createBlockElement('list', null, '', listType, null, isNested);
             const listEl = el.querySelector('.editable-list');
             if (listEl && block.items) {
               listEl.innerHTML = '';
@@ -848,7 +849,7 @@
             return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'section') {
-            const el = createBlockElement('section');
+            const el = createBlockElement('section', null, '', null, null, isNested);
             // Set properties
             el.dataset.background = block.background || '#1a1a1a';
             el.dataset.color = block.color || '#ffffff';
@@ -909,13 +910,13 @@
             if (block.children && block.children.length > 0) {
               const sectionBlocks = el.querySelector('.section-blocks');
               block.children.forEach(child => {
-                sectionBlocks.appendChild(blockElFromSource(child));
+                sectionBlocks.appendChild(blockElFromSource(child, depth + 1));
               });
             }
             return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'layout') {
-            const el = createBlockElement('layout');
+            const el = createBlockElement('layout', null, '', null, null, isNested);
             const cols = block.columns || 2;
             const rows = block.cells ? Math.ceil(block.cells.length / cols) : 2;
             
@@ -1018,7 +1019,7 @@
                 cellBlocks.className = 'layout-cell-blocks';
                 if (cellData.children && cellData.children.length > 0) {
                   const child = cellData.children[0];
-                  cellBlocks.appendChild(blockElFromSource(child));
+                  cellBlocks.appendChild(blockElFromSource(child, depth + 1));
                 }
                 cellEl.appendChild(cellBlocks);
 
@@ -1044,7 +1045,7 @@
                   b.textContent = t.label;
                   b.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const newBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight);
+                    const newBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight, true);
                     cellBlocks.appendChild(newBlock);
                     dropdown.classList.add('hidden');
                     const focusTarget = newBlock.querySelector('li[contenteditable="true"]') || newBlock.querySelector('.block-content');
@@ -1074,13 +1075,13 @@
             return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'heading') {
-            return applySelectorToBlockElement(createBlockElement('heading', block.level, inlineNodesToHtml(block.children)), block);
+            return applySelectorToBlockElement(createBlockElement('heading', block.level, inlineNodesToHtml(block.children), null, null, isNested), block);
           }
           if (block.type === 'blockquote') {
-            return applySelectorToBlockElement(createBlockElement('blockquote', null, inlineNodesToHtml(block.children)), block);
+            return applySelectorToBlockElement(createBlockElement('blockquote', null, inlineNodesToHtml(block.children), null, null, isNested), block);
           }
           // paragraph
-          return applySelectorToBlockElement(createBlockElement('paragraph', null, inlineNodesToHtml(block.children)), block);
+          return applySelectorToBlockElement(createBlockElement('paragraph', null, inlineNodesToHtml(block.children), null, null, isNested), block);
         };
 
         // Restore blocks from content array
@@ -1521,7 +1522,7 @@
         dropdown.addEventListener('click', (e) => {
           const clicked = e.target.closest('button');
           if (!clicked) return;
-          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType, clicked.dataset.spacerHeight);
+          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType, clicked.dataset.spacerHeight, true);
           const sectionBlocks = sectionBlock.querySelector('.section-blocks');
           sectionBlocks.appendChild(childBlock);
           const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
@@ -1541,7 +1542,7 @@
         return row;
       }
 
-      function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null) {
+      function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null, isNested = false) {
         const block = document.createElement('div');
         block.className = 'block-item';
         block.dataset.type = type;
@@ -1551,18 +1552,11 @@
         if (type === 'spacer') block.dataset.height = spacerHeight || '1rem';
 
         function createBlockSelectorControl(currentBlock) {
-          const row = document.createElement('div');
-          row.className = 'block-selector-row';
-
-          const label = document.createElement('label');
-          label.setAttribute('data-i18n', 'editor.blockSelector');
-          label.textContent = t('editor.blockSelector');
-
           const input = document.createElement('input');
           input.type = 'text';
           input.className = 'block-selector-input';
-          input.placeholder = t('editor.blockSelectorPlaceholder');
-          input.setAttribute('data-i18n-placeholder', 'editor.blockSelectorPlaceholder');
+          input.placeholder = '.your-css-class';
+          input.title = 'CSS selector';
           input.value = currentBlock.dataset.selector || '';
           input.addEventListener('input', () => {
             currentBlock.dataset.selector = input.value.trim();
@@ -1570,9 +1564,7 @@
             debouncedPreview();
           });
 
-          row.appendChild(label);
-          row.appendChild(input);
-          return row;
+          return input;
         }
 
         // Section block: completely different DOM structure
@@ -1597,6 +1589,7 @@
 
           const actions = document.createElement('div');
           actions.className = 'block-item-actions';
+          if (!isNested) actions.appendChild(createBlockSelectorControl(block));
           const upBtn = document.createElement('button');
           upBtn.type = 'button';
           upBtn.textContent = '↑';
@@ -1633,8 +1626,6 @@
           const contentWrapper = document.createElement('div');
           contentWrapper.className = 'section-inner-wrapper';
           block.appendChild(contentWrapper);
-
-          contentWrapper.appendChild(createBlockSelectorControl(block));
 
           // Controls row: color pickers + pattern selector
           const controls = document.createElement('div');
@@ -1861,6 +1852,7 @@
 
           const actions = document.createElement('div');
           actions.className = 'block-item-actions';
+          if (!isNested) actions.appendChild(createBlockSelectorControl(block));
           const upBtn = document.createElement('button');
           upBtn.type = 'button';
           upBtn.textContent = '↑';
@@ -1892,8 +1884,6 @@
           actions.appendChild(deleteBtn);
           header.appendChild(actions);
           block.appendChild(header);
-
-          block.appendChild(createBlockSelectorControl(block));
 
           // Cells grid (direct child, no wrapper needed - .layout-grid uses display:contents)
           const cellsGrid = document.createElement('div');
@@ -2098,7 +2088,7 @@
               b.textContent = t.label;
               b.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const childBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight);
+                const childBlock = createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight, true);
                 cellBlocks.appendChild(childBlock);
                 dropdown.classList.add('hidden');
                 const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
@@ -2279,6 +2269,7 @@
 
         const actions = document.createElement('div');
         actions.className = 'block-item-actions';
+        if (!isNested) actions.appendChild(createBlockSelectorControl(block));
 
         const upBtn = document.createElement('button');
         upBtn.type = 'button';
@@ -2314,8 +2305,6 @@
         actions.appendChild(deleteBtn);
 
         header.appendChild(actions);
-
-        block.appendChild(createBlockSelectorControl(block));
 
         // Byte indicator für diesen Block
         const byteIndicator = document.createElement('div');
