@@ -2908,67 +2908,98 @@
         let totalContentBytes = 0;
         const encoder = new TextEncoder();
 
-        // Estimate section wrapper bytes by mirroring compiler logic
-        function estimateSectionWrapper(block) {
+        function renderBlockHtmlForBytes(blockData) {
+          if (!blockData || typeof blockData !== 'object') return '';
+
+          if (blockData.type === 'bloglist') {
+            return '<!-- bloglist -->';
+          }
+          if (blockData.type === 'divider') {
+            return '<hr>';
+          }
+          if (blockData.type === 'codeblock') {
+            return `<pre><code>${escapeHtml(blockData.content || '')}</code></pre>`;
+          }
+          if (blockData.type === 'unordered-list' || blockData.type === 'ordered-list') {
+            const tag = blockData.type === 'unordered-list' ? 'ul' : 'ol';
+            const items = (blockData.items || []).map(item => {
+              const inlineHtml = inlineNodesToHtml(item.children || []);
+              return `<li>${inlineHtml}</li>`;
+            }).join('\n');
+            return `<${tag}>\n${items}\n</${tag}>`;
+          }
+          if (blockData.type === 'layout') {
+            const cellsHtml = (blockData.cells || []).map(cell => {
+              const cellContent = (cell.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
+              const cellStyles = [];
+              if (cell.textAlign) cellStyles.push(`text-align:${cell.textAlign}`);
+              if (cell.padding) cellStyles.push(`padding:${cell.padding}`);
+              if (cell.margin) cellStyles.push(`margin:${cell.margin}`);
+              const cellStyle = cellStyles.length ? ` style="${cellStyles.join(';')}"` : '';
+              return `<div class="cell"${cellStyle}>${cellContent}</div>`;
+            }).join('\n');
+
             const styles = [];
-            if (block.dataset.background) styles.push(`--sb:${block.dataset.background}`);
-            if (block.dataset.color) styles.push(`--sc:${block.dataset.color}`);
-            if (block.dataset.patternColor && block.dataset.patternOpacity) {
-                const hex = block.dataset.patternColor;
-                const op = block.dataset.patternOpacity;
-                const r = parseInt(hex.substring(1, 3), 16);
-                const g = parseInt(hex.substring(3, 5), 16);
-                const b = parseInt(hex.substring(5, 7), 16);
-                styles.push(`--pc:rgba(${r},${g},${b},${op})`);
+            styles.push('display:grid');
+            styles.push(`grid-template-columns:repeat(${blockData.columns},1fr)`);
+            if (blockData.rows) {
+              styles.push(`grid-template-rows:repeat(${blockData.rows},auto)`);
             }
-            if (block.dataset.width) styles.push(`--sw:${block.dataset.width}`);
-            if (block.dataset.padding) styles.push(`--sp:${block.dataset.padding}`);
-            if (block.dataset.align) styles.push(`--sa:${block.dataset.align}`);
+            const rowGap = blockData.rowGap || '0';
+            const colGap = blockData.columnGap || '0';
+            if (rowGap === colGap) {
+              styles.push(`gap:${rowGap}`);
+            } else {
+              styles.push(`gap:${rowGap} ${colGap}`);
+            }
+
+            const classes = ['layout'];
+            if (blockData.className) classes.push(blockData.className);
+            return `<div class="${classes.join(' ')}" style="${styles.join(';')}">${cellsHtml}</div>`;
+          }
+          if (blockData.type === 'section') {
+            const childrenHtml = (blockData.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
+            const styles = [];
+            if (blockData.background) styles.push(`--sb:${blockData.background}`);
+            if (blockData.color) styles.push(`--sc:${blockData.color}`);
+            if (blockData.patternColor && blockData.patternOpacity) {
+              const hex = blockData.patternColor;
+              const opacity = blockData.patternOpacity;
+              const r = parseInt(hex.substring(1, 3), 16);
+              const g = parseInt(hex.substring(3, 5), 16);
+              const b = parseInt(hex.substring(5, 7), 16);
+              styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
+            }
+            if (blockData.width) styles.push(`--sw:${blockData.width}`);
+            if (blockData.padding) styles.push(`--sp:${blockData.padding}`);
+            if (blockData.align) styles.push(`--sa:${blockData.align}`);
+
+            const classes = ['section'];
+            if (blockData.pattern === 'dots') classes.push('bg-pattern-dots');
+            if (blockData.pattern === 'grid') classes.push('bg-pattern-grid');
+            if (blockData.pattern === 'stripes') classes.push('bg-pattern-stripes');
+            if (blockData.pattern === 'cross') classes.push('bg-pattern-cross');
+            if (blockData.pattern === 'hexagons') classes.push('bg-pattern-hexagons');
+
             const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
+            return `<div class="${classes.join(' ')}"${styleAttr}>${childrenHtml}</div>`;
+          }
 
-            let cls = 'section';
-            const p = block.dataset.pattern;
-            if (p === 'dots') cls += ' bg-pattern-dots';
-            else if (p === 'grid') cls += ' bg-pattern-grid';
-            else if (p === 'stripes') cls += ' bg-pattern-stripes';
-            else if (p === 'cross') cls += ' bg-pattern-cross';
-            else if (p === 'hexagons') cls += ' bg-pattern-hexagons';
-
-            // <div class="..."[ style="..."]></div>
-            return encoder.encode(`<div class="${cls}"${styleAttr}></div>`).length;
+          const inlineHtml = inlineNodesToHtml(blockData.children || []);
+          if (blockData.type === 'heading') {
+            const level = blockData.level ?? 1;
+            return `<h${level}>${inlineHtml}</h${level}>`;
+          }
+          if (blockData.type === 'blockquote') {
+            return `<blockquote>${inlineHtml}</blockquote>`;
+          }
+          return `<p>${inlineHtml}</p>`;
         }
 
-        // Estimate content bytes for a non-section block
         function estimateBlockBytes(block) {
-            const type = block.dataset.type;
-            if (type === 'divider') return 4; // <hr>
-            if (type === 'bloglist') return 50; // placeholder estimate
-
-            const content = block.querySelector('.block-content');
-            if (type === 'codeblock') {
-                // Code has no inline formatting — use textContent
-                const text = content ? content.textContent : '';
-                return encoder.encode(text).length + 24; // <pre><code></code></pre>
-            }
-
-            // For other blocks, innerHTML captures inline formatting
-            const inner = content ? content.innerHTML : '';
-            const innerBytes = encoder.encode(inner).length;
-
-            if (type === 'heading') return innerBytes + 9;    // <hN></hN>
-            if (type === 'blockquote') return innerBytes + 28; // <blockquote><p></p></blockquote>
-
-            if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-                const listEl = block.querySelector('.editable-list');
-                if (!listEl) return 9;
-                let bytes = 9; // <ul></ul> or <ol></ol>
-                listEl.querySelectorAll('li').forEach(li => {
-                    bytes += encoder.encode(li.innerHTML).length + 9; // <li></li>
-                });
-                return bytes;
-            }
-
-            return innerBytes + 7; // <p></p> (paragraph / default)
+          const blockData = serializeBlock(block);
+          const html = renderBlockHtmlForBytes(blockData);
+          return encoder.encode(html).length;
         }
 
         // Recursive helper to calculate bytes for a block and its children
@@ -2979,18 +3010,25 @@
 
             if (type === 'section') {
                 label = 'Section';
-                bytes = estimateSectionWrapper(block);
+                bytes = estimateBlockBytes(block);
 
-                // Sum children bytes recursively, plus newlines between them
                 const childrenWrapper = block.querySelector('.section-blocks');
                 if (childrenWrapper) {
-                    const children = childrenWrapper.querySelectorAll(':scope > .block-item');
-                    let childCount = 0;
-                    children.forEach(child => {
-                        bytes += processBlock(child);
-                        childCount++;
-                    });
-                    if (childCount > 1) bytes += childCount - 1; // \n between children
+                  const children = childrenWrapper.querySelectorAll(':scope > .block-item');
+                  children.forEach(child => {
+                    processBlock(child);
+                  });
+                }
+            } else if (type === 'layout') {
+                label = 'Layout';
+                bytes = estimateBlockBytes(block);
+
+                const cellsGrid = block.querySelector('.layout-cells-grid');
+                if (cellsGrid) {
+                  const cellBlocks = cellsGrid.querySelectorAll('.layout-cell .layout-cell-blocks > .block-item');
+                  cellBlocks.forEach(child => {
+                    processBlock(child);
+                  });
                 }
             } else {
                 bytes = estimateBlockBytes(block);
