@@ -1564,30 +1564,47 @@ button:disabled {
 }
 
 .section-controls {
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
-  justify-content: start;
-  gap: 12px 32px;
-  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 10px 12px;
   background: transparent;
-  border-bottom: 1px solid #ffffff;
+
 }
 
-.section-controls label {
-  font-size: 12px;
+.section-inner-wrapper .section-pattern-opts {
+  display: none;
+}
+
+.section-inner-wrapper.has-pattern .section-pattern-opts {
+  display: flex;
+}
+
+.section-pattern-row {
+  width: 100%;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.section-controls label,
+.section-pattern-row label {
+  font-size: 11px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 5px;
   color: var(--text-secondary);
   font-weight: 500;
   white-space: nowrap;
-  width: 100%;
 }
 
-.section-controls input[type="color"] {
-  width: 32px;
-  height: 24px;
+.section-controls input[type="color"],
+.section-pattern-row input[type="color"] {
+  width: 28px;
+  height: 22px;
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px;
@@ -1596,16 +1613,37 @@ button:disabled {
 }
 
 .section-controls select,
-.section-controls .section-width-input {
-  font-size: 12px;
-  padding: 2px 4px;
+.section-controls .section-width-input,
+.section-controls .section-padding-input,
+.section-pattern-row .section-opacity-input {
+  font-size: 11px;
+  height: 22px;
+  padding: 0 4px;
   border: 1px solid var(--border);
   border-radius: 3px;
   background: var(--input-bg);
+  width: 64px;
 }
 
-.section-controls .section-width-input {
-  width: 64px;
+.section-controls select {
+  width: auto;
+  appearance: none;
+  padding-right: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  cursor: pointer;
+}
+
+.section-controls .section-opacity-input {
+  width: 44px;
+}
+
+.section-controls input[type="range"],
+.section-pattern-row input[type="range"] {
+  width: 56px;
+  height: 22px;
+  vertical-align: middle;
 }
 
 .section-preview {
