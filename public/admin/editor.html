@@ -1816,6 +1816,17 @@
           downBtn.title = 'Move down';
           downBtn.addEventListener('click', () => moveBlock(block, 1));
           actions.appendChild(downBtn);
+          const copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.innerHTML = '⧉';
+          copyBtn.title = 'Duplicate';
+          copyBtn.addEventListener('click', () => {
+            const data = serializeBlock(block);
+            const clone = blockElFromSource(data);
+            insertBlockDirectlyBelow(block, clone);
+            debouncedPreview();
+          });
+          actions.appendChild(copyBtn);
           const deleteBtn = document.createElement('button');
           deleteBtn.type = 'button';
           deleteBtn.textContent = '×';
@@ -2223,6 +2234,18 @@
         downBtn.title = 'Move down';
         downBtn.addEventListener('click', () => moveBlock(block, 1));
         actions.appendChild(downBtn);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.innerHTML = '⧉';
+        copyBtn.title = 'Duplicate';
+        copyBtn.addEventListener('click', () => {
+          const data = serializeBlock(block);
+          const clone = blockElFromSource(data);
+          insertBlockDirectlyBelow(block, clone);
+          debouncedPreview();
+        });
+        actions.appendChild(copyBtn);
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
