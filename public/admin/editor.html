@@ -560,13 +560,18 @@
       function saveToLocalStorage() {
         const context = getCurrentContext();
         try {
+          const title = titleInput.value;
+          const slug = slugInput.value;
+          const pageType = pageTypeSelect.value;
+          const content = getContentFromBlocks();
+
           const data = {
             // Context for validation on restore
             context,
             // Editor state
-            title: titleInput.value,
-            slug: slugInput.value,
-            pageType: pageTypeSelect.value,
+            title,
+            slug,
+            pageType,
             blocks: [],
             titleOverrideEnabled: titleOverrideEnabled.checked,
             titleOverride: titleOverrideEnabled.checked ? titleOverrideInput.value : null,
@@ -579,6 +584,22 @@
             metaAuthor: metaAuthor.value,
             cssEnabled: cssEnabled.checked,
             css: cssEnabled.checked ? cssRules.value : null,
+            source: {
+              title,
+              slug,
+              pageType,
+              content,
+              titleOverride: titleOverrideEnabled.checked && titleOverrideInput.value.trim()
+                ? { enabled: true, title: titleOverrideInput.value.trim() }
+                : null,
+              navigation: navEnabled.checked ? { items: getNavigationItems() } : null,
+              footer: footerEnabled.checked ? { content: footerText.value } : null,
+              meta: metaEnabled.checked ? {
+                description: metaDescription.value,
+                author: metaAuthor.value
+              } : null,
+              css: cssEnabled.checked ? { rules: cssRules.value } : null
+            },
             timestamp: Date.now()
           };
 
@@ -622,6 +643,13 @@
           if (age > 7 * 24 * 60 * 60 * 1000) {
             localStorage.removeItem(AUTOSAVE_KEY);
             return false;
+          }
+
+          // Preferred restore path (v2 autosave): compiler-like source snapshot with nested blocks
+          if (data.source && Array.isArray(data.source.content)) {
+            loadFromSource(data.source);
+            updatePageTitleSlug();
+            return true;
           }
 
           // Restore basic fields
@@ -2307,16 +2335,22 @@
       }
 
       function moveBlock(block, direction) {
-        const blocks = Array.from(blockEditor.children);
+        const parent = block?.parentElement;
+        if (!parent) return;
+
+        const blocks = Array.from(parent.children).filter(el => el.classList?.contains('block-item'));
         const index = blocks.indexOf(block);
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= blocks.length) return;
 
         if (direction < 0) {
-          blockEditor.insertBefore(block, blocks[newIndex]);
+          parent.insertBefore(block, blocks[newIndex]);
         } else {
-          blockEditor.insertBefore(block, blocks[newIndex].nextSibling);
+          parent.insertBefore(block, blocks[newIndex].nextSibling);
         }
+
+        updateCostRail();
+        debouncedPreview();
       }
 
       function insertBlockDirectlyBelow(referenceBlock, newBlock) {
