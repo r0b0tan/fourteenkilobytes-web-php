@@ -28,6 +28,10 @@ html { overflow-x: hidden }
 .section * { color: inherit }
 .section > * { position: relative; z-index: 1 }
 
+/* Layout inside sections: avoid extra vertical whitespace from default block margins */
+.section .layout .cell > :first-child { margin-top: 0; }
+.section .layout .cell > :last-child { margin-bottom: 0; }
+
 /* Pattern overlay layer */
 .section::before {
   content: '';

@@ -1903,6 +1903,17 @@ button:disabled {
   transition: background 0.15s;
 }
 
+.section-blocks .block-layout .layout-cells-grid {
+  display: inline-grid;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+}
+
+.section-blocks .block-layout .layout-cell {
+  min-height: 0;
+}
+
 .layout-cell:hover {
   background: rgba(128, 128, 128, 0.06);
 }
