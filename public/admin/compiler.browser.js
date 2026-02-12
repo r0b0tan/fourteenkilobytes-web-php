@@ -258,6 +258,17 @@ function validateContentBlock(block, path, disallowNesting = false) {
       }
     };
   }
+  if (block.selector !== void 0 && typeof block.selector !== "string") {
+    return {
+      valid: false,
+      error: {
+        code: "CONTENT_INVALID_ELEMENT",
+        element: `${blockType} with non-string selector`,
+        allowed: [`${blockType} with string selector or no selector`],
+        path
+      }
+    };
+  }
   if (disallowNesting && (blockType === "section" || blockType === "layout")) {
     return {
       valid: false,
@@ -659,6 +670,35 @@ var HTML_ESCAPE = {
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (char) => HTML_ESCAPE[char]);
 }
+function parseSelector(selector) {
+  if (!selector || typeof selector !== "string") {
+    return { id: "", classes: [] };
+  }
+  const safeToken = (token) => {
+    if (!token)
+      return "";
+    return token.trim().replace(/[^a-zA-Z0-9_-]/g, "");
+  };
+  const normalized = selector.trim();
+  if (!normalized)
+    return { id: "", classes: [] };
+  if (normalized.startsWith("#")) {
+    const [idToken, ...classTokens] = normalized.slice(1).split(".");
+    const id = safeToken(idToken);
+    const classes2 = classTokens.map(safeToken).filter(Boolean);
+    return { id, classes: classes2 };
+  }
+  const source = normalized.startsWith(".") ? normalized.slice(1) : normalized;
+  const classes = source.split(/[.\s]+/).map(safeToken).filter(Boolean);
+  return { id: "", classes };
+}
+function selectorAttrs(selector, baseClasses = []) {
+  const parsed = parseSelector(selector);
+  const classes = [...baseClasses, ...parsed.classes].filter(Boolean);
+  const idAttr = parsed.id ? ` id="${escapeHtml(parsed.id)}"` : "";
+  const classAttr = classes.length > 0 ? ` class="${escapeHtml(classes.join(" "))}"` : "";
+  return `${idAttr}${classAttr}`;
+}
 function flatten(input) {
   const breakdown = {
     base: 0,
@@ -789,17 +829,20 @@ ${navItems}
 }
 function flattenContentBlock(block, icons, posts) {
   if (block.type === "bloglist") {
-    return renderBloglist(posts || [], block);
+    const bloglistHtml = renderBloglist(posts || [], block);
+    if (!block.selector)
+      return bloglistHtml;
+    return `<div${selectorAttrs(block.selector)}>${bloglistHtml}</div>`;
   }
   if (block.type === "divider") {
-    return "<hr>";
+    return `<hr${selectorAttrs(block.selector)}>`;
   }
   if (block.type === "spacer") {
     const height = block.height && block.height.trim() ? block.height.trim() : "1rem";
-    return `<div style="height:${height}"></div>`;
+    return `<div${selectorAttrs(block.selector)} style="height:${height}"></div>`;
   }
   if (block.type === "codeblock") {
-    return `<pre><code>${escapeHtml(block.content)}</code></pre>`;
+    return `<pre${selectorAttrs(block.selector)}><code>${escapeHtml(block.content)}</code></pre>`;
   }
   if (block.type === "unordered-list" || block.type === "ordered-list") {
     const tag = block.type === "unordered-list" ? "ul" : "ol";
@@ -807,7 +850,7 @@ function flattenContentBlock(block, icons, posts) {
       const inlineHtml2 = flattenInlineNodes(item.children, icons, "content");
       return `<li>${inlineHtml2}</li>`;
     }).join("\n");
-    return `<${tag}>
+    return `<${tag}${selectorAttrs(block.selector)}>
 ${items}
 </${tag}>`;
   }
@@ -844,7 +887,7 @@ ${items}
     if (block.className) {
       classes.push(block.className);
     }
-    return `<div class="${classes.join(" ")}"${styleAttr}>${cellsHtml}</div>`;
+    return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${cellsHtml}</div>`;
   }
   if (block.type === "section") {
     const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
@@ -881,17 +924,17 @@ ${items}
       if (block.pattern === "hexagons")
         classes.push("bg-pattern-hexagons");
     }
-    return `<div class="${classes.join(" ")}"${styleAttr}>${childrenHtml}</div>`;
+    return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${childrenHtml}</div>`;
   }
   const inlineHtml = flattenInlineNodes(block.children, icons, "content");
   if (block.type === "heading") {
     const level = block.level ?? 1;
-    return `<h${level}>${inlineHtml}</h${level}>`;
+    return `<h${level}${selectorAttrs(block.selector)}>${inlineHtml}</h${level}>`;
   }
   if (block.type === "blockquote") {
-    return `<blockquote>${inlineHtml}</blockquote>`;
+    return `<blockquote${selectorAttrs(block.selector)}>${inlineHtml}</blockquote>`;
   }
-  return `<p>${inlineHtml}</p>`;
+  return `<p${selectorAttrs(block.selector)}>${inlineHtml}</p>`;
 }
 var DEFAULT_BLOGLIST_LIMIT = 20;
 function renderBloglist(posts, block) {

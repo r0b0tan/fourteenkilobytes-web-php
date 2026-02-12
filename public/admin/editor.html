@@ -779,6 +779,35 @@
         right: '<svg width="14" height="14" viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
       };
 
+      function selectorFromSourceBlock(block) {
+        if (typeof block?.selector === 'string') {
+          return block.selector.trim();
+        }
+        if (typeof block?.id === 'string' && block.id.trim()) {
+          return `#${block.id.trim()}`;
+        }
+        if (typeof block?.className === 'string' && block.className.trim()) {
+          return block.className
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(cls => `.${cls}`)
+            .join('');
+        }
+        return '';
+      }
+
+      function applySelectorToBlockElement(element, block) {
+        if (!element) return element;
+        const selector = selectorFromSourceBlock(block);
+        element.dataset.selector = selector;
+        const selectorInput = element.querySelector('.block-selector-input');
+        if (selectorInput) {
+          selectorInput.value = selector;
+        }
+        return element;
+      }
+
       let blockElFromSource = null;
 
       // Load editor state from source JSON (compiler format)
@@ -791,16 +820,16 @@
         // Helper to create a block element from source data
         blockElFromSource = function(block) {
           if (block.type === 'bloglist') {
-            return createBlockElement('bloglist');
+            return applySelectorToBlockElement(createBlockElement('bloglist'), block);
           }
           if (block.type === 'divider') {
-            return createBlockElement('divider');
+            return applySelectorToBlockElement(createBlockElement('divider'), block);
           }
           if (block.type === 'spacer') {
-            return createBlockElement('spacer', null, '', null, block.height || '1rem');
+            return applySelectorToBlockElement(createBlockElement('spacer', null, '', null, block.height || '1rem'), block);
           }
           if (block.type === 'codeblock') {
-            return createBlockElement('codeblock', null, block.content || '');
+            return applySelectorToBlockElement(createBlockElement('codeblock', null, block.content || ''), block);
           }
           if (block.type === 'unordered-list' || block.type === 'ordered-list') {
             const listType = block.type === 'ordered-list' ? 'ordered' : 'unordered';
@@ -816,7 +845,7 @@
               });
               setupListKeyHandlers(listEl);
             }
-            return el;
+            return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'section') {
             const el = createBlockElement('section');
@@ -883,7 +912,7 @@
                 sectionBlocks.appendChild(blockElFromSource(child));
               });
             }
-            return el;
+            return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'layout') {
             const el = createBlockElement('layout');
@@ -1042,16 +1071,16 @@
               cellsGrid.style.gridTemplateRows = `repeat(${rows}, auto)`;
             }
 
-            return el;
+            return applySelectorToBlockElement(el, block);
           }
           if (block.type === 'heading') {
-            return createBlockElement('heading', block.level, inlineNodesToHtml(block.children));
+            return applySelectorToBlockElement(createBlockElement('heading', block.level, inlineNodesToHtml(block.children)), block);
           }
           if (block.type === 'blockquote') {
-            return createBlockElement('blockquote', null, inlineNodesToHtml(block.children));
+            return applySelectorToBlockElement(createBlockElement('blockquote', null, inlineNodesToHtml(block.children)), block);
           }
           // paragraph
-          return createBlockElement('paragraph', null, inlineNodesToHtml(block.children));
+          return applySelectorToBlockElement(createBlockElement('paragraph', null, inlineNodesToHtml(block.children)), block);
         };
 
         // Restore blocks from content array
@@ -1516,9 +1545,35 @@
         const block = document.createElement('div');
         block.className = 'block-item';
         block.dataset.type = type;
+        block.dataset.selector = '';
         if (level) block.dataset.level = level;
         if (listType) block.dataset.listType = listType;
         if (type === 'spacer') block.dataset.height = spacerHeight || '1rem';
+
+        function createBlockSelectorControl(currentBlock) {
+          const row = document.createElement('div');
+          row.className = 'block-selector-row';
+
+          const label = document.createElement('label');
+          label.setAttribute('data-i18n', 'editor.blockSelector');
+          label.textContent = t('editor.blockSelector');
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'block-selector-input';
+          input.placeholder = t('editor.blockSelectorPlaceholder');
+          input.setAttribute('data-i18n-placeholder', 'editor.blockSelectorPlaceholder');
+          input.value = currentBlock.dataset.selector || '';
+          input.addEventListener('input', () => {
+            currentBlock.dataset.selector = input.value.trim();
+            updateCostRail();
+            debouncedPreview();
+          });
+
+          row.appendChild(label);
+          row.appendChild(input);
+          return row;
+        }
 
         // Section block: completely different DOM structure
         if (type === 'section') {
@@ -1578,6 +1633,8 @@
           const contentWrapper = document.createElement('div');
           contentWrapper.className = 'section-inner-wrapper';
           block.appendChild(contentWrapper);
+
+          contentWrapper.appendChild(createBlockSelectorControl(block));
 
           // Controls row: color pickers + pattern selector
           const controls = document.createElement('div');
@@ -1835,6 +1892,8 @@
           actions.appendChild(deleteBtn);
           header.appendChild(actions);
           block.appendChild(header);
+
+          block.appendChild(createBlockSelectorControl(block));
 
           // Cells grid (direct child, no wrapper needed - .layout-grid uses display:contents)
           const cellsGrid = document.createElement('div');
@@ -2255,6 +2314,8 @@
         actions.appendChild(deleteBtn);
 
         header.appendChild(actions);
+
+        block.appendChild(createBlockSelectorControl(block));
 
         // Byte indicator für diesen Block
         const byteIndicator = document.createElement('div');
@@ -2774,6 +2835,14 @@
 
       function serializeBlock(block) {
         const type = block.dataset.type;
+        const selector = block.dataset.selector ? block.dataset.selector.trim() : '';
+
+        function withSelector(blockData) {
+          if (selector) {
+            blockData.selector = selector;
+          }
+          return blockData;
+        }
 
         if (type === 'section') {
           const sectionBlocks = block.querySelector('.section-blocks');
@@ -2781,7 +2850,7 @@
           for (const childBlock of sectionBlocks.querySelectorAll(':scope > .block-item')) {
             children.push(serializeBlock(childBlock));
           }
-          return {
+          return withSelector({
             type: 'section',
             background: block.dataset.background,
             color: block.dataset.color,
@@ -2792,7 +2861,7 @@
             padding: block.dataset.padding || null,
             align: block.dataset.align || null,
             children
-          };
+          });
         }
 
         if (type === 'layout') {
@@ -2811,31 +2880,31 @@
               margin: cell.dataset.margin || null
             });
           }
-          return {
+          return withSelector({
             type: 'layout',
             columns: parseInt(block.dataset.columns || '2'),
             cells
-          };
+          });
         }
 
         if (type === 'bloglist') {
-          return { type: 'bloglist' };
+          return withSelector({ type: 'bloglist' });
         }
         if (type === 'divider') {
-          return { type: 'divider' };
+          return withSelector({ type: 'divider' });
         }
         if (type === 'spacer') {
-          return {
+          return withSelector({
             type: 'spacer',
             height: block.dataset.height || '1rem'
-          };
+          });
         }
         if (type === 'codeblock') {
           const contentEl = block.querySelector('.block-content');
-          return {
+          return withSelector({
             type: 'codeblock',
             content: contentEl.textContent || ''
-          };
+          });
         }
         if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
           const listEl = block.querySelector('.editable-list');
@@ -2846,26 +2915,26 @@
             });
           }
           const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
-          return {
+          return withSelector({
             type: listType === 'ordered' ? 'ordered-list' : 'unordered-list',
             items
-          };
+          });
         }
 
         const contentEl = block.querySelector('.block-content');
         const children = parseInlineNodes(contentEl);
 
         if (type === 'heading') {
-          return {
+          return withSelector({
             type: 'heading',
             level: parseInt(block.dataset.level, 10),
             children
-          };
+          });
         }
         if (type === 'blockquote') {
-          return { type: 'blockquote', children };
+          return withSelector({ type: 'blockquote', children });
         }
-        return { type: 'paragraph', children };
+        return withSelector({ type: 'paragraph', children });
       }
 
       function getContentFromBlocks() {
@@ -3022,20 +3091,61 @@
         let totalContentBytes = 0;
         const encoder = new TextEncoder();
 
+        function parseSelector(selector) {
+          if (!selector || typeof selector !== 'string') {
+            return { id: '', classes: [] };
+          }
+
+          const safeToken = token => {
+            if (!token) return '';
+            const cleaned = token.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+            return cleaned;
+          };
+
+          const normalized = selector.trim();
+          if (!normalized) return { id: '', classes: [] };
+
+          if (normalized.startsWith('#')) {
+            const [idToken, ...classTokens] = normalized.slice(1).split('.');
+            const id = safeToken(idToken);
+            const classes = classTokens.map(safeToken).filter(Boolean);
+            return { id, classes };
+          }
+
+          const source = normalized.startsWith('.') ? normalized.slice(1) : normalized;
+          const classes = source
+            .split(/[.\s]+/)
+            .map(safeToken)
+            .filter(Boolean);
+          return { id: '', classes };
+        }
+
+        function selectorAttr(selector, baseClasses = []) {
+          const parsed = parseSelector(selector);
+          const classList = [...baseClasses, ...parsed.classes].filter(Boolean);
+          const idAttr = parsed.id ? ` id="${parsed.id}"` : '';
+          const classAttr = classList.length > 0 ? ` class="${classList.join(' ')}"` : '';
+          return `${idAttr}${classAttr}`;
+        }
+
         function renderBlockHtmlForBytes(blockData) {
           if (!blockData || typeof blockData !== 'object') return '';
 
           if (blockData.type === 'bloglist') {
-            return '<!-- bloglist -->';
+            const attrs = selectorAttr(blockData.selector);
+            return `<div${attrs}><!-- bloglist --></div>`;
           }
           if (blockData.type === 'divider') {
-            return '<hr>';
+            const attrs = selectorAttr(blockData.selector);
+            return `<hr${attrs}>`;
           }
           if (blockData.type === 'spacer') {
-            return `<div style="height:${blockData.height || '1rem'}"></div>`;
+            const attrs = selectorAttr(blockData.selector);
+            return `<div${attrs} style="height:${blockData.height || '1rem'}"></div>`;
           }
           if (blockData.type === 'codeblock') {
-            return `<pre><code>${escapeHtml(blockData.content || '')}</code></pre>`;
+            const attrs = selectorAttr(blockData.selector);
+            return `<pre${attrs}><code>${escapeHtml(blockData.content || '')}</code></pre>`;
           }
           if (blockData.type === 'unordered-list' || blockData.type === 'ordered-list') {
             const tag = blockData.type === 'unordered-list' ? 'ul' : 'ol';
@@ -3043,7 +3153,8 @@
               const inlineHtml = inlineNodesToHtml(item.children || []);
               return `<li>${inlineHtml}</li>`;
             }).join('\n');
-            return `<${tag}>\n${items}\n</${tag}>`;
+            const attrs = selectorAttr(blockData.selector);
+            return `<${tag}${attrs}>\n${items}\n</${tag}>`;
           }
           if (blockData.type === 'layout') {
             const cellsHtml = (blockData.cells || []).map(cell => {
@@ -3074,7 +3185,8 @@
 
             const classes = ['layout'];
             if (blockData.className) classes.push(blockData.className);
-            return `<div class="${classes.join(' ')}" style="${styles.join(';')}">${cellsHtml}</div>`;
+            const attrs = selectorAttr(blockData.selector, classes);
+            return `<div${attrs} style="${styles.join(';')}">${cellsHtml}</div>`;
           }
           if (blockData.type === 'section') {
             const childrenHtml = (blockData.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
@@ -3101,18 +3213,20 @@
             if (blockData.pattern === 'hexagons') classes.push('bg-pattern-hexagons');
 
             const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
-            return `<div class="${classes.join(' ')}"${styleAttr}>${childrenHtml}</div>`;
+            const attrs = selectorAttr(blockData.selector, classes);
+            return `<div${attrs}${styleAttr}>${childrenHtml}</div>`;
           }
 
           const inlineHtml = inlineNodesToHtml(blockData.children || []);
+          const attrs = selectorAttr(blockData.selector);
           if (blockData.type === 'heading') {
             const level = blockData.level ?? 1;
-            return `<h${level}>${inlineHtml}</h${level}>`;
+            return `<h${level}${attrs}>${inlineHtml}</h${level}>`;
           }
           if (blockData.type === 'blockquote') {
-            return `<blockquote>${inlineHtml}</blockquote>`;
+            return `<blockquote${attrs}>${inlineHtml}</blockquote>`;
           }
-          return `<p>${inlineHtml}</p>`;
+          return `<p${attrs}>${inlineHtml}</p>`;
         }
 
         function estimateBlockBytes(block) {

@@ -286,6 +286,8 @@
     "layoutColumnGap": "Spaltenabstand",
     "layoutRowGap": "Zeilenabstand",
     "layoutClassName": "Klasse",
+    "blockSelector": "Selektor",
+    "blockSelectorPlaceholder": ".mein-block oder #hero",
     "sectionBackground": "Hintergrund",
     "sectionTextColor": "Textfarbe",
     "sectionPattern": "Muster",

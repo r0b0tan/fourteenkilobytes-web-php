@@ -285,6 +285,8 @@
     "layoutColumnGap": "Col Gap",
     "layoutRowGap": "Row Gap",
     "layoutClassName": "Class",
+    "blockSelector": "Selector",
+    "blockSelectorPlaceholder": ".my-block or #hero",
     "sectionBackground": "Background",
     "sectionTextColor": "Text Color",
     "sectionPattern": "Pattern",
