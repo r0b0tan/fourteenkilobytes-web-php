@@ -246,7 +246,7 @@ function validateContent(blocks) {
 }
 function validateContentBlock(block, path, disallowNesting = false) {
   const blockType = block.type;
-  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "section", "layout"];
+  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer", "section", "layout"];
   if (!allowedBlockTypes.includes(blockType)) {
     return {
       valid: false,
@@ -264,7 +264,7 @@ function validateContentBlock(block, path, disallowNesting = false) {
       error: {
         code: "CONTENT_INVALID_ELEMENT",
         element: blockType,
-        allowed: ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider"],
+        allowed: ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer"],
         path
       }
     };
@@ -331,6 +331,20 @@ function validateContentBlock(block, path, disallowNesting = false) {
     return { valid: true };
   }
   if (blockType === "divider") {
+    return { valid: true };
+  }
+  if (blockType === "spacer") {
+    if (block.height !== void 0 && typeof block.height !== "string") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "spacer with non-string height",
+          allowed: ["spacer with string height or no height"],
+          path
+        }
+      };
+    }
     return { valid: true };
   }
   if (blockType === "bloglist") {
@@ -779,6 +793,10 @@ function flattenContentBlock(block, icons, posts) {
   }
   if (block.type === "divider") {
     return "<hr>";
+  }
+  if (block.type === "spacer") {
+    const height = block.height && block.height.trim() ? block.height.trim() : "1rem";
+    return `<div style="height:${height}"></div>`;
   }
   if (block.type === "codeblock") {
     return `<pre><code>${escapeHtml(block.content)}</code></pre>`;
