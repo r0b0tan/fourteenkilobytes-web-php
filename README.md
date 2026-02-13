@@ -5,6 +5,7 @@ A lightweight, experimental CMS built with PHP that enforces a strict **14,336-b
 ## Features
 
 - **14KB Size Limit**: Each published page cannot exceed 14,336 bytes, promoting efficient web design
+- **Automatic Minification**: Published HTML (incl. inline CSS) is minified server-side before size checks/saving
 - **No Database Required**: File-based JSON storage for simplicity and portability
 - **Admin Panel**: Modern single-page application with real-time byte counter
 - **Multi-Language Support**: English and German interfaces
@@ -234,7 +235,8 @@ The Docker setup includes:
 
 ### Manual Deployment
 
-1. Run `./build.sh` to generate `dist/`
+1. Run `./build.sh` to generate `dist/` (HTML/CSS in `dist/public` and `dist/setup` is minified by default)
+   - Disable build minification if needed: `MINIFY_ASSETS=0 ./build.sh`
 2. Upload `dist/` contents to your server
 3. Ensure `data/` is writable by web server
 4. Configure web server (copy .htaccess for Apache or nginx.conf.example for nginx)

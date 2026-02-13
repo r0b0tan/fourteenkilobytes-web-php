@@ -159,6 +159,56 @@ const App = (function() {
     return css.replace(/\/\*[\s\S]*?\*\//g, '');
   }
 
+  function minifyCss(css) {
+    return css
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/[\r\n\t]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+      .replace(/;}/g, '}')
+      .trim();
+  }
+
+  function minifyHtmlDocument(html) {
+    return html
+      .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, css) => match.replace(css, minifyCss(css)))
+      .replace(/<!--(?!\[if)[\s\S]*?-->/g, '')
+      .replace(/>\s+</g, '><')
+      .trim();
+  }
+
+  function getByteLength(text) {
+    return new TextEncoder().encode(text).length;
+  }
+
+  async function isCompressionEnabled() {
+    const settings = await getSettings();
+    return settings?.optimizations?.compression?.enabled !== false;
+  }
+
+  function isCompressionEnabledForSettings(settings) {
+    return settings?.optimizations?.compression?.enabled !== false;
+  }
+
+  function finalizeCompiledPageHtml(rawHtml, initialBytes = 0, applyMinification = true) {
+    let bytes = initialBytes;
+    let html = '';
+
+    for (let i = 0; i < 5; i++) {
+      const withBytes = rawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
+      html = applyMinification ? minifyHtmlDocument(withBytes) : withBytes;
+      const nextBytes = getByteLength(html);
+      if (nextBytes === bytes) {
+        return { html, bytes: nextBytes };
+      }
+      bytes = nextBytes;
+    }
+
+    const withBytes = rawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
+    html = applyMinification ? minifyHtmlDocument(withBytes) : withBytes;
+    return { html, bytes: getByteLength(html) };
+  }
+
   /**
    * Section CSS - loaded from file, cached
    */
@@ -408,12 +458,12 @@ const App = (function() {
     const { total, overhead, content } = result.measurements[0].measurements;
     const breakdown = result.measurements[0].breakdown;
 
-    // Replace {{bytes}} placeholder
-    const finalHtml = page.html.replace(/\{\{bytes\}\}/g, String(page.bytes));
+    const compressionEnabled = await isCompressionEnabled();
+    const finalized = finalizeCompiledPageHtml(page.html, page.bytes, compressionEnabled);
 
     return {
-      html: finalHtml,
-      bytes: page.bytes,
+      html: finalized.html,
+      bytes: finalized.bytes,
       overheadBytes: overhead,
       contentBytes: content,
       breakdown,
@@ -463,10 +513,13 @@ const App = (function() {
       throw new Error(result.error?.code || 'Compilation failed');
     }
 
+    const page = result.pages[0];
+    const compressionEnabled = isCompressionEnabledForSettings(settings);
+    const finalized = finalizeCompiledPageHtml(page.html, page.bytes, compressionEnabled);
     const breakdown = result.measurements?.[0]?.breakdown || {};
 
     return {
-      overheadBytes: result.pages[0].bytes,
+      overheadBytes: finalized.bytes,
       measurements: result.measurements,
       breakdown,
     };
@@ -578,12 +631,16 @@ const App = (function() {
 
     // Handle pagination: multiple pages
     if (result.pages.length > 1) {
-      const pages = result.pages.map(page => ({
-        slug: page.slug,
-        html: page.html.replace(/\{\{bytes\}\}/g, String(page.bytes)),
-        bytes: page.bytes,
-        hash: page.hash,
-      }));
+      const compressionEnabled = await isCompressionEnabled();
+      const pages = result.pages.map(page => {
+        const finalized = finalizeCompiledPageHtml(page.html, page.bytes, compressionEnabled);
+        return {
+          slug: page.slug,
+          html: finalized.html,
+          bytes: finalized.bytes,
+          hash: page.hash,
+        };
+      });
 
       return apiFetch('/api/posts', {
         method: 'POST',
@@ -609,15 +666,16 @@ const App = (function() {
 
     // Single page (legacy format)
     const page = result.pages[0];
-    const finalHtml = page.html.replace(/\{\{bytes\}\}/g, String(page.bytes));
+    const compressionEnabled = await isCompressionEnabled();
+    const finalized = finalizeCompiledPageHtml(page.html, page.bytes, compressionEnabled);
 
     return apiFetch('/api/posts', {
       method: 'POST',
       body: JSON.stringify({
         slug: page.slug,
         title: input.title,
-        html: finalHtml,
-        bytes: page.bytes,
+        html: finalized.html,
+        bytes: finalized.bytes,
         hash: page.hash,
         pageType: input.pageType || 'post',
         sourceData: {

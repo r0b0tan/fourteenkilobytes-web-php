@@ -299,6 +299,10 @@ if ($method === 'POST' && $path === '/install') {
         'language' => $language,
         'cssMode' => 'default',
         'cssEnabled' => true,
+        'optimizations' => [
+            'compression' => ['enabled' => true],
+            'casing' => ['lowercaseEnabled' => false],
+        ],
         'header' => [
             'enabled' => false,
             'links' => [],
