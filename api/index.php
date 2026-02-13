@@ -309,7 +309,49 @@ function loadSessions(): array {
         return [];
     }
     $content = @file_get_contents(SESSION_FILE);
-    return $content ? json_decode($content, true) : [];
+    $sessions = $content ? json_decode($content, true) : [];
+
+    if (!is_array($sessions)) {
+        return [];
+    }
+
+    // Legacy wrapper compatibility: { "sessions": { ... } }
+    if (isset($sessions['sessions']) && is_array($sessions['sessions'])) {
+        $sessions = $sessions['sessions'];
+    }
+
+    $normalized = [];
+    foreach ($sessions as $sessionId => $session) {
+        if (!is_string($sessionId) || !is_array($session)) {
+            continue;
+        }
+
+        $createdAt = $session['createdAt'] ?? null;
+        $lastRotation = $session['lastRotation'] ?? null;
+
+        if (!is_numeric($createdAt)) {
+            if (is_numeric($lastRotation)) {
+                $createdAt = (int)$lastRotation;
+            } else {
+                continue;
+            }
+        }
+
+        if (!is_numeric($lastRotation)) {
+            $lastRotation = (int)$createdAt;
+        }
+
+        $session['createdAt'] = (int)$createdAt;
+        $session['lastRotation'] = (int)$lastRotation;
+
+        if (isset($session['rotatedAt']) && is_numeric($session['rotatedAt'])) {
+            $session['rotatedAt'] = (int)$session['rotatedAt'];
+        }
+
+        $normalized[$sessionId] = $session;
+    }
+
+    return $normalized;
 }
 
 /**
@@ -337,11 +379,20 @@ function createSession(string $authToken): string {
 
     // Clean up expired sessions (including grace period for rotated ones)
     $sessions = array_filter($sessions, function($s) use ($now) {
+        if (!is_array($s)) {
+            return false;
+        }
+
         if (isset($s['rotatedTo'])) {
              // Keep rotated sessions for 60 seconds
              return ($now - ($s['rotatedAt'] ?? 0) < 60);
         }
-        return ($now - $s['createdAt'] < SESSION_MAX_LIFETIME);
+
+        if (!isset($s['createdAt']) || !is_numeric($s['createdAt'])) {
+            return false;
+        }
+
+        return ($now - (int)$s['createdAt'] < SESSION_MAX_LIFETIME);
     });
 
     saveSessions($sessions);
@@ -378,14 +429,24 @@ function validateSession(string $sessionId): ?array {
     }
 
     // Check max lifetime
-    if ($now - $session['createdAt'] > SESSION_MAX_LIFETIME) {
+    if (!isset($session['createdAt']) || !is_numeric($session['createdAt'])) {
+        unset($sessions[$sessionId]);
+        saveSessions($sessions);
+        return null;
+    }
+
+    if ($now - (int)$session['createdAt'] > SESSION_MAX_LIFETIME) {
         unset($sessions[$sessionId]);
         saveSessions($sessions);
         return null;
     }
 
     // Check if rotation needed
-    if ($now - $session['lastRotation'] > SESSION_ROTATION_INTERVAL) {
+    if (!isset($session['lastRotation']) || !is_numeric($session['lastRotation'])) {
+        $session['lastRotation'] = (int)$session['createdAt'];
+    }
+
+    if ($now - (int)$session['lastRotation'] > SESSION_ROTATION_INTERVAL) {
         // Create new session ID, preserve session data
         $newSessionId = bin2hex(random_bytes(32));
         $session['lastRotation'] = $now;
@@ -487,12 +548,23 @@ function checkRateLimit(string $ip): bool {
     }
 
     $entry = $limits[$ip];
-    // Check if window has expired
-    if ($now - $entry['firstAttempt'] > RATE_LIMIT_WINDOW_SECONDS) {
+    $firstAttempt = isset($entry['firstAttempt']) && is_numeric($entry['firstAttempt'])
+        ? (int)$entry['firstAttempt']
+        : 0;
+    $attempts = isset($entry['attempts']) && is_numeric($entry['attempts'])
+        ? (int)$entry['attempts']
+        : 0;
+
+    if ($firstAttempt <= 0) {
         return true;
     }
 
-    return $entry['attempts'] < RATE_LIMIT_MAX_ATTEMPTS;
+    // Check if window has expired
+    if ($now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
+        return true;
+    }
+
+    return $attempts < RATE_LIMIT_MAX_ATTEMPTS;
 }
 
 /**
@@ -502,10 +574,15 @@ function recordFailedAttempt(string $ip): void {
     $limits = loadRateLimits();
     $now = time();
 
-    if (!isset($limits[$ip]) || $now - $limits[$ip]['firstAttempt'] > RATE_LIMIT_WINDOW_SECONDS) {
+    $existing = $limits[$ip] ?? null;
+    $firstAttempt = is_array($existing) && isset($existing['firstAttempt']) && is_numeric($existing['firstAttempt'])
+        ? (int)$existing['firstAttempt']
+        : 0;
+
+    if (!is_array($existing) || $firstAttempt <= 0 || $now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
         $limits[$ip] = ['attempts' => 1, 'firstAttempt' => $now];
     } else {
-        $limits[$ip]['attempts']++;
+        $limits[$ip]['attempts'] = max(0, (int)($existing['attempts'] ?? 0)) + 1;
     }
 
     saveRateLimits($limits);
@@ -530,13 +607,40 @@ function loadRateLimits(): array {
     $content = @file_get_contents(RATE_LIMIT_FILE);
     $limits = $content ? json_decode($content, true) : [];
 
+    if (!is_array($limits)) {
+        return [];
+    }
+
+    // Legacy/setup compatibility: { "attempts": { ... } }
+    if (isset($limits['attempts']) && is_array($limits['attempts'])) {
+        $limits = $limits['attempts'];
+    }
+
     // Clean up expired entries
     $now = time();
-    $limits = array_filter($limits, fn($entry) =>
-        $now - $entry['firstAttempt'] <= RATE_LIMIT_WINDOW_SECONDS
-    );
 
-    return $limits;
+    $normalized = [];
+    foreach ($limits as $ip => $entry) {
+        if (!is_string($ip) || !is_array($entry)) {
+            continue;
+        }
+
+        if (!isset($entry['firstAttempt']) || !is_numeric($entry['firstAttempt'])) {
+            continue;
+        }
+
+        $firstAttempt = (int)$entry['firstAttempt'];
+        if ($now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
+            continue;
+        }
+
+        $normalized[$ip] = [
+            'attempts' => max(0, (int)($entry['attempts'] ?? 0)),
+            'firstAttempt' => $firstAttempt,
+        ];
+    }
+
+    return $normalized;
 }
 
 /**
