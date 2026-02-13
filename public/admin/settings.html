@@ -1230,7 +1230,10 @@
 
       // ============ OPTIMIZATIONS ============
 
-      compressionEnabled.addEventListener('change', markAsChanged);
+      compressionEnabled.addEventListener('change', () => {
+        markAsChanged();
+        updateOverhead();
+      });
 
       // ============ CSS EDITOR ============
 
@@ -1625,6 +1628,9 @@
           initialSettings = JSON.stringify(settings);
           hasUnsavedChanges = false;
           updateSaveButton();
+
+          // Recalculate overhead after persisted save
+          await updateOverhead();
 
           Toast.success(t('settings.saved'));
         } catch (err) {
