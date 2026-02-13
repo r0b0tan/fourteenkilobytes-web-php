@@ -858,11 +858,11 @@ ${items}
     const cellsHtml = block.cells.map((cell) => {
       const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
       const cellStyles = [];
-      if (cell.textAlign)
+      if (cell.textAlign && cell.textAlign !== "left")
         cellStyles.push(`text-align:${cell.textAlign}`);
-      if (cell.padding)
+      if (cell.padding && cell.padding !== "10px")
         cellStyles.push(`padding:${cell.padding}`);
-      if (cell.margin)
+      if (cell.margin && cell.margin !== "10px")
         cellStyles.push(`margin:${cell.margin}`);
       const cellStyle = cellStyles.length ? ` style="${cellStyles.join(";")}"` : "";
       return `<div class="cell"${cellStyle}>${cellContent}</div>`;
@@ -871,16 +871,20 @@ ${items}
     styles.push(`display:inline-grid`);
     styles.push(`width:fit-content`);
     styles.push(`max-width:100%`);
-    styles.push(`grid-template-columns:repeat(${block.columns},1fr)`);
+    if (block.columns !== 1) {
+      styles.push(`grid-template-columns:repeat(${block.columns},1fr)`);
+    }
     if (block.rows) {
       styles.push(`grid-template-rows:repeat(${block.rows},auto)`);
     }
     const rowGap = block.rowGap || "0";
     const colGap = block.columnGap || "0";
-    if (rowGap === colGap) {
-      styles.push(`gap:${rowGap}`);
-    } else {
-      styles.push(`gap:${rowGap} ${colGap}`);
+    if (!(rowGap === "0" && colGap === "0")) {
+      if (rowGap === colGap) {
+        styles.push(`gap:${rowGap}`);
+      } else {
+        styles.push(`gap:${rowGap} ${colGap}`);
+      }
     }
     const styleAttr = ` style="${styles.join(";")}"`;
     const classes = ["layout"];
@@ -892,11 +896,11 @@ ${items}
   if (block.type === "section") {
     const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts)).join("\n");
     const styles = [];
-    if (block.background)
+    if (block.background && block.background !== "transparent")
       styles.push(`--sb:${block.background}`);
-    if (block.color)
+    if (block.color && block.color !== "inherit")
       styles.push(`--sc:${block.color}`);
-    if (block.patternColor && block.patternOpacity) {
+    if (block.pattern && block.patternColor && block.patternOpacity && block.patternOpacity !== "0" && block.patternOpacity !== 0) {
       const hex = block.patternColor;
       const opacity = block.patternOpacity;
       const r = parseInt(hex.substring(1, 3), 16);
@@ -904,11 +908,11 @@ ${items}
       const b = parseInt(hex.substring(5, 7), 16);
       styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
     }
-    if (block.width)
+    if (block.width && block.width !== "100%")
       styles.push(`--sw:${block.width}`);
-    if (block.padding)
+    if (block.padding && block.padding !== "3rem")
       styles.push(`--sp:${block.padding}`);
-    if (block.align)
+    if (block.align && block.align !== "start")
       styles.push(`--sa:${block.align}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
     const classes = ["section"];

@@ -129,6 +129,9 @@ function minifyCss(string $css): string {
 
     $minified = preg_replace('/\s{2,}/', ' ', $minified) ?? $minified;
     $minified = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $minified) ?? $minified;
+    $minified = preg_replace('/(^|[:\s,(])0(?:px|rem|em|%|vh|vw|vmin|vmax)(?=([;,)\s}]|$))/i', '${1}0', $minified) ?? $minified;
+    $minified = preg_replace('/#([\da-f])\1([\da-f])\2([\da-f])\3\b/i', '#$1$2$3', $minified) ?? $minified;
+    $minified = str_ireplace('rgba(255,255,255,0)', 'transparent', $minified);
     $minified = preg_replace('/;}/', '}', $minified) ?? $minified;
 
     return trim($minified);
@@ -142,6 +145,13 @@ function minifyHtmlDocument(string $html): string {
         return str_replace($matches[1], minifyCss($matches[1]), $matches[0]);
     }, $html);
     $minified = $minified ?? $html;
+
+    $minified = preg_replace_callback('/\sstyle="([^"]*)"/i', function (array $matches): string {
+        $css = minifyCss($matches[1]);
+        return $css !== '' ? ' style="' . $css . '"' : '';
+    }, $minified) ?? $minified;
+
+    $minified = preg_replace('/\s(class|id|rel|target|lang)="([A-Za-z0-9_-]+)"/', ' $1=$2', $minified) ?? $minified;
 
     // Remove HTML comments, but keep conditional comments
     $minified = preg_replace('/<!--(?!\[if)[\s\S]*?-->/', '', $minified) ?? $minified;

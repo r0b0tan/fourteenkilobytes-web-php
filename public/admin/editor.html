@@ -3149,9 +3149,9 @@
             const cellsHtml = (blockData.cells || []).map(cell => {
               const cellContent = (cell.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
               const cellStyles = [];
-              if (cell.textAlign) cellStyles.push(`text-align:${cell.textAlign}`);
-              if (cell.padding) cellStyles.push(`padding:${cell.padding}`);
-              if (cell.margin) cellStyles.push(`margin:${cell.margin}`);
+              if (cell.textAlign && cell.textAlign !== 'left') cellStyles.push(`text-align:${cell.textAlign}`);
+              if (cell.padding && cell.padding !== '10px') cellStyles.push(`padding:${cell.padding}`);
+              if (cell.margin && cell.margin !== '10px') cellStyles.push(`margin:${cell.margin}`);
               const cellStyle = cellStyles.length ? ` style="${cellStyles.join(';')}"` : '';
               return `<div class="cell"${cellStyle}>${cellContent}</div>`;
             }).join('\n');
@@ -3160,16 +3160,20 @@
             styles.push('display:inline-grid');
             styles.push('width:fit-content');
             styles.push('max-width:100%');
-            styles.push(`grid-template-columns:repeat(${blockData.columns},1fr)`);
+            if (blockData.columns !== 1) {
+              styles.push(`grid-template-columns:repeat(${blockData.columns},1fr)`);
+            }
             if (blockData.rows) {
               styles.push(`grid-template-rows:repeat(${blockData.rows},auto)`);
             }
             const rowGap = blockData.rowGap || '0';
             const colGap = blockData.columnGap || '0';
-            if (rowGap === colGap) {
-              styles.push(`gap:${rowGap}`);
-            } else {
-              styles.push(`gap:${rowGap} ${colGap}`);
+            if (!(rowGap === '0' && colGap === '0')) {
+              if (rowGap === colGap) {
+                styles.push(`gap:${rowGap}`);
+              } else {
+                styles.push(`gap:${rowGap} ${colGap}`);
+              }
             }
 
             const classes = ['layout'];
@@ -3180,9 +3184,9 @@
           if (blockData.type === 'section') {
             const childrenHtml = (blockData.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
             const styles = [];
-            if (blockData.background) styles.push(`--sb:${blockData.background}`);
-            if (blockData.color) styles.push(`--sc:${blockData.color}`);
-            if (blockData.patternColor && blockData.patternOpacity) {
+            if (blockData.background && blockData.background !== 'transparent') styles.push(`--sb:${blockData.background}`);
+            if (blockData.color && blockData.color !== 'inherit') styles.push(`--sc:${blockData.color}`);
+            if (blockData.pattern && blockData.patternColor && blockData.patternOpacity && blockData.patternOpacity !== '0' && blockData.patternOpacity !== 0) {
               const hex = blockData.patternColor;
               const opacity = blockData.patternOpacity;
               const r = parseInt(hex.substring(1, 3), 16);
@@ -3190,9 +3194,9 @@
               const b = parseInt(hex.substring(5, 7), 16);
               styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
             }
-            if (blockData.width) styles.push(`--sw:${blockData.width}`);
-            if (blockData.padding) styles.push(`--sp:${blockData.padding}`);
-            if (blockData.align) styles.push(`--sa:${blockData.align}`);
+            if (blockData.width && blockData.width !== '100%') styles.push(`--sw:${blockData.width}`);
+            if (blockData.padding && blockData.padding !== '3rem') styles.push(`--sp:${blockData.padding}`);
+            if (blockData.align && blockData.align !== 'start') styles.push(`--sa:${blockData.align}`);
 
             const classes = ['section'];
             if (blockData.pattern === 'dots') classes.push('bg-pattern-dots');
