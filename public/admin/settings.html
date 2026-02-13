@@ -428,15 +428,15 @@
         </div>
 
         <div class="override-section">
-          <h3 class="override-section-title" data-i18n="settings.optimizationsCasing">CASING</h3>
+          <h3 class="override-section-title" data-i18n="settings.optimizationsClassMangling">CLASS MANGLING</h3>
           <div class="override-section-header">
             <label class="override-toggle">
-              <input type="checkbox" id="lowercase-enabled" disabled>
-              <span data-i18n="settings.optimizationsLowercaseEnable">Force lowercase output</span>
+              <input type="checkbox" id="class-mangling-enabled">
+              <span data-i18n="settings.optimizationsClassManglingEnable">Enable class mangling</span>
             </label>
           </div>
           <div class="override-editor" style="display: block;">
-            <p class="text-small text-muted mb-1" data-i18n="settings.optimizationsLowercaseHint">Coming soon. Will normalize generated output to lowercase where safe.</p>
+            <p class="text-small text-muted mb-1" data-i18n="settings.optimizationsClassManglingHint">Shortens compiler-generated class names for smaller raw HTML/CSS output.</p>
           </div>
         </div>
       </div>
@@ -860,7 +860,7 @@
       const archiveLinkText = document.getElementById('archive-link-text');
       const recompileArchiveBtn = document.getElementById('recompile-archive-btn');
       const compressionEnabled = document.getElementById('compression-enabled');
-      const lowercaseEnabled = document.getElementById('lowercase-enabled');
+      const classManglingEnabled = document.getElementById('class-mangling-enabled');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
@@ -1235,6 +1235,11 @@
         updateOverhead();
       });
 
+      classManglingEnabled.addEventListener('change', () => {
+        markAsChanged();
+        updateOverhead();
+      });
+
       // ============ CSS EDITOR ============
 
       cssEnabled.addEventListener('change', () => {
@@ -1366,8 +1371,8 @@
             compression: {
               enabled: compressionEnabled.checked,
             },
-            casing: {
-              lowercaseEnabled: lowercaseEnabled.checked,
+            classMangling: {
+              enabled: classManglingEnabled.checked,
             },
           },
         };
@@ -1564,9 +1569,9 @@
           // Optimizations
           const optimizations = settings.optimizations || {};
           const compression = optimizations.compression || {};
-          const casing = optimizations.casing || {};
+          const classMangling = optimizations.classMangling || {};
           compressionEnabled.checked = compression.enabled !== false;
-          lowercaseEnabled.checked = casing.lowercaseEnabled === true;
+          classManglingEnabled.checked = classMangling.enabled === true;
 
           await updateOverhead();
 

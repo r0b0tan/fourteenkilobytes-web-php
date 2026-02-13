@@ -198,6 +198,10 @@ const App = (function() {
     return settings?.optimizations?.compression?.enabled !== false;
   }
 
+  function isClassManglingEnabledForSettings(settings) {
+    return settings?.optimizations?.classMangling?.enabled === true;
+  }
+
   function finalizeCompiledPageHtml(rawHtml, initialBytes = 0, applyMinification = true) {
     let bytes = initialBytes;
     let html = '';
@@ -286,6 +290,7 @@ const App = (function() {
   async function applyGlobalSettings(input) {
     const settings = await getSettings();
     const mergedInput = { ...input };
+    mergedInput.classMangling = isClassManglingEnabledForSettings(settings);
 
     // Load posts if there are bloglist blocks in the content
     const hasBloglist = mergedInput.content?.some(block => block.type === 'bloglist');
@@ -514,6 +519,7 @@ const App = (function() {
       icons: [],
       allowPagination: false,
       buildId: 'overhead-test',
+      classMangling: isClassManglingEnabledForSettings(settings),
     };
 
     const result = await Compiler.dryRun(testInput);
