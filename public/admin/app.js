@@ -165,6 +165,9 @@ const App = (function() {
       .replace(/[\r\n\t]/g, '')
       .replace(/\s{2,}/g, ' ')
       .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+      .replace(/(^|[:\s,(])0(?:px|rem|em|%|vh|vw|vmin|vmax)(?=([;,)\s}]|$))/gi, (_, prefix) => `${prefix}0`)
+      .replace(/#([\da-f])\1([\da-f])\2([\da-f])\3\b/gi, '#$1$2$3')
+      .replace(/rgba\(255,255,255,0\)/gi, 'transparent')
       .replace(/;}/g, '}')
       .trim();
   }
@@ -172,6 +175,11 @@ const App = (function() {
   function minifyHtmlDocument(html) {
     return html
       .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, css) => match.replace(css, minifyCss(css)))
+      .replace(/\sstyle="([^"]*)"/gi, (_, css) => {
+        const minified = minifyCss(css);
+        return minified ? ` style="${minified}"` : '';
+      })
+      .replace(/\s(class|id|rel|target|lang)="([A-Za-z0-9_-]+)"/g, ' $1=$2')
       .replace(/<!--(?!\[if)[\s\S]*?-->/g, '')
       .replace(/>\s+</g, '><')
       .trim();
