@@ -3198,7 +3198,7 @@
             if (blockData.padding && blockData.padding !== '3rem') styles.push(`--sp:${blockData.padding}`);
             if (blockData.align && blockData.align !== 'start') styles.push(`--sa:${blockData.align}`);
 
-            const classes = ['section'];
+            const classes = [];
             if (blockData.pattern === 'dots') classes.push('bg-pattern-dots');
             if (blockData.pattern === 'grid') classes.push('bg-pattern-grid');
             if (blockData.pattern === 'stripes') classes.push('bg-pattern-stripes');
@@ -3207,7 +3207,7 @@
 
             const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
             const attrs = selectorAttr(blockData.selector, classes);
-            return `<div${attrs}${styleAttr}>${childrenHtml}</div>`;
+            return `<section${attrs}${styleAttr}>${childrenHtml}</section>`;
           }
 
           const inlineHtml = inlineNodesToHtml(blockData.children || []);
