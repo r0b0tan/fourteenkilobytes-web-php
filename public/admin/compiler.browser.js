@@ -667,7 +667,7 @@ var HTML_ESCAPE = {
   '"': "&quot;",
   "'": "&#39;"
 };
-var GENERATED_CLASS_MAP = {
+var SAFE_GENERATED_CLASS_MAP = {
   layout: "l",
   cell: "c",
   "bg-pattern-dots": "pd",
@@ -675,6 +675,15 @@ var GENERATED_CLASS_MAP = {
   "bg-pattern-stripes": "ps",
   "bg-pattern-cross": "pc",
   "bg-pattern-hexagons": "ph"
+};
+var AGGRESSIVE_GENERATED_CLASS_MAP = {
+  ...SAFE_GENERATED_CLASS_MAP,
+  pagination: "p",
+  posts: "s",
+  post: "t",
+  "archive-link": "al",
+  "end-of-list": "el",
+  empty: "e"
 };
 var DEFAULTS = {
   layoutCell: {
@@ -697,21 +706,61 @@ var DEFAULTS = {
   }
 };
 function isLayoutCellDefaultTextAlign(value) {
-  return value === "left" || value === "start" || value === null || value === void 0 || value === "";
+  return value === "start" || value === null || value === void 0 || value === "";
+}
+function normalizeAlignment(value) {
+  if (value === null || value === void 0)
+    return null;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized)
+    return null;
+  if (normalized === "left" || normalized === "links")
+    return "left";
+  if (normalized === "right" || normalized === "rechts")
+    return "right";
+  if (normalized === "center" || normalized === "centre" || normalized === "mittig" || normalized === "mitte")
+    return "center";
+  if (normalized === "start")
+    return "start";
+  return null;
+}
+function normalizeCssLength(value) {
+  if (value === null || value === void 0)
+    return null;
+  const normalized = String(value).trim();
+  if (!normalized)
+    return null;
+  if (/^-?\d+(?:\.\d+)?$/.test(normalized)) {
+    return `${normalized}px`;
+  }
+  return normalized;
 }
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function mangleGeneratedClass(className, enabled) {
+function normalizeClassManglingMode(enabled, mode) {
+  if (!enabled)
+    return "safe";
+  return mode === "aggressive" ? "aggressive" : "safe";
+}
+function getGeneratedClassMap(mode) {
+  return mode === "aggressive" ? AGGRESSIVE_GENERATED_CLASS_MAP : SAFE_GENERATED_CLASS_MAP;
+}
+function mangleGeneratedClass(className, enabled, mode = "safe") {
   if (!enabled)
     return className;
-  return GENERATED_CLASS_MAP[className] || className;
+  const classMap = getGeneratedClassMap(mode);
+  return classMap[className] || className;
 }
-function mangleCssClassSelectors(css, enabled) {
-  if (!enabled || !css)
+function mangleCssClassSelectors(css, enabled, mode = "safe") {
+  if (!css)
     return css;
   let result = css;
-  for (const [fromClass, toClass] of Object.entries(GENERATED_CLASS_MAP)) {
+  result = result.replace(/\.section(?![a-zA-Z0-9_-])/g, "section");
+  if (!enabled)
+    return result;
+  const classMap = getGeneratedClassMap(mode);
+  for (const [fromClass, toClass] of Object.entries(classMap)) {
     if (fromClass === toClass)
       continue;
     const selectorRegex = new RegExp(`\\.${escapeRegExp(fromClass)}(?![a-zA-Z0-9_-])`, "g");
@@ -779,8 +828,9 @@ function flatten(input) {
   breakdown.title = measureBytes(titleHtml);
   let cssHtml = "";
   const classManglingEnabled = input.classMangling === true;
+  const classManglingMode = normalizeClassManglingMode(classManglingEnabled, input.classManglingMode);
   const rawCssRules = input.css ? input.css.rules.trim() : "";
-  const cssRules = mangleCssClassSelectors(rawCssRules, classManglingEnabled);
+  const cssRules = mangleCssClassSelectors(rawCssRules, classManglingEnabled, classManglingMode);
   if (cssRules) {
     cssHtml = `<style>${cssRules}</style>`;
     breakdown.css = measureBytes(cssHtml);
@@ -829,11 +879,13 @@ ${navItems}
       const bloglistBlocks = flattenBloglistToItems(
         input.posts || [],
         block,
-        index
+        index,
+        classManglingEnabled,
+        classManglingMode
       );
       contentBlocks.push(...bloglistBlocks);
     } else {
-      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled);
+      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled, classManglingMode);
       contentBlocks.push({
         html,
         bytes: measureBytes(html),
@@ -881,9 +933,9 @@ ${navItems}
     iconBytes
   };
 }
-function flattenContentBlock(block, icons, posts, classManglingEnabled = false) {
+function flattenContentBlock(block, icons, posts, classManglingEnabled = false, classManglingMode = "safe") {
   if (block.type === "bloglist") {
-    const bloglistHtml = renderBloglist(posts || [], block);
+    const bloglistHtml = renderBloglist(posts || [], block, classManglingEnabled, classManglingMode);
     if (!block.selector)
       return bloglistHtml;
     return `<div${selectorAttrs(block.selector)}>${bloglistHtml}</div>`;
@@ -910,16 +962,19 @@ ${items}
   }
   if (block.type === "layout") {
     const cellsHtml = block.cells.map((cell) => {
-      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled)).join("\n");
+      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode)).join("\n");
       const cellStyles = [];
-      if (!isLayoutCellDefaultTextAlign(cell.textAlign))
-        cellStyles.push(`text-align:${cell.textAlign}`);
-      if (cell.padding && cell.padding !== DEFAULTS.layoutCell.padding)
-        cellStyles.push(`padding:${cell.padding}`);
-      if (cell.margin && cell.margin !== DEFAULTS.layoutCell.margin)
-        cellStyles.push(`margin:${cell.margin}`);
+      const textAlign = normalizeAlignment(cell.textAlign);
+      const padding = normalizeCssLength(cell.padding);
+      const margin = normalizeCssLength(cell.margin);
+      if (textAlign && !isLayoutCellDefaultTextAlign(textAlign))
+        cellStyles.push(`text-align:${textAlign}`);
+      if (padding && padding !== DEFAULTS.layoutCell.padding)
+        cellStyles.push(`padding:${padding}`);
+      if (margin && margin !== DEFAULTS.layoutCell.margin)
+        cellStyles.push(`margin:${margin}`);
       const cellStyle = cellStyles.length ? ` style="${cellStyles.join(";")}"` : "";
-      return `<div class="${mangleGeneratedClass("cell", classManglingEnabled)}"${cellStyle}>${cellContent}</div>`;
+      return `<div class="${mangleGeneratedClass("cell", classManglingEnabled, classManglingMode)}"${cellStyle}>${cellContent}</div>`;
     }).join("\n");
     const styles = [];
     styles.push(`display:inline-grid`);
@@ -941,14 +996,16 @@ ${items}
       }
     }
     const styleAttr = ` style="${styles.join(";")}"`;
-    const classes = [mangleGeneratedClass("layout", classManglingEnabled)];
+    const classes = [mangleGeneratedClass("layout", classManglingEnabled, classManglingMode)];
     if (block.className) {
       classes.push(block.className);
     }
     return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${cellsHtml}</div>`;
   }
   if (block.type === "section") {
-    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled)).join("\n");
+    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode)).join("\n");
+    const sectionAlign = normalizeAlignment(block.align);
+    const sectionPadding = normalizeCssLength(block.padding);
     const styles = [];
     if (block.background && block.background !== DEFAULTS.section.background)
       styles.push(`--sb:${block.background}`);
@@ -964,23 +1021,23 @@ ${items}
     }
     if (block.width && block.width !== DEFAULTS.section.width)
       styles.push(`--sw:${block.width}`);
-    if (block.padding && block.padding !== DEFAULTS.section.padding)
-      styles.push(`--sp:${block.padding}`);
-    if (block.align && block.align !== DEFAULTS.section.align)
-      styles.push(`--sa:${block.align}`);
+    if (sectionPadding && sectionPadding !== DEFAULTS.section.padding)
+      styles.push(`--sp:${sectionPadding}`);
+    if (sectionAlign && sectionAlign !== DEFAULTS.section.align)
+      styles.push(`--sa:${sectionAlign}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
     const classes = [];
     if (block.pattern) {
       if (block.pattern === "dots")
-        classes.push(mangleGeneratedClass("bg-pattern-dots", classManglingEnabled));
+        classes.push(mangleGeneratedClass("bg-pattern-dots", classManglingEnabled, classManglingMode));
       if (block.pattern === "grid")
-        classes.push(mangleGeneratedClass("bg-pattern-grid", classManglingEnabled));
+        classes.push(mangleGeneratedClass("bg-pattern-grid", classManglingEnabled, classManglingMode));
       if (block.pattern === "stripes")
-        classes.push(mangleGeneratedClass("bg-pattern-stripes", classManglingEnabled));
+        classes.push(mangleGeneratedClass("bg-pattern-stripes", classManglingEnabled, classManglingMode));
       if (block.pattern === "cross")
-        classes.push(mangleGeneratedClass("bg-pattern-cross", classManglingEnabled));
+        classes.push(mangleGeneratedClass("bg-pattern-cross", classManglingEnabled, classManglingMode));
       if (block.pattern === "hexagons")
-        classes.push(mangleGeneratedClass("bg-pattern-hexagons", classManglingEnabled));
+        classes.push(mangleGeneratedClass("bg-pattern-hexagons", classManglingEnabled, classManglingMode));
     }
     return `<section${selectorAttrs(block.selector, classes)}${styleAttr}>${childrenHtml}</section>`;
   }
@@ -995,10 +1052,10 @@ ${items}
   return `<p${selectorAttrs(block.selector)}>${inlineHtml}</p>`;
 }
 var DEFAULT_BLOGLIST_LIMIT = 20;
-function renderBloglist(posts, block) {
+function renderBloglist(posts, block, classManglingEnabled = false, classManglingMode = "safe") {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {
-    return '<p class="empty">Noch keine Posts.</p>';
+    return `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">Noch keine Posts.</p>`;
   }
   published.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   const limit = block?.limit === null ? published.length : block?.limit ?? DEFAULT_BLOGLIST_LIMIT;
@@ -1009,21 +1066,21 @@ function renderBloglist(posts, block) {
       month: "long",
       day: "numeric"
     });
-    return `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
+    return `<li class="${mangleGeneratedClass("post", classManglingEnabled, classManglingMode)}"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
   }).join("\n");
-  let html = `<ul class="posts">
+  let html = `<ul class="${mangleGeneratedClass("posts", classManglingEnabled, classManglingMode)}">
 ${items}
 </ul>`;
   if (block?.archiveLink) {
     html += `
-<p class="archive-link"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
+<p class="${mangleGeneratedClass("archive-link", classManglingEnabled, classManglingMode)}"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
   }
   return html;
 }
-function flattenBloglistToItems(posts, block, sourceIndex) {
+function flattenBloglistToItems(posts, block, sourceIndex, classManglingEnabled = false, classManglingMode = "safe") {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {
-    const html = '<p class="empty">Noch keine Posts.</p>';
+    const html = `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">Noch keine Posts.</p>`;
     return [{
       html,
       bytes: measureBytes(html),
@@ -1039,7 +1096,7 @@ function flattenBloglistToItems(posts, block, sourceIndex) {
       month: "long",
       day: "numeric"
     });
-    const html = `<li class="post"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
+    const html = `<li class="${mangleGeneratedClass("post", classManglingEnabled, classManglingMode)}"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
     return {
       html,
       bytes: measureBytes(html),
@@ -1048,7 +1105,7 @@ function flattenBloglistToItems(posts, block, sourceIndex) {
     };
   });
   if (block?.archiveLink) {
-    const archiveHtml = `<p class="archive-link"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
+    const archiveHtml = `<p class="${mangleGeneratedClass("archive-link", classManglingEnabled, classManglingMode)}"><a href="${escapeHtml(block.archiveLink.href)}">${escapeHtml(block.archiveLink.text)}</a></p>`;
     blocks.push({
       html: archiveHtml,
       bytes: measureBytes(archiveHtml),
@@ -1056,7 +1113,7 @@ function flattenBloglistToItems(posts, block, sourceIndex) {
       blockType: "bloglist-archive-link"
     });
   } else if (block?.limit === null) {
-    const endHtml = '<p class="end-of-list">\u2014 Ende der Liste \u2014</p>';
+    const endHtml = `<p class="${mangleGeneratedClass("end-of-list", classManglingEnabled, classManglingMode)}">\u2014 Ende der Liste \u2014</p>`;
     blocks.push({
       html: endHtml,
       bytes: measureBytes(endHtml),
@@ -1117,7 +1174,7 @@ function assemblePageWithContent(page, contentHtml, paginationHtml) {
 }
 
 // src/paginate.ts
-function generatePaginationNav(baseSlug, currentPage, totalPages) {
+function generatePaginationNav(baseSlug, currentPage, totalPages, classManglingEnabled = false, classManglingMode = "safe") {
   if (totalPages <= 1) {
     return "";
   }
@@ -1130,21 +1187,42 @@ function generatePaginationNav(baseSlug, currentPage, totalPages) {
       links.push(`<a href="${slug}">${i}</a>`);
     }
   }
-  return `<div class="pagination">
+  return `<div class="${manglePaginateClass("pagination", classManglingEnabled, classManglingMode)}">
 ${links.join("\n")}
 </div>`;
 }
-function calculatePaginationBytes(baseSlug, currentPage, totalPages) {
-  const html = generatePaginationNav(baseSlug, currentPage, totalPages);
+function calculatePaginationBytes(baseSlug, currentPage, totalPages, classManglingEnabled = false, classManglingMode = "safe") {
+  const html = generatePaginationNav(baseSlug, currentPage, totalPages, classManglingEnabled, classManglingMode);
   return measureBytes(html);
 }
 function calculateFixedOverhead(breakdown) {
   return breakdown.base + breakdown.title + breakdown.favicon + breakdown.meta + breakdown.css + breakdown.navigation + breakdown.footer + breakdown.icons;
 }
-var BLOGLIST_WRAPPER_OPEN = '<ul class="posts">\n';
 var BLOGLIST_WRAPPER_CLOSE = "\n</ul>";
-var BLOGLIST_WRAPPER_BYTES = measureBytes(BLOGLIST_WRAPPER_OPEN) + measureBytes(BLOGLIST_WRAPPER_CLOSE);
-function assembleContentHtml(blocks) {
+function normalizeClassManglingMode2(enabled, mode) {
+  if (!enabled)
+    return "safe";
+  return mode === "aggressive" ? "aggressive" : "safe";
+}
+function manglePaginateClass(className, enabled, mode) {
+  if (!enabled)
+    return className;
+  if (mode !== "aggressive")
+    return className;
+  if (className === "pagination")
+    return "p";
+  if (className === "posts")
+    return "s";
+  return className;
+}
+function bloglistWrapperOpen(classManglingEnabled, classManglingMode) {
+  return `<ul class="${manglePaginateClass("posts", classManglingEnabled, classManglingMode)}">
+`;
+}
+function bloglistWrapperBytes(classManglingEnabled, classManglingMode) {
+  return measureBytes(bloglistWrapperOpen(classManglingEnabled, classManglingMode)) + measureBytes(BLOGLIST_WRAPPER_CLOSE);
+}
+function assembleContentHtml(blocks, classManglingEnabled = false, classManglingMode = "safe") {
   if (blocks.length === 0)
     return "";
   const parts = [];
@@ -1159,7 +1237,7 @@ function assembleContentHtml(blocks) {
       bloglistItems.push(block.html);
     } else {
       if (inBloglist) {
-        parts.push(BLOGLIST_WRAPPER_OPEN + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
+        parts.push(bloglistWrapperOpen(classManglingEnabled, classManglingMode) + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
         inBloglist = false;
         bloglistItems = [];
       }
@@ -1167,18 +1245,18 @@ function assembleContentHtml(blocks) {
     }
   }
   if (inBloglist) {
-    parts.push(BLOGLIST_WRAPPER_OPEN + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
+    parts.push(bloglistWrapperOpen(classManglingEnabled, classManglingMode) + bloglistItems.join("\n") + BLOGLIST_WRAPPER_CLOSE);
   }
   return parts.join("\n");
 }
-function calculateBloglistWrapperOverhead(blocks) {
+function calculateBloglistWrapperOverhead(blocks, classManglingEnabled = false, classManglingMode = "safe") {
   let overhead = 0;
   let inBloglist = false;
   for (const block of blocks) {
     if (block.blockType === "bloglist-item") {
       if (!inBloglist) {
         inBloglist = true;
-        overhead += BLOGLIST_WRAPPER_BYTES;
+        overhead += bloglistWrapperBytes(classManglingEnabled, classManglingMode);
       }
     } else {
       inBloglist = false;
@@ -1186,14 +1264,15 @@ function calculateBloglistWrapperOverhead(blocks) {
   }
   return overhead;
 }
-function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination) {
+function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination, classManglingEnabled = false, classManglingMode = "safe") {
+  const normalizedManglingMode = normalizeClassManglingMode2(classManglingEnabled, classManglingMode);
   const fixedOverhead = calculateFixedOverhead(baseBreakdown);
   const totalContentBytes = contentBlocks.reduce((sum, b) => sum + b.bytes, 0);
   const contentNewlines = Math.max(0, contentBlocks.length - 1);
   const totalContentWithNewlines = totalContentBytes + contentNewlines;
-  const bloglistWrapperOverhead = calculateBloglistWrapperOverhead(contentBlocks);
+  const bloglistWrapperOverhead = calculateBloglistWrapperOverhead(contentBlocks, classManglingEnabled, normalizedManglingMode);
   if (fixedOverhead + totalContentWithNewlines + bloglistWrapperOverhead <= SIZE_LIMIT) {
-    const contentHtml = assembleContentHtml(contentBlocks);
+    const contentHtml = assembleContentHtml(contentBlocks, classManglingEnabled, normalizedManglingMode);
     return {
       success: true,
       pages: [
@@ -1240,13 +1319,15 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
       const paginationBytes = calculatePaginationBytes(
         baseSlug,
         pageNumber,
-        estimatedPages
+        estimatedPages,
+        classManglingEnabled,
+        normalizedManglingMode
       );
       const availableBudget = SIZE_LIMIT - fixedOverhead - paginationBytes;
       const newlineBytes = currentPageBlocks.length > 0 ? 1 : 0;
       let candidateBytes = currentPageBytes + newlineBytes + block.bytes;
       if (block.blockType === "bloglist-item" && !currentPageHasBloglist) {
-        candidateBytes += BLOGLIST_WRAPPER_BYTES;
+        candidateBytes += bloglistWrapperBytes(classManglingEnabled, normalizedManglingMode);
       }
       if (candidateBytes <= availableBudget) {
         currentPageBlocks.push(block);
@@ -1268,11 +1349,13 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
             }
           };
         }
-        const contentHtml = assembleContentHtml(currentPageBlocks);
+        const contentHtml = assembleContentHtml(currentPageBlocks, classManglingEnabled, normalizedManglingMode);
         const paginationHtml = generatePaginationNav(
           baseSlug,
           pageNumber,
-          estimatedPages
+          estimatedPages,
+          classManglingEnabled,
+          normalizedManglingMode
         );
         pages.push({
           pageNumber,
@@ -1289,7 +1372,7 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
         currentPageBlocks = [block];
         currentPageBytes = block.bytes;
         if (block.blockType === "bloglist-item") {
-          currentPageBytes += BLOGLIST_WRAPPER_BYTES;
+          currentPageBytes += bloglistWrapperBytes(classManglingEnabled, normalizedManglingMode);
           currentPageHasBloglist = true;
         } else {
           currentPageHasBloglist = false;
@@ -1297,11 +1380,13 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
       }
     }
     if (currentPageBlocks.length > 0) {
-      const contentHtml = assembleContentHtml(currentPageBlocks);
+      const contentHtml = assembleContentHtml(currentPageBlocks, classManglingEnabled, normalizedManglingMode);
       const paginationHtml = generatePaginationNav(
         baseSlug,
         pageNumber,
-        estimatedPages
+        estimatedPages,
+        classManglingEnabled,
+        normalizedManglingMode
       );
       pages.push({
         pageNumber,
@@ -1328,7 +1413,7 @@ function paginate(baseSlug, page, contentBlocks, baseBreakdown, allowPagination)
       }
       for (let i = 0; i < pages.length; i++) {
         const p = pages[i];
-        p.paginationHtml = generatePaginationNav(baseSlug, p.pageNumber, pages.length);
+        p.paginationHtml = generatePaginationNav(baseSlug, p.pageNumber, pages.length, classManglingEnabled, normalizedManglingMode);
         p.breakdown.pagination = measureBytes(p.paginationHtml);
       }
       return { success: true, pages };
@@ -1398,7 +1483,9 @@ function compile(input) {
     page,
     contentBlocks,
     breakdown,
-    input.allowPagination
+    input.allowPagination,
+    input.classMangling === true,
+    input.classManglingMode ?? "safe"
   );
   if (!paginationResult.success) {
     return {

@@ -969,9 +969,15 @@
                 padInput.type = 'text';
                 padInput.placeholder = '0';
                 padInput.title = 'Padding';
-                if (cellData.padding) { padInput.value = cellData.padding; cellEl.dataset.padding = cellData.padding; }
+                if (cellData.padding) {
+                  padInput.value = cellData.padding;
+                  cellEl.dataset.padding = cellData.padding;
+                  cellEl.style.padding = cellData.padding;
+                }
                 padInput.addEventListener('input', () => {
-                  cellEl.dataset.padding = padInput.value.trim();
+                  const value = padInput.value.trim();
+                  cellEl.dataset.padding = value;
+                  cellEl.style.padding = value || '';
                   debouncedPreview();
                 });
                 padGroup.appendChild(padInput);
@@ -985,9 +991,15 @@
                 marInput.type = 'text';
                 marInput.placeholder = '0';
                 marInput.title = 'Margin';
-                if (cellData.margin) { marInput.value = cellData.margin; cellEl.dataset.margin = cellData.margin; }
+                if (cellData.margin) {
+                  marInput.value = cellData.margin;
+                  cellEl.dataset.margin = cellData.margin;
+                  cellEl.style.margin = cellData.margin;
+                }
                 marInput.addEventListener('input', () => {
-                  cellEl.dataset.margin = marInput.value.trim();
+                  const value = marInput.value.trim();
+                  cellEl.dataset.margin = value;
+                  cellEl.style.margin = value || '';
                   debouncedPreview();
                 });
                 marGroup.appendChild(marInput);
@@ -1627,6 +1639,16 @@
           contentWrapper.className = 'section-inner-wrapper';
           block.appendChild(contentWrapper);
 
+          // Preview area with section background - CREATE FIRST so event listeners can reference it
+          const preview = document.createElement('div');
+          preview.className = 'section-preview';
+          preview.style.backgroundColor = '#ffffff';
+          preview.style.color = '#000000';
+
+          const sectionBlocks = document.createElement('div');
+          sectionBlocks.className = 'section-blocks';
+          preview.appendChild(sectionBlocks);
+
           // Controls row: color pickers + pattern selector
           const controls = document.createElement('div');
           controls.className = 'section-controls';
@@ -1810,17 +1832,7 @@
           contentWrapper.appendChild(controls);
           contentWrapper.appendChild(patternRow);
 
-          // Preview area with section background
-          const preview = document.createElement('div');
-          preview.className = 'section-preview';
-          preview.style.backgroundColor = '#ffffff';
-          preview.style.color = '#000000';
-
-          const sectionBlocks = document.createElement('div');
-          sectionBlocks.className = 'section-blocks';
-          preview.appendChild(sectionBlocks);
-
-          // Inner add-block button
+          // Inner add-block button (preview was already created above)
           preview.appendChild(createInnerAddBlock(block));
 
           contentWrapper.appendChild(preview);
@@ -2025,7 +2037,9 @@
             padInput.placeholder = '0';
             padInput.title = 'Padding (z.B. 1rem, 8px)';
             padInput.addEventListener('input', () => {
-              cell.dataset.padding = padInput.value.trim();
+              const value = padInput.value.trim();
+              cell.dataset.padding = value;
+              cell.style.padding = value || '';
               if (debouncedPreview) debouncedPreview();
             });
             padGroup.appendChild(padInput);
@@ -2040,7 +2054,9 @@
             marInput.placeholder = '0';
             marInput.title = 'Margin (z.B. 1rem, 8px)';
             marInput.addEventListener('input', () => {
-              cell.dataset.margin = marInput.value.trim();
+              const value = marInput.value.trim();
+              cell.dataset.margin = value;
+              cell.style.margin = value || '';
               if (debouncedPreview) debouncedPreview();
             });
             marGroup.appendChild(marInput);

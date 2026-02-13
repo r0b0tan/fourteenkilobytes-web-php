@@ -915,7 +915,7 @@ function loadSettings(): array {
             'globalCss' => '',
             'optimizations' => [
                 'compression' => ['enabled' => true],
-                'classMangling' => ['enabled' => false],
+                'classMangling' => ['enabled' => false, 'mode' => 'safe'],
             ],
             'header' => ['enabled' => false, 'links' => []],
             'footer' => ['enabled' => false, 'content' => ''],
@@ -961,6 +961,8 @@ function loadSettings(): array {
     if (!array_key_exists('enabled', $settings['optimizations']['classMangling'])) {
         $settings['optimizations']['classMangling']['enabled'] = false;
     }
+    $mode = $settings['optimizations']['classMangling']['mode'] ?? 'safe';
+    $settings['optimizations']['classMangling']['mode'] = ($mode === 'aggressive') ? 'aggressive' : 'safe';
     unset($settings['optimizations']['casing']);
     return $settings;
 }

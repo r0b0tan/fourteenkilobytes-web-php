@@ -301,7 +301,7 @@ if ($method === 'POST' && $path === '/install') {
         'cssEnabled' => true,
         'optimizations' => [
             'compression' => ['enabled' => true],
-            'classMangling' => ['enabled' => false],
+            'classMangling' => ['enabled' => false, 'mode' => 'safe'],
         ],
         'header' => [
             'enabled' => false,

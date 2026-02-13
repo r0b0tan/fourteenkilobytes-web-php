@@ -995,6 +995,32 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.optimization-mode-box {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.optimization-mode-select {
+  width: auto;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.optimization-mode-hint {
+  margin: 0;
+  max-width: 420px;
+}
+
+.optimization-mode-hint-line {
+  display: block;
+}
+
 /* RSS Feed URL Preview Row */
 .rss-url-row {
   display: flex;
