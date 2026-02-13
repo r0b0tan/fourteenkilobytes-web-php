@@ -119,6 +119,44 @@ function readJsonBody(): array {
 }
 
 /**
+ * Minify CSS conservatively (safe defaults for inline style blocks)
+ */
+function minifyCss(string $css): string {
+    $minified = preg_replace('~/\*[\s\S]*?\*/~', '', $css);
+    $minified = $minified ?? $css;
+
+    $minified = str_replace(["\r", "\n", "\t"], '', $minified);
+
+    $minified = preg_replace('/\s{2,}/', ' ', $minified) ?? $minified;
+    $minified = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $minified) ?? $minified;
+    $minified = preg_replace('/;}/', '}', $minified) ?? $minified;
+
+    return trim($minified);
+}
+
+/**
+ * Minify HTML conservatively while preserving visible text spacing
+ */
+function minifyHtmlDocument(string $html): string {
+    $minified = preg_replace_callback('/<style\b[^>]*>(.*?)<\/style>/is', function (array $matches): string {
+        return str_replace($matches[1], minifyCss($matches[1]), $matches[0]);
+    }, $html);
+    $minified = $minified ?? $html;
+
+    // Remove HTML comments, but keep conditional comments
+    $minified = preg_replace('/<!--(?!\[if)[\s\S]*?-->/', '', $minified) ?? $minified;
+
+    // Collapse whitespace between tags only (safe for text nodes)
+    $minified = preg_replace('/>\s+</', '><', $minified) ?? $minified;
+
+    return trim($minified);
+}
+
+function isCompressionEnabled(array $settings): bool {
+    return ($settings['optimizations']['compression']['enabled'] ?? true) !== false;
+}
+
+/**
  * Get or generate instance salt
  */
 function getInstanceSalt(): string {
@@ -865,6 +903,10 @@ function loadSettings(): array {
             'version' => 1,
             'cssMode' => 'default',
             'globalCss' => '',
+            'optimizations' => [
+                'compression' => ['enabled' => true],
+                'casing' => ['lowercaseEnabled' => false],
+            ],
             'header' => ['enabled' => false, 'links' => []],
             'footer' => ['enabled' => false, 'content' => ''],
             'bloglist' => [
@@ -893,6 +935,21 @@ function loadSettings(): array {
             'archiveSlug' => 'archive',
             'archiveLinkText' => 'View all posts →',
         ];
+    }
+    if (!isset($settings['optimizations']) || !is_array($settings['optimizations'])) {
+        $settings['optimizations'] = [];
+    }
+    if (!isset($settings['optimizations']['compression']) || !is_array($settings['optimizations']['compression'])) {
+        $settings['optimizations']['compression'] = [];
+    }
+    if (!array_key_exists('enabled', $settings['optimizations']['compression'])) {
+        $settings['optimizations']['compression']['enabled'] = true;
+    }
+    if (!isset($settings['optimizations']['casing']) || !is_array($settings['optimizations']['casing'])) {
+        $settings['optimizations']['casing'] = [];
+    }
+    if (!array_key_exists('lowercaseEnabled', $settings['optimizations']['casing'])) {
+        $settings['optimizations']['casing']['lowercaseEnabled'] = false;
     }
     return $settings;
 }
@@ -1226,6 +1283,8 @@ if ($method === 'POST' && $path === '/posts') {
 
     $body = readJsonBody();
     $timestamp = date('c');
+    $settings = loadSettings();
+    $compressionEnabled = isCompressionEnabled($settings);
 
     // Support both single-page (legacy) and multi-page (pagination) format
     if (isset($body['pages']) && is_array($body['pages'])) {
@@ -1245,19 +1304,22 @@ if ($method === 'POST' && $path === '/posts') {
             sendJson(400, ['error' => 'Invalid slug format']);
         }
 
-        // Validate all pages
+        // Validate and minify all pages
         $totalBytes = 0;
         $hashes = [];
+        $minifiedPages = [];
         foreach ($pages as $i => $page) {
             if (empty($page['slug']) || empty($page['html'])) {
                 sendJson(400, ['error' => "Page {$i} missing slug or html"]);
             }
+
+            $minifiedHtml = $compressionEnabled ? minifyHtmlDocument($page['html']) : $page['html'];
             
             // SECURITY: Calculate hash server-side
-            $hashes[$i] = hash('sha256', $page['html']);
+            $hashes[$i] = hash('sha256', $minifiedHtml);
             
             // Enforce 14KB (14336 bytes) limit per page
-            $pageBytes = strlen($page['html']);
+            $pageBytes = strlen($minifiedHtml);
             if ($pageBytes > 14336) {
                 sendJson(400, ['error' => "Page {$i} exceeds 14KB limit ({$pageBytes} bytes, max 14336)"]);
             }
@@ -1266,6 +1328,11 @@ if ($method === 'POST' && $path === '/posts') {
             if ($pageBytes > 1048576) {
                 sendJson(400, ['error' => "Page {$i} HTML too large (max 1MB)"]);
             }
+
+            $minifiedPages[] = [
+                'slug' => $page['slug'],
+                'html' => $minifiedHtml,
+            ];
             $totalBytes += $pageBytes;
         }
 
@@ -1279,7 +1346,7 @@ if ($method === 'POST' && $path === '/posts') {
 
         // Save all HTML files
         $savedSlugs = [];
-        foreach ($pages as $page) {
+        foreach ($minifiedPages as $page) {
             $htmlPath = POSTS_DIR . "/{$page['slug']}.html";
             file_put_contents($htmlPath, $page['html'], LOCK_EX);
             $savedSlugs[] = $page['slug'];
@@ -1325,8 +1392,10 @@ if ($method === 'POST' && $path === '/posts') {
             sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
         }
 
+        $html = $compressionEnabled ? minifyHtmlDocument($body['html']) : $body['html'];
+
         // Enforce 14KB (14336 bytes) limit
-        $htmlBytes = strlen($body['html']);
+        $htmlBytes = strlen($html);
         if ($htmlBytes > 14336) {
             sendJson(400, ['error' => "Page exceeds 14KB limit ({$htmlBytes} bytes, max 14336)"]);
         }
@@ -1337,8 +1406,7 @@ if ($method === 'POST' && $path === '/posts') {
         }
 
         $slug = $body['slug'];
-        $html = $body['html'];
-        $bytes = (int)$body['bytes'];
+        $bytes = $htmlBytes;
         $title = $body['title'] ?? $slug;
         // SECURITY: Always calculate hash server-side
         $hash = hash('sha256', $html);
@@ -1745,6 +1813,10 @@ if ($method === 'POST' && $path === '/reset') {
         'version' => 1,
         'cssMode' => 'default',
         'globalCss' => '',
+        'optimizations' => [
+            'compression' => ['enabled' => true],
+            'casing' => ['lowercaseEnabled' => false],
+        ],
         'header' => ['enabled' => false, 'links' => []],
         'footer' => ['enabled' => false, 'content' => ''],
         'bloglist' => [

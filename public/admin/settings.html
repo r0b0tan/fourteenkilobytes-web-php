@@ -117,6 +117,7 @@
         <button type="button" class="tab-btn" data-tab="footer" data-i18n="tabs.footer">Footer</button>
         <button type="button" class="tab-btn" data-tab="bloglist" data-i18n="tabs.bloglist">Bloglist</button>
         <button type="button" class="tab-btn" data-tab="css" data-i18n="tabs.css">CSS</button>
+        <button type="button" class="tab-btn" data-tab="optimizations" data-i18n="tabs.optimizations">Optimizations</button>
         <button type="button" class="tab-btn" data-tab="rss" data-i18n="tabs.rss">RSS</button>
         <button type="button" class="tab-btn" data-tab="data" data-i18n="tabs.data">Data</button>
         <button type="button" class="tab-btn" data-tab="logs" data-i18n="tabs.logs">Logs</button>
@@ -407,6 +408,35 @@
               <p class="text-small text-muted mb-1" data-i18n="settings.pageWidthHint">Override body max-width (e.g. 42rem, 800px, 90%)</p>
               <input type="text" id="page-width" placeholder="42rem" maxlength="20" style="max-width: 12rem;">
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optimizations Tab -->
+      <div id="tab-optimizations" class="tab-content hidden">
+        <div class="override-section override-section-first">
+          <h3 class="override-section-title" data-i18n="settings.optimizationsCompression">COMPRESSION</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="compression-enabled">
+              <span data-i18n="settings.optimizationsCompressionEnable">Enable compression</span>
+            </label>
+          </div>
+          <div id="compression-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.optimizationsCompressionHint">Minifies HTML and inline CSS during publish to save bytes.</p>
+          </div>
+        </div>
+
+        <div class="override-section">
+          <h3 class="override-section-title" data-i18n="settings.optimizationsCasing">CASING</h3>
+          <div class="override-section-header">
+            <label class="override-toggle">
+              <input type="checkbox" id="lowercase-enabled" disabled>
+              <span data-i18n="settings.optimizationsLowercaseEnable">Force lowercase output</span>
+            </label>
+          </div>
+          <div class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.optimizationsLowercaseHint">Coming soon. Will normalize generated output to lowercase where safe.</p>
           </div>
         </div>
       </div>
@@ -829,6 +859,8 @@
       const archiveSlug = document.getElementById('archive-slug');
       const archiveLinkText = document.getElementById('archive-link-text');
       const recompileArchiveBtn = document.getElementById('recompile-archive-btn');
+      const compressionEnabled = document.getElementById('compression-enabled');
+      const lowercaseEnabled = document.getElementById('lowercase-enabled');
       const saveBtn = document.getElementById('save-btn');
       const discardBtn = document.getElementById('discard-btn');
       const overheadPieChart = document.getElementById('overhead-pie-chart');
@@ -1196,6 +1228,10 @@
       archiveSlug.addEventListener('input', markAsChanged);
       archiveLinkText.addEventListener('input', markAsChanged);
 
+      // ============ OPTIMIZATIONS ============
+
+      compressionEnabled.addEventListener('change', markAsChanged);
+
       // ============ CSS EDITOR ============
 
       cssEnabled.addEventListener('change', () => {
@@ -1323,6 +1359,14 @@
             archiveSlug: archiveSlug.value.trim() || 'archive',
             archiveLinkText: archiveLinkText.value.trim() || 'View all posts →',
           },
+          optimizations: {
+            compression: {
+              enabled: compressionEnabled.checked,
+            },
+            casing: {
+              lowercaseEnabled: lowercaseEnabled.checked,
+            },
+          },
         };
       }
 
@@ -1381,6 +1425,7 @@
           footer: settings.footer,
           meta: settings.meta,
           favicon: settings.favicon,
+          optimizations: settings.optimizations,
         };
       }
 
@@ -1512,6 +1557,13 @@
           archiveLinkTextSection.style.display = isArchiveEnabled ? 'block' : 'none';
           archiveSlug.value = bloglist.archiveSlug || 'archive';
           archiveLinkText.value = bloglist.archiveLinkText || 'View all posts →';
+
+          // Optimizations
+          const optimizations = settings.optimizations || {};
+          const compression = optimizations.compression || {};
+          const casing = optimizations.casing || {};
+          compressionEnabled.checked = compression.enabled !== false;
+          lowercaseEnabled.checked = casing.lowercaseEnabled === true;
 
           await updateOverhead();
 
