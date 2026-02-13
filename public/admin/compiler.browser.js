@@ -915,7 +915,7 @@ ${items}
     if (block.align && block.align !== "start")
       styles.push(`--sa:${block.align}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
-    const classes = ["section"];
+    const classes = [];
     if (block.pattern) {
       if (block.pattern === "dots")
         classes.push("bg-pattern-dots");
@@ -928,7 +928,7 @@ ${items}
       if (block.pattern === "hexagons")
         classes.push("bg-pattern-hexagons");
     }
-    return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${childrenHtml}</div>`;
+    return `<section${selectorAttrs(block.selector, classes)}${styleAttr}>${childrenHtml}</section>`;
   }
   const inlineHtml = flattenInlineNodes(block.children, icons, "content");
   if (block.type === "heading") {

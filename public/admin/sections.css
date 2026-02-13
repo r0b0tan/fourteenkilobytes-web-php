@@ -12,7 +12,7 @@
  * Override any property with normal CSS (no !important needed).
  */
 html { overflow-x: hidden }
-.section {
+section {
   width: var(--sw, 100%);
   margin-left: calc((var(--sw, 100%) - 100%) / -2);
   max-width: 100vw;
@@ -25,15 +25,15 @@ html { overflow-x: hidden }
   isolation: isolate;
   --pc: rgba(255, 255, 255, 0.1);
 }
-.section * { color: inherit }
-.section > * { position: relative; z-index: 1 }
+section * { color: inherit }
+section > * { position: relative; z-index: 1 }
 
 /* Layout inside sections: avoid extra vertical whitespace from default block margins */
-.section .layout .cell > :first-child { margin-top: 0; }
-.section .layout .cell > :last-child { margin-bottom: 0; }
+section .layout .cell > :first-child { margin-top: 0; }
+section .layout .cell > :last-child { margin-bottom: 0; }
 
 /* Pattern overlay layer */
-.section::before {
+section::before {
   content: '';
   position: absolute;
   inset: 0;
