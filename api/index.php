@@ -915,7 +915,7 @@ function loadSettings(): array {
             'globalCss' => '',
             'optimizations' => [
                 'compression' => ['enabled' => true],
-                'casing' => ['lowercaseEnabled' => false],
+                'classMangling' => ['enabled' => false],
             ],
             'header' => ['enabled' => false, 'links' => []],
             'footer' => ['enabled' => false, 'content' => ''],
@@ -955,12 +955,13 @@ function loadSettings(): array {
     if (!array_key_exists('enabled', $settings['optimizations']['compression'])) {
         $settings['optimizations']['compression']['enabled'] = true;
     }
-    if (!isset($settings['optimizations']['casing']) || !is_array($settings['optimizations']['casing'])) {
-        $settings['optimizations']['casing'] = [];
+    if (!isset($settings['optimizations']['classMangling']) || !is_array($settings['optimizations']['classMangling'])) {
+        $settings['optimizations']['classMangling'] = [];
     }
-    if (!array_key_exists('lowercaseEnabled', $settings['optimizations']['casing'])) {
-        $settings['optimizations']['casing']['lowercaseEnabled'] = false;
+    if (!array_key_exists('enabled', $settings['optimizations']['classMangling'])) {
+        $settings['optimizations']['classMangling']['enabled'] = false;
     }
+    unset($settings['optimizations']['casing']);
     return $settings;
 }
 
@@ -1825,7 +1826,7 @@ if ($method === 'POST' && $path === '/reset') {
         'globalCss' => '',
         'optimizations' => [
             'compression' => ['enabled' => true],
-            'casing' => ['lowercaseEnabled' => false],
+            'classMangling' => ['enabled' => false],
         ],
         'header' => ['enabled' => false, 'links' => []],
         'footer' => ['enabled' => false, 'content' => ''],
