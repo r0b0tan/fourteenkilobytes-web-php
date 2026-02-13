@@ -160,7 +160,15 @@ const App = (function() {
   }
 
   function minifyCss(css) {
-    return css
+    // Temporarily replace calc() functions to protect them
+    const calcs = [];
+    let result = css.replace(/calc\([^)]+\)/g, (match) => {
+      calcs.push(match);
+      return `__CALC${calcs.length - 1}__`;
+    });
+
+    // Normal minification (without calc)
+    result = result
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/[\r\n\t]/g, '')
       .replace(/\s{2,}/g, ' ')
@@ -170,6 +178,23 @@ const App = (function() {
       .replace(/rgba\(255,255,255,0\)/gi, 'transparent')
       .replace(/;}/g, '}')
       .trim();
+
+    // Restore calc() functions with preserved spacing for + and - operators (but not --)
+    result = result.replace(/__CALC(\d+)__/g, (_, index) => {
+      let calc = calcs[parseInt(index)];
+      // Minify inside calc but preserve + and - operators with spaces
+      calc = calc
+        .replace(/\s+/g, ' ')
+        .replace(/\s*([(),])\s*/g, '$1')
+        // Only add spaces around + and - when they're operators (not part of --)
+        .replace(/([^-])\s*([+])\s*/g, '$1 $2 ')  // + is always an operator
+        .replace(/([^-])\s*([-])\s*([^-])/g, '$1 $2 $3')  // - between non-dash chars
+        .replace(/\s+/g, ' ')
+        .trim();
+      return calc;
+    });
+
+    return result;
   }
 
   function minifyHtmlDocument(html) {
@@ -200,6 +225,11 @@ const App = (function() {
 
   function isClassManglingEnabledForSettings(settings) {
     return settings?.optimizations?.classMangling?.enabled === true;
+  }
+
+  function getClassManglingModeForSettings(settings) {
+    if (!isClassManglingEnabledForSettings(settings)) return 'safe';
+    return settings?.optimizations?.classMangling?.mode === 'aggressive' ? 'aggressive' : 'safe';
   }
 
   function finalizeCompiledPageHtml(rawHtml, initialBytes = 0, applyMinification = true) {
@@ -246,7 +276,28 @@ const App = (function() {
    * Check if content blocks contain any section blocks
    */
   function contentHasSections(content) {
-    return content?.some(block => block.type === 'section') || false;
+    if (!Array.isArray(content) || content.length === 0) return false;
+
+    const hasSectionInBlock = (block) => {
+      if (!block || typeof block !== 'object') return false;
+      if (block.type === 'section') return true;
+
+      if (Array.isArray(block.children) && block.children.some(hasSectionInBlock)) {
+        return true;
+      }
+
+      if (Array.isArray(block.cells)) {
+        for (const cell of block.cells) {
+          if (Array.isArray(cell?.children) && cell.children.some(hasSectionInBlock)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
+    return content.some(hasSectionInBlock);
   }
 
   /**
@@ -291,6 +342,7 @@ const App = (function() {
     const settings = await getSettings();
     const mergedInput = { ...input };
     mergedInput.classMangling = isClassManglingEnabledForSettings(settings);
+    mergedInput.classManglingMode = getClassManglingModeForSettings(settings);
 
     // Load posts if there are bloglist blocks in the content
     const hasBloglist = mergedInput.content?.some(block => block.type === 'bloglist');
@@ -520,6 +572,7 @@ const App = (function() {
       allowPagination: false,
       buildId: 'overhead-test',
       classMangling: isClassManglingEnabledForSettings(settings),
+      classManglingMode: getClassManglingModeForSettings(settings),
     };
 
     const result = await Compiler.dryRun(testInput);
