@@ -123,6 +123,79 @@ export function selectorFromSourceBlock(block) {
 }
 
 /**
+ * Builds compiler input object from editor data
+ * Pure function - no DOM access, fully testable
+ * @param {Object} data - Editor data
+ * @param {Array} data.content - Serialized content blocks
+ * @param {Object} data.fields - Form field values
+ * @param {Object} data.globalConfig - Global site config
+ * @param {Array} data.posts - Posts for bloglist (optional)
+ * @param {boolean} allowPagination - Allow multi-page output
+ * @returns {Object} Compiler input object
+ */
+export function buildInputFromData(data, allowPagination = false) {
+  const { content, fields, globalConfig, posts = [] } = data;
+
+  // For preview with empty content, use minimal placeholder
+  const finalContent = content.length > 0
+    ? content
+    : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
+
+  // Navigation
+  let navigation = null;
+  if (fields.navEnabled && fields.navItems?.length > 0) {
+    navigation = { items: fields.navItems };
+  }
+
+  // Footer
+  let footer = null;
+  if (fields.footerEnabled && fields.footerText?.trim()) {
+    footer = { content: fields.footerText.trim() };
+  }
+
+  // CSS
+  let css = null;
+  if (fields.cssEnabled && fields.cssRules?.trim()) {
+    css = { rules: fields.cssRules.trim() };
+  }
+
+  // Meta
+  let meta = null;
+  if (fields.metaEnabled) {
+    const description = fields.metaDescription?.trim();
+    const author = fields.metaAuthor?.trim();
+    if (description || author) {
+      meta = {};
+      if (description) meta.description = description;
+      if (author) meta.author = author;
+    }
+  }
+
+  // Title override
+  let titleOverride = null;
+  if (fields.titleOverrideEnabled && fields.titleOverride?.trim()) {
+    titleOverride = fields.titleOverride.trim();
+  }
+
+  return {
+    slug: fields.slug?.trim() || 'untitled',
+    title: fields.title?.trim() || 'Untitled',
+    siteTitle: (globalConfig?.siteTitleEnabled !== false) ? (globalConfig?.siteTitle || null) : null,
+    titleOverride,
+    content: finalContent,
+    navigation,
+    footer,
+    css,
+    meta,
+    icons: [],
+    posts,
+    allowPagination,
+    buildId: fields.buildId || crypto.randomUUID(),
+    pageType: fields.pageType || 'post',
+  };
+}
+
+/**
  * Serializes a block DOM element to compiler-compatible JSON format
  * Handles all block types including nested structures (sections, layouts)
  * @param {HTMLElement} block - Block DOM element with dataset attributes
