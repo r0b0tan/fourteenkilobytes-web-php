@@ -3,12 +3,13 @@
  * Critical data serialization/deserialization functions
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   inlineNodesToHtml,
   parseInlineNodes,
   selectorFromSourceBlock,
   serializeBlock,
+  buildInputFromData,
 } from '../../public/admin/lib/editor-core.js';
 
 describe('Editor Core Module', () => {
@@ -988,6 +989,528 @@ describe('Editor Core Module', () => {
       expect(serialized.cells[0].children).toHaveLength(2);
       expect(serialized.cells[0].children[0].type).toBe('heading');
       expect(serialized.cells[0].children[1].type).toBe('paragraph');
+    });
+  });
+
+  describe('buildInputFromData()', () => {
+    it('should build minimal input with defaults', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test-page',
+          title: 'Test Page',
+          pageType: 'post',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+
+      expect(input.slug).toBe('test-page');
+      expect(input.title).toBe('Test Page');
+      expect(input.pageType).toBe('post');
+      expect(input.content).toEqual([{ type: 'paragraph', children: [{ type: 'text', text: '' }] }]);
+      expect(input.navigation).toBeNull();
+      expect(input.footer).toBeNull();
+      expect(input.css).toBeNull();
+      expect(input.meta).toBeNull();
+      expect(input.icons).toEqual([]);
+      expect(input.posts).toEqual([]);
+      expect(input.allowPagination).toBe(false);
+      expect(input.buildId).toBeDefined();
+    });
+
+    it('should use content when provided', () => {
+      const data = {
+        content: [
+          { type: 'paragraph', children: [{ type: 'text', text: 'Hello' }] },
+        ],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.content).toEqual(data.content);
+    });
+
+    it('should include navigation when enabled with items', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          navEnabled: true,
+          navItems: [
+            { text: 'Home', href: '/' },
+            { text: 'About', href: '/about' },
+          ],
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.navigation).toEqual({
+        items: [
+          { text: 'Home', href: '/' },
+          { text: 'About', href: '/about' },
+        ],
+      });
+    });
+
+    it('should not include navigation when disabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          navEnabled: false,
+          navItems: [{ text: 'Home', href: '/' }],
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.navigation).toBeNull();
+    });
+
+    it('should not include navigation when enabled but no items', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          navEnabled: true,
+          navItems: [],
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.navigation).toBeNull();
+    });
+
+    it('should include footer when enabled with text', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          footerEnabled: true,
+          footerText: '© 2024 Test',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.footer).toEqual({ content: '© 2024 Test' });
+    });
+
+    it('should trim footer text', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          footerEnabled: true,
+          footerText: '  © 2024  ',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.footer).toEqual({ content: '© 2024' });
+    });
+
+    it('should not include footer when disabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          footerEnabled: false,
+          footerText: '© 2024',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.footer).toBeNull();
+    });
+
+    it('should not include footer when enabled but empty text', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          footerEnabled: true,
+          footerText: '   ',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.footer).toBeNull();
+    });
+
+    it('should include CSS when enabled with rules', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          cssEnabled: true,
+          cssRules: 'body { color: red; }',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.css).toEqual({ rules: 'body { color: red; }' });
+    });
+
+    it('should trim CSS rules', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          cssEnabled: true,
+          cssRules: '  body { margin: 0; }  ',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.css).toEqual({ rules: 'body { margin: 0; }' });
+    });
+
+    it('should not include CSS when disabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          cssEnabled: false,
+          cssRules: 'body { color: red; }',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.css).toBeNull();
+    });
+
+    it('should include meta when enabled with description', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: true,
+          metaDescription: 'Test description',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toEqual({ description: 'Test description' });
+    });
+
+    it('should include meta when enabled with author', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: true,
+          metaAuthor: 'John Doe',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toEqual({ author: 'John Doe' });
+    });
+
+    it('should include meta with both description and author', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: true,
+          metaDescription: 'Description',
+          metaAuthor: 'Author',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toEqual({
+        description: 'Description',
+        author: 'Author',
+      });
+    });
+
+    it('should trim meta fields', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: true,
+          metaDescription: '  Desc  ',
+          metaAuthor: '  Auth  ',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toEqual({
+        description: 'Desc',
+        author: 'Auth',
+      });
+    });
+
+    it('should not include meta when disabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: false,
+          metaDescription: 'Description',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toBeNull();
+    });
+
+    it('should not include meta when enabled but all fields empty', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          metaEnabled: true,
+          metaDescription: '   ',
+          metaAuthor: '',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.meta).toBeNull();
+    });
+
+    it('should include titleOverride when enabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          titleOverrideEnabled: true,
+          titleOverride: 'Custom Title',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.titleOverride).toBe('Custom Title');
+    });
+
+    it('should trim titleOverride', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          titleOverrideEnabled: true,
+          titleOverride: '  Custom  ',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.titleOverride).toBe('Custom');
+    });
+
+    it('should not include titleOverride when disabled', () => {
+      const data = {
+        content: [],
+        fields: {
+          slug: 'test',
+          title: 'Test',
+          titleOverrideEnabled: false,
+          titleOverride: 'Custom',
+        },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.titleOverride).toBeNull();
+    });
+
+    it('should include siteTitle from globalConfig', () => {
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {
+          siteTitleEnabled: true,
+          siteTitle: 'My Site',
+        },
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.siteTitle).toBe('My Site');
+    });
+
+    it('should not include siteTitle when disabled in globalConfig', () => {
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {
+          siteTitleEnabled: false,
+          siteTitle: 'My Site',
+        },
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.siteTitle).toBeNull();
+    });
+
+    it('should include posts when provided', () => {
+      const posts = [
+        { slug: 'post-1', title: 'Post 1' },
+        { slug: 'post-2', title: 'Post 2' },
+      ];
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {},
+        posts,
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.posts).toEqual(posts);
+    });
+
+    it('should respect allowPagination parameter', () => {
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data, true);
+      expect(input.allowPagination).toBe(true);
+    });
+
+    it('should use default slug when empty', () => {
+      const data = {
+        content: [],
+        fields: { slug: '', title: 'Test' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.slug).toBe('untitled');
+    });
+
+    it('should use default title when empty', () => {
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: '' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.title).toBe('Untitled');
+    });
+
+    it('should trim slug and title', () => {
+      const data = {
+        content: [],
+        fields: { slug: '  my-slug  ', title: '  My Title  ' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.slug).toBe('my-slug');
+      expect(input.title).toBe('My Title');
+    });
+
+    it('should use provided buildId', () => {
+      const buildId = 'custom-build-id';
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test', buildId },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.buildId).toBe(buildId);
+    });
+
+    it('should generate buildId when not provided', () => {
+      const data = {
+        content: [],
+        fields: { slug: 'test', title: 'Test' },
+        globalConfig: {},
+      };
+
+      const input = buildInputFromData(data);
+      expect(input.buildId).toBeDefined();
+      expect(typeof input.buildId).toBe('string');
+    });
+
+    it('should handle complex complete input', () => {
+      const data = {
+        content: [
+          { type: 'heading', level: 1, children: [{ type: 'text', text: 'Title' }] },
+          { type: 'paragraph', children: [{ type: 'text', text: 'Content' }] },
+        ],
+        fields: {
+          slug: 'complex-page',
+          title: 'Complex Page',
+          pageType: 'page',
+          navEnabled: true,
+          navItems: [{ text: 'Home', href: '/' }],
+          footerEnabled: true,
+          footerText: '© 2024',
+          cssEnabled: true,
+          cssRules: 'body { margin: 0; }',
+          metaEnabled: true,
+          metaDescription: 'Description',
+          metaAuthor: 'Author',
+          titleOverrideEnabled: true,
+          titleOverride: 'Override',
+        },
+        globalConfig: {
+          siteTitleEnabled: true,
+          siteTitle: 'Site Title',
+        },
+        posts: [{ slug: 'post-1', title: 'Post 1' }],
+      };
+
+      const input = buildInputFromData(data, true);
+
+      expect(input.slug).toBe('complex-page');
+      expect(input.title).toBe('Complex Page');
+      expect(input.pageType).toBe('page');
+      expect(input.content).toEqual(data.content);
+      expect(input.navigation).toEqual({ items: [{ text: 'Home', href: '/' }] });
+      expect(input.footer).toEqual({ content: '© 2024' });
+      expect(input.css).toEqual({ rules: 'body { margin: 0; }' });
+      expect(input.meta).toEqual({ description: 'Description', author: 'Author' });
+      expect(input.titleOverride).toBe('Override');
+      expect(input.siteTitle).toBe('Site Title');
+      expect(input.posts).toEqual([{ slug: 'post-1', title: 'Post 1' }]);
+      expect(input.allowPagination).toBe(true);
+      expect(input.icons).toEqual([]);
     });
   });
 });
