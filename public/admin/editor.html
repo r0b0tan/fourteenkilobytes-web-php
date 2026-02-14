@@ -439,41 +439,23 @@
   <script type="module">
     // Import compiler (browser bundle)
     import * as Compiler from './compiler.browser.js';
+    // Import common utilities
+    import { debounce, initAuthGuard, setupLogoutHandler, hideLoadingOverlay } from './lib/common.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
 
     (async function () {
-      // Wait for i18n to be ready
-      await i18nReady();
-
-      // Check if setup is complete
-      const status = await App.getSetupStatus();
-      if (!status.setupComplete) {
-        window.location.href = '/setup/';
-        return;
-      }
-
-      // Check auth
-      const config = await App.getConfig();
-      if (config.authEnabled && !(await App.isLoggedIn())) {
-        window.location.href = 'index.html';
-        return;
-      }
+      // Initialize auth guard and setup
+      await initAuthGuard({ redirectIfNotAuth: 'index.html' });
 
       // Load settings with global header/footer/CSS
       const settings = await App.getSettings();
       window.globalConfig = settings;
 
-      // Hide loading overlay
-      document.getElementById('loading-overlay')?.remove();
-
-      // Logout handler
-      document.getElementById('logout-btn').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await App.logout();
-        window.location.href = '/admin/login.html';
-      });
+      // Hide loading overlay and setup logout
+      hideLoadingOverlay();
+      setupLogoutHandler();
 
       // Elements
       const pageTypeSelect = document.getElementById('page-type');
@@ -3604,14 +3586,6 @@
 
       cssEditor.classList.remove('hidden');
       cssRules.disabled = true;
-
-      function debounce(fn, delay = 300) {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => fn(...args), delay);
-        };
-      }
 
       // ============ SEED TEMPLATES ============
 

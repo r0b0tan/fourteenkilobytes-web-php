@@ -789,30 +789,15 @@
 
   <script type="module" src="/admin/app.js"></script>
   <script type="module">
+    // Import common utilities
+    import { debounce, initAuthGuard, setupLogoutHandler, hideLoadingOverlay } from './lib/common.js';
+
     (async function () {
-      // Wait for i18n to be ready
-      await i18nReady();
+      // Initialize auth guard and setup
+      await initAuthGuard({ redirectIfNotAuth: 'index.html' });
 
-      // Check if setup is complete
-      const status = await App.getSetupStatus();
-      if (!status.setupComplete) {
-        window.location.href = '/setup/';
-        return;
-      }
-
-      // Check auth
-      const config = await App.getConfig();
-      if (config.authEnabled && !(await App.isLoggedIn())) {
-        window.location.href = 'index.html';
-        return;
-      }
-
-      // Logout handler
-      document.getElementById('logout-btn').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await App.logout();
-        window.location.href = '/admin/login.html';
-      });
+      // Setup logout handler
+      setupLogoutHandler();
 
       // Elements
       const adminLanguage = document.getElementById('admin-language');
@@ -1772,16 +1757,6 @@
           hide
         };
       })();
-
-      // ============ UTILS ============
-
-      function debounce(fn, delay = 300) {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => fn(...args), delay);
-        };
-      }
 
       // ============ DATA TAB ============
 
