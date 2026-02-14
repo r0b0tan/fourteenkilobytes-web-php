@@ -451,6 +451,8 @@
     import { debounce, initAuthGuard, setupLogoutHandler, hideLoadingOverlay } from './lib/common.js';
     // Import editor core functions (data serialization/deserialization)
     import { inlineNodesToHtml, parseInlineNodes, selectorFromSourceBlock, serializeBlock } from './lib/editor-core.js';
+    // Import byte utilities
+    import { formatBytes } from './lib/byte-utils.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
@@ -2820,10 +2822,6 @@
       }
 
       // ============ BYTE COUNTER & COST RAIL ============
-
-      function formatBytes(bytes) {
-        return bytes.toLocaleString('de-DE') + ' B';
-      }
 
       function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
         const limit = 14336;

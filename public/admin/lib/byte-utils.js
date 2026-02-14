@@ -16,6 +16,15 @@ export function getByteLength(text) {
 }
 
 /**
+ * Format byte count for display with German locale formatting
+ * @param {number} bytes - Number of bytes
+ * @returns {string} Formatted string with " B" suffix (e.g., "1.234 B")
+ */
+export function formatBytes(bytes) {
+  return bytes.toLocaleString('de-DE') + ' B';
+}
+
+/**
  * Finalize compiled page HTML with accurate byte counting
  * Iteratively replaces {{bytes}} placeholder and re-minifies until byte count converges
  *
