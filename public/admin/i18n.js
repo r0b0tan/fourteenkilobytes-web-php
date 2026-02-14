@@ -8,7 +8,7 @@
  * - JavaScript: t('messages.saved') or t('messages.deleted', { slug: 'my-post' })
  */
 
-const i18n = {
+export const i18n = {
   locale: 'en',
   translations: {},
   loaded: false,
@@ -21,10 +21,10 @@ const i18n = {
         // Fallback to English if locale file not found
         const fallback = await fetch('/lang/en.json');
         if (fallback.ok) {
-            this.translations = await fallback.json();
+          this.translations = await fallback.json();
         } else {
-            console.error('i18n: Fatal - Could not load English translations');
-            this.translations = {}; 
+          console.error('i18n: Fatal - Could not load English translations');
+          this.translations = {};
         }
       } else {
         this.translations = await res.json();
@@ -70,7 +70,7 @@ const i18n = {
    */
   translatePage() {
     // Translate text content
-    document.querySelectorAll('[data-i18n]').forEach(el => {
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
       const key = el.dataset.i18n;
       const translated = this.t(key);
       if (translated !== key) {
@@ -79,7 +79,7 @@ const i18n = {
     });
 
     // Translate placeholders
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
       const key = el.dataset.i18nPlaceholder;
       const translated = this.t(key);
       if (translated !== key) {
@@ -88,7 +88,7 @@ const i18n = {
     });
 
     // Translate title attributes
-    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    document.querySelectorAll('[data-i18n-title]').forEach((el) => {
       const key = el.dataset.i18nTitle;
       const translated = this.t(key);
       if (translated !== key) {
@@ -97,7 +97,7 @@ const i18n = {
     });
 
     // Translate aria-label attributes
-    document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
       const key = el.dataset.i18nAria;
       const translated = this.t(key);
       if (translated !== key) {
@@ -131,29 +131,43 @@ const i18n = {
       localStorage.setItem('adminLanguage', locale);
       window.location.reload();
     }
-  }
+  },
 };
 
-// Global translation function
-window.t = (key, params) => i18n.t(key, params);
+/**
+ * Global translation function
+ * @param {string} key - Translation key
+ * @param {Object} params - Optional parameters for interpolation
+ * @returns {string} Translated string
+ */
+export const t = (key, params) => i18n.t(key, params);
 
-// Helper to wait for i18n to be ready (returns immediately if already loaded)
-window.i18nReady = () => new Promise(resolve => {
-  if (i18n.loaded) return resolve();
-  window.addEventListener('i18n:ready', resolve, { once: true });
-});
+/**
+ * Helper to wait for i18n to be ready (returns immediately if already loaded)
+ * @returns {Promise<void>}
+ */
+export const i18nReady = () =>
+  new Promise((resolve) => {
+    if (i18n.loaded) return resolve();
+    window.addEventListener('i18n:ready', resolve, { once: true });
+  });
 
-// Show loading overlay during navigation (smooth page transitions)
-window.showNavigationOverlay = () => {
+/**
+ * Show loading overlay during navigation (smooth page transitions)
+ */
+export const showNavigationOverlay = () => {
   // Avoid duplicate overlays
   if (document.querySelector('.loading-overlay')) return;
   const overlay = document.createElement('div');
   overlay.className = 'loading-overlay';
-  overlay.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div></div>';
+  overlay.innerHTML =
+    '<div class="loading-state"><div class="loading-spinner"></div></div>';
   document.body.appendChild(overlay);
 };
 
-// Auto-attach navigation overlay to internal links (runs after DOM ready)
+/**
+ * Auto-attach navigation overlay to internal links (runs after DOM ready)
+ */
 function setupNavigationOverlay() {
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a[href]');
@@ -170,16 +184,21 @@ function setupNavigationOverlay() {
   });
 }
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Make functions available globally for non-module usage
+if (typeof window !== 'undefined') {
+  window.i18n = i18n;
+  window.t = t;
+  window.i18nReady = i18nReady;
+  window.showNavigationOverlay = showNavigationOverlay;
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      i18n.init();
+      setupNavigationOverlay();
+    });
+  } else {
     i18n.init();
     setupNavigationOverlay();
-  });
-} else {
-  i18n.init();
-  setupNavigationOverlay();
+  }
 }
-
-// Export for module usage
-window.i18n = i18n;
