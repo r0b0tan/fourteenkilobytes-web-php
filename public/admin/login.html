@@ -144,37 +144,17 @@
 
   <script type="module" src="/admin/app.js"></script>
   <script type="module">
-    (async function () {
-      // Wait for i18n to be ready
-      await i18nReady();
+    // Import common utilities
+    import { initLoginPage } from './lib/common.js';
 
+    (async function () {
       const loginForm = document.getElementById('login-form');
       const passwordInput = document.getElementById('password');
       const loginBtn = document.getElementById('login-btn');
       const loginError = document.getElementById('login-error');
 
-      // Check if setup is complete
-      const status = await App.getSetupStatus();
-      if (!status.setupComplete) {
-        window.location.href = '/setup/';
-        return;
-      }
-
-      // Check if auth is required
-      const config = await App.getConfig();
-
-      if (!config.authEnabled) {
-        // No auth required, go directly to dashboard
-        window.location.href = '/admin/';
-        return;
-      }
-
-      // Check if already logged in
-      const loggedIn = await App.isLoggedIn();
-      if (loggedIn) {
-        window.location.href = '/admin/';
-        return;
-      }
+      // Initialize login page (handles setup check and redirects)
+      await initLoginPage();
 
       // Focus password input
       passwordInput.focus();
