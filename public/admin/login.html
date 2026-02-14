@@ -7,7 +7,10 @@
   <title>Login - fourteenkilobytes</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/admin/favicon-32x32.png">
   <link rel="stylesheet" href="/admin/style.css">
-  <script src="/admin/i18n.js"></script>
+  <link rel="modulepreload" href="/admin/i18n.js">
+  <link rel="modulepreload" href="/admin/app.js">
+  <link rel="modulepreload" href="/admin/lib/common.js">
+  <script type="module" src="/admin/i18n.js"></script>
   <style>
     body {
       background: var(--gray-100);
