@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getByteLength, finalizeCompiledPageHtml } from '../../public/admin/lib/byte-utils.js';
+import { getByteLength, formatBytes, finalizeCompiledPageHtml } from '../../public/admin/lib/byte-utils.js';
 
 describe('Byte Utils Module', () => {
   describe('getByteLength()', () => {
@@ -33,6 +33,26 @@ describe('Byte Utils Module', () => {
     it('should handle HTML entities (counted as literal characters)', () => {
       // &lt; is 4 bytes (as literal characters, not entity)
       expect(getByteLength('&lt;')).toBe(4);
+    });
+  });
+
+  describe('formatBytes()', () => {
+    it('should format bytes with German locale and " B" suffix', () => {
+      expect(formatBytes(0)).toBe('0 B');
+      expect(formatBytes(123)).toBe('123 B');
+      expect(formatBytes(1234)).toBe('1.234 B');
+      expect(formatBytes(12345)).toBe('12.345 B');
+    });
+
+    it('should handle large numbers', () => {
+      expect(formatBytes(14336)).toBe('14.336 B');
+      expect(formatBytes(1000000)).toBe('1.000.000 B');
+    });
+
+    it('should handle edge cases', () => {
+      expect(formatBytes(1)).toBe('1 B');
+      expect(formatBytes(999)).toBe('999 B');
+      expect(formatBytes(1000)).toBe('1.000 B');
     });
   });
 

@@ -798,6 +798,8 @@
   <script type="module">
     // Import common utilities
     import { debounce, initAuthGuard, setupLogoutHandler, hideLoadingOverlay } from './lib/common.js';
+    // Import byte utilities
+    import { formatBytes } from './lib/byte-utils.js';
 
     (async function () {
       // Initialize auth guard and setup
@@ -1390,10 +1392,6 @@
       }
 
       // ============ OVERHEAD CALCULATION ============
-
-      function formatBytes(bytes) {
-        return bytes.toLocaleString('de-DE') + ' B';
-      }
 
       // Cache for overhead calculation (avoid redundant compiler runs)
       let overheadCache = { hash: null, result: null };
