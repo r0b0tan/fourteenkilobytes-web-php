@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "overview": "Übersicht",
+    "new": "Neu",
+    "settings": "Einstellungen",
+    "blog": "Blog"
+  },
+  "messages": {
+    "saved": "Erfolgreich gespeichert!",
+    "deleted": "Beitrag {{slug}} gelöscht",
+    "error": "Ein Fehler ist aufgetreten"
+  },
+  "search": {
+    "placeholder": "Beiträge durchsuchen..."
+  },
+  "actions": {
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "save": "Speichern"
+  }
+}

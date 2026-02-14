@@ -1,0 +1,21 @@
+{
+  "name": "web-php",
+  "version": "1.0.0",
+  "description": "A lightweight, experimental CMS built with PHP that enforces a strict **14,336-byte size limit** per page. This constraint encourages minimalist design and efficient content creation.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "happy-dom": "^20.6.1",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "new": "New",
+    "settings": "Settings",
+    "blog": "Blog"
+  },
+  "messages": {
+    "saved": "Saved successfully!",
+    "deleted": "Post {{slug}} deleted",
+    "error": "An error occurred"
+  },
+  "search": {
+    "placeholder": "Search posts..."
+  },
+  "actions": {
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save"
+  }
+}
