@@ -28,6 +28,10 @@ composer.phar
 # Build output
 dist/
 
+# Node.js
+node_modules/
+coverage/
+
 # Application data (contains sensitive tokens and user data)
 data/instance.json
 data/manifest.json
