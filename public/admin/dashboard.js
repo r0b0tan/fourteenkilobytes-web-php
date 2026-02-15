@@ -630,7 +630,7 @@ export async function init() {
 }
 
 // Check for available updates from GitHub
-async function checkForUpdates() {
+export async function checkForUpdates() {
   try {
     const response = await fetch('/api/check-updates');
     if (!response.ok) return;
@@ -647,7 +647,7 @@ async function checkForUpdates() {
 }
 
 // Check if update should be shown based on user preferences
-function shouldShowUpdate(version) {
+export function shouldShowUpdate(version) {
   // Check if permanently dismissed
   const dismissedVersion = localStorage.getItem('dismissedUpdateVersion');
   if (dismissedVersion === version) {
@@ -672,7 +672,7 @@ function shouldShowUpdate(version) {
 }
 
 // Show update notification banner
-function showUpdateBanner(updateInfo) {
+export function showUpdateBanner(updateInfo) {
   // Check if should show based on user preferences
   if (!shouldShowUpdate(updateInfo.latest)) {
     return;
@@ -730,9 +730,15 @@ function showUpdateBanner(updateInfo) {
   });
 }
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+// Auto-initialize when DOM is ready (dashboard page only)
+export function autoInitDashboard() {
+  if (!document.getElementById('dashboard-view')) return;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 }
+
+autoInitDashboard();
