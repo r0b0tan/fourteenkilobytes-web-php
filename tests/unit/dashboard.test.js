@@ -50,6 +50,9 @@ describe('dashboard.js update helpers', () => {
     vi.restoreAllMocks();
 
     globalThis.t = vi.fn((key) => key);
+    globalThis.i18n = {
+      getFullLocale: vi.fn(() => 'en-US'),
+    };
     globalThis.i18nReady = vi.fn(() => Promise.resolve());
     globalThis.App = {
       escapeHtml: vi.fn((value) => String(value)),
@@ -340,6 +343,148 @@ describe('dashboard.js update helpers', () => {
       await flushPromises();
 
       expect(App.deletePost).toHaveBeenCalledWith('my post');
+    });
+
+    it('applies date range filters and clear button resets them', async () => {
+      const { init } = await loadDashboardModule();
+      createDashboardInitDom();
+
+      global.fetch = vi.fn(() => Promise.resolve({ ok: false }));
+      globalThis.App = {
+        ...globalThis.App,
+        formatDate: vi.fn(() => 'Jan 1, 2026'),
+        getSetupStatus: vi.fn(() => Promise.resolve({ setupComplete: true })),
+        getConfig: vi.fn(() => Promise.resolve({ authEnabled: false })),
+        getPosts: vi.fn(() => Promise.resolve([
+          {
+            slug: 'old-post',
+            title: 'Old Post',
+            pageType: 'post',
+            status: 'published',
+            publishedAt: '2025-01-10T12:00:00Z',
+          },
+          {
+            slug: 'new-post',
+            title: 'New Post',
+            pageType: 'post',
+            status: 'published',
+            publishedAt: '2026-01-15T12:00:00Z',
+          },
+        ])),
+      };
+
+      await init();
+
+      const postsList = document.getElementById('posts-list');
+      const dateFromInput = document.getElementById('date-from');
+      const clearDatesBtn = document.getElementById('clear-dates');
+      const dateRangeTrigger = document.getElementById('date-range-trigger');
+
+      expect(postsList?.innerHTML).toContain('old-post');
+      expect(postsList?.innerHTML).toContain('new-post');
+
+      dateFromInput.value = '2026-01-01';
+      dateFromInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(postsList?.innerHTML).not.toContain('old-post');
+      expect(postsList?.innerHTML).toContain('new-post');
+      expect(dateRangeTrigger?.classList.contains('active')).toBe(true);
+
+      clearDatesBtn.dispatchEvent(new Event('click', { bubbles: true }));
+
+      expect(postsList?.innerHTML).toContain('old-post');
+      expect(postsList?.innerHTML).toContain('new-post');
+      expect(dateRangeTrigger?.classList.contains('active')).toBe(false);
+    });
+
+    it('opens and closes actions dropdown via click, outside click and Escape key', async () => {
+      const { init } = await loadDashboardModule();
+      createDashboardInitDom();
+
+      global.fetch = vi.fn(() => Promise.resolve({ ok: false }));
+      globalThis.App = {
+        ...globalThis.App,
+        formatDate: vi.fn(() => 'Jan 1, 2026'),
+        getSetupStatus: vi.fn(() => Promise.resolve({ setupComplete: true })),
+        getConfig: vi.fn(() => Promise.resolve({ authEnabled: false })),
+        getPosts: vi.fn(() => Promise.resolve([
+          {
+            slug: 'dropdown-post',
+            title: 'Dropdown Post',
+            pageType: 'post',
+            status: 'published',
+            publishedAt: '2026-01-10T12:00:00Z',
+          },
+        ])),
+      };
+
+      await init();
+
+      const toggle = document.querySelector('[data-action="toggle-dropdown"]');
+      const dropdown = document.querySelector('.actions-dropdown');
+
+      toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      dropdown?.classList.add('open');
+      toggle?.setAttribute('aria-expanded', 'true');
+
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(dropdown?.classList.contains('open')).toBe(false);
+      expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+
+      dropdown?.classList.add('open');
+      toggle?.setAttribute('aria-expanded', 'true');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(dropdown?.classList.contains('open')).toBe(false);
+      expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('shows error modal when duplicate or delete action fails', async () => {
+      const { init } = await loadDashboardModule();
+      createDashboardInitDom();
+
+      global.fetch = vi.fn(() => Promise.resolve({ ok: false }));
+      globalThis.App = {
+        ...globalThis.App,
+        formatDate: vi.fn(() => 'Jan 1, 2026'),
+        getSetupStatus: vi.fn(() => Promise.resolve({ setupComplete: true })),
+        getConfig: vi.fn(() => Promise.resolve({ authEnabled: false })),
+        getPosts: vi.fn(() => Promise.resolve([
+          {
+            slug: 'error-post',
+            title: 'Error Post',
+            pageType: 'post',
+            status: 'published',
+            publishedAt: '2026-01-10T12:00:00Z',
+          },
+        ])),
+        clonePage: vi.fn(() => Promise.reject(new Error('clone failed'))),
+        deletePost: vi.fn(() => Promise.reject(new Error('delete failed'))),
+      };
+
+      await init();
+
+      const duplicateBtn = document.querySelector('[data-action="duplicate"]');
+      duplicateBtn.dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(document.getElementById('modal')?.className).toContain('modal-error');
+      expect(document.getElementById('modal-message')?.textContent).toBe('dashboard.duplicateError');
+
+      const duplicateOkBtn = document.querySelector('#modal-actions button');
+      duplicateOkBtn?.dispatchEvent(new Event('click', { bubbles: true }));
+
+      const deleteBtn = document.querySelector('[data-action="delete"]');
+      deleteBtn.dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+
+      const confirmBtn = Array.from(document.querySelectorAll('#modal-actions button'))
+        .find(btn => btn.textContent === 'modal.yes');
+      confirmBtn?.dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(document.getElementById('modal')?.className).toContain('modal-error');
+      expect(document.getElementById('modal-message')?.textContent).toBe('dashboard.deleteError');
     });
   });
 });

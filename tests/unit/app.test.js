@@ -232,6 +232,55 @@ describe('App Utility Functions', () => {
       expect(fetch).toHaveBeenNthCalledWith(2, '/api/settings', expect.objectContaining({ method: 'PUT' }));
       expect(fetch).toHaveBeenCalledTimes(3);
     });
+
+    it('exportData downloads json backup and revokes object URL', async () => {
+      const createObjectURL = vi.fn(() => 'blob:test-url');
+      const revokeObjectURL = vi.fn();
+      global.URL.createObjectURL = createObjectURL;
+      global.URL.revokeObjectURL = revokeObjectURL;
+
+      const clickSpy = vi.fn();
+      const createElementSpy = vi.spyOn(document, 'createElement');
+      createElementSpy.mockImplementation((tagName) => {
+        const el = document.createElementNS('http://www.w3.org/1999/xhtml', tagName);
+        if (tagName === 'a') {
+          el.click = clickSpy;
+        }
+        return el;
+      });
+
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ posts: [{ slug: 'a' }] }),
+      }));
+
+      const result = await App.exportData('settings');
+
+      expect(fetch).toHaveBeenCalledWith('/api/export?type=settings', { credentials: 'same-origin' });
+      expect(result).toEqual({ posts: [{ slug: 'a' }] });
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
+
+      createElementSpy.mockRestore();
+    });
+
+    it('exportData throws API error message on failed response', async () => {
+      global.fetch = vi.fn(() => Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ error: 'export failed' }),
+      }));
+
+      await expect(App.exportData('all')).rejects.toThrow('export failed');
+    });
+
+    it('forwards icon APIs to compiler module', () => {
+      expect(App.getAvailableIcons()).toEqual(['icon-a']);
+      expect(App.getIconSvg('icon-a')).toBe('<svg data-id="icon-a"></svg>');
+      expect(compilerMocks.getAvailableIconIds).toHaveBeenCalledTimes(1);
+      expect(compilerMocks.getIconSvg).toHaveBeenCalledWith('icon-a');
+    });
   });
 
   describe('preview() and publish()', () => {
@@ -360,6 +409,47 @@ describe('App Utility Functions', () => {
       expect(body.pages).toHaveLength(2);
       expect(body.pages[0].slug).toBe('hello');
       expect(body.pages[1].slug).toBe('hello-2');
+    });
+
+    it('publish applies global settings by default and injects posts for bloglist', async () => {
+      compilerMocks.compile.mockResolvedValue({
+        success: true,
+        pages: [{ slug: 'global-page', html: '<h1>G</h1>', bytes: 1000, hash: 'g1' }],
+      });
+
+      global.fetch = vi.fn((url, options) => {
+        if (url === '/api/settings') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({
+              cssEnabled: false,
+              header: { enabled: false, links: [] },
+              footer: { enabled: false, content: '' },
+              bloglist: { limit: 5, archiveEnabled: false },
+            }),
+          });
+        }
+        if (url === '/api/posts' && !options?.method) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ posts: [{ slug: 'p1' }] }) });
+        }
+        if (url === '/api/posts' && options?.method === 'POST') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      });
+
+      await App.publish({
+        slug: 'global-page',
+        title: 'Global Page',
+        content: [{ type: 'bloglist' }],
+        icons: [],
+        allowPagination: true,
+      });
+
+      expect(compilerMocks.compile).toHaveBeenCalledWith(expect.objectContaining({
+        slug: 'global-page',
+        posts: [{ slug: 'p1' }],
+      }));
     });
 
     it('previewOverhead builds compiler input from settings and returns breakdown', async () => {
