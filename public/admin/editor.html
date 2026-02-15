@@ -20,7 +20,6 @@
 </head>
 
 <body>
-  <!-- Loading Overlay (shown until editor is loaded) -->
   <div id="loading-overlay" class="loading-overlay instant">
     <div class="loading-state">
       <div class="loading-spinner"></div>
@@ -28,13 +27,10 @@
     </div>
   </div>
 
-  <!-- Use semantic header element for better document structure -->
   <header class="header">
     <div class="header-top">
-      <!-- Logo with improved accessibility -->
       <div class="logo-container">
         <a href="/admin/index.html" class="logo" aria-label="14KB Dashboard">
-          <!-- SVG uses currentColor to inherit accent from CSS -->
           <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
             viewBox="0 0 191.000000 191.000000" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             <g transform="translate(0.000000,191.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
@@ -61,11 +57,9 @@
 221 -40 48 -135 112 -207 139 -55 21 -71 22 -587 23 -305 1 -551 -2 -579 -7z" />
             </g>
           </svg>
-          <!-- Stacked wordmark for compact branding -->
           <span class="logo-text" aria-hidden="true">14<br>KB</span>
         </a>
       </div>
-      <!-- Semantic nav with improved structure -->
       <nav class="header-nav" aria-label="Main navigation">
         <a href="/admin/index.html" class="nav-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -101,7 +95,6 @@
           </svg>
           <span data-i18n="nav.blog">Blog</span>
         </a>
-        <!-- Visual separator before logout -->
         <span class="nav-separator" aria-hidden="true"></span>
         <a href="#" id="logout-btn" class="nav-icon logout-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -135,7 +128,6 @@
     </div>
   </header>
 
-  <!-- Card: Head -->
   <div class="editor-card">
     <div class="card-header">
       <h2 class="card-title" data-i18n="editor.head">Head</h2>
@@ -164,7 +156,6 @@
         <span id="title-bytes">0 B</span>
       </div>
 
-      <!-- Title Override -->
       <div class="override-section">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -188,7 +179,6 @@
         <span id="browser-title-bytes">0 B</span>
       </div>
 
-      <!-- Meta-Override -->
       <div class="override-section">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -217,7 +207,6 @@
         <span id="meta-bytes">0 B</span>
       </div>
 
-      <!-- Navigation-Override -->
       <div class="override-section">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -243,7 +232,6 @@
     </div>
   </div>
 
-  <!-- Card: Body -->
   <div class="editor-card">
     <div class="card-header">
       <h2 class="card-title" data-i18n="editor.body">Body</h2>
@@ -272,13 +260,11 @@
     </div>
   </div>
 
-  <!-- Card: Footer -->
   <div class="editor-card">
     <div class="card-header">
       <h2 class="card-title" data-i18n="editor.footer">Footer</h2>
     </div>
     <div class="card-body card-body-grid">
-      <!-- Footer-Override -->
       <div class="override-section override-section-first">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -300,7 +286,6 @@
         <span id="footer-bytes">0 B</span>
       </div>
 
-      <!-- CSS Override -->
       <div class="override-section">
         <div class="override-section-header">
           <label class="override-toggle">
@@ -322,7 +307,6 @@
     </div>
   </div>
 
-  <!-- Link Edit Popup for Navigation -->
   <div id="nav-link-popup" class="nav-link-popup hidden">
     <div class="popup-content">
       <div class="form-group">
@@ -342,18 +326,7 @@
     </div>
   </div>
 
-  <!-- Floating Format Toolbar (disabled - using inline buttons in block header)
-  <div id="format-toolbar" class="format-toolbar hidden">
-    <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
-    <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
-    <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
-    <button type="button" data-cmd="strikethrough" title="Strikethrough"><s>S</s></button>
-    <button type="button" data-cmd="code" title="Code"><code>&lt;&gt;</code></button>
-    <button type="button" data-cmd="link" title="Link">🔗</button>
-  </div>
-  -->
 
-  <!-- Link Popup for content -->
   <div id="link-popup" class="link-popup hidden">
     <div class="link-prefix-buttons">
       <button type="button" class="link-prefix-btn" data-prefix="https://" title="URL">
@@ -381,7 +354,6 @@
     <button type="button" id="link-cancel" class="btn btn-secondary">×</button>
   </div>
 
-  <!-- Modal System -->
   <div id="modal-backdrop" class="modal-backdrop hidden"></div>
   <div id="modal" class="modal hidden">
     <div class="modal-content">
@@ -390,7 +362,6 @@
     </div>
   </div>
 
-  <!-- Card: Build -->
   <div class="editor-card">
     <div class="card-header">
       <h2 class="card-title">Build</h2>
@@ -462,60 +433,36 @@
     </div>
   </div>
 
-  <!-- Live CSS Container -->
   <style id="live-css"></style>
 
   <script type="module" src="/admin/app.js"></script>
   <script type="module">
-    // Import compiler (browser bundle)
     import * as Compiler from './compiler.browser.js';
-    // Import common utilities
     import { debounce, initAuthGuard, setupLogoutHandler, hideLoadingOverlay } from './lib/common.js';
-    // Import editor core functions (data serialization/deserialization)
-    import { inlineNodesToHtml, parseInlineNodes, selectorFromSourceBlock, serializeBlock } from './lib/editor-core.js';
-    // Import byte utilities
+    import { inlineNodesToHtml, selectorFromSourceBlock, serializeBlock } from './lib/editor-core.js';
     import { formatBytes } from './lib/byte-utils.js';
-    // Import byte estimation functions
-    import { parseSelector, selectorToAttributes, renderBlockHtml, estimateBlockSize } from './lib/byte-estimation.js';
-    // Import publish workflow functions
+    import { estimateBlockSize } from './lib/byte-estimation.js';
     import { validatePublishData, determinePaginationStrategy, executePublish, resetEditorForm } from './lib/publish-workflow.js';
-    // Import block UI utilities
-    import { createBlockSelectorControl, createBlockActions, createBlockHeader, createInnerAddBlock, createByteIndicator } from './lib/block-ui-utils.js';
-    // Import block builders
+    import { createBlockSelectorControl, createInnerAddBlock, createByteIndicator } from './lib/block-ui-utils.js';
     import { createSectionBlock, createLayoutBlock } from './lib/block-builders.js';
-    // Import modal utilities
     import { createModalManager } from './lib/modal-utils.js';
-    // Import block operations
     import { updateBlockStyling, insertBlockBelow, moveBlock as moveBlockUtil, toggleSelectionWrap } from './lib/block-operations.js';
-    // Import block type selectors
     import { createTextBlockTypeSelector, createHeadingLevelSelector, createListTypeSelector, createBlockTypeLabel, createFormatButtons } from './lib/block-type-selectors.js';
-    // Import block content builders
     import { createBloglistContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
-    // Import editor state manager
     import { createEditorStateManager } from './lib/editor/state.js';
-    // Import editor metrics manager
     import { createEditorMetricsManager } from './lib/editor/metrics.js';
-    // Import editor overrides manager
     import { createEditorOverridesManager } from './lib/editor/overrides.js';
-    // Import editor build input manager
     import { createEditorBuildInputManager } from './lib/editor/build-input.js';
+    import { createEditorBlockFactory } from './lib/editor/block-factory.js';
 
-    // Declare early to avoid initialization order issues
     let debouncedPreview = () => { };
 
     (async function () {
-      // Initialize auth guard and setup
       await initAuthGuard({ redirectIfNotAuth: 'index.html' });
-
-      // Load settings with global header/footer/CSS
       const settings = await App.getSettings();
       window.globalConfig = settings;
-
-      // Hide loading overlay and setup logout
       hideLoadingOverlay();
       setupLogoutHandler();
-
-      // Elements
       const pageTypeSelect = document.getElementById('page-type');
       const pageTypeHint = document.getElementById('page-type-hint');
       const titleInput = document.getElementById('title');
@@ -523,7 +470,6 @@
       const blockEditor = document.getElementById('block-editor');
       const addBlockBtn = document.getElementById('add-block-btn');
       const addBlockDropdown = document.getElementById('add-block-dropdown');
-      const formatToolbar = document.getElementById('format-toolbar');
       const linkPopup = document.getElementById('link-popup');
       const linkHrefInput = document.getElementById('link-href');
       const linkApplyBtn = document.getElementById('link-apply');
@@ -559,7 +505,6 @@
       const liveCSS = document.getElementById('live-css');
       const publishBtn = document.getElementById('publish-btn');
 
-      // Byte display elements
       const costContentTotal = document.getElementById('cost-content-total');
       const contentRail = document.getElementById('content-rail');
       const titleBytesEl = document.getElementById('title-bytes');
@@ -569,7 +514,6 @@
       const footerBytesEl = document.getElementById('footer-bytes');
       const cssBytesEl = document.getElementById('css-bytes');
 
-      // Build Card elements
       const breakdownBase = document.getElementById('breakdown-base');
       const breakdownTitle = document.getElementById('breakdown-title');
       const breakdownFavicon = document.getElementById('breakdown-favicon');
@@ -583,7 +527,6 @@
       const piePercent = document.getElementById('pie-percent');
       const pieContentDot = document.querySelector('.pie-dot-content');
 
-      // State
       let savedSelection = null;
 
       // ============ AUTO-SAVE ============
@@ -621,10 +564,6 @@
         return editorStateManager;
       }
 
-      function getCurrentContext() {
-        return getEditorStateManager().getCurrentContext();
-      }
-
       function saveToLocalStorage() {
         return getEditorStateManager().saveToLocalStorage();
       }
@@ -642,7 +581,6 @@
       let isEditMode = false;
       let editingSlug = null;
 
-      // Update page title with current slug (for new mode)
       function updatePageTitleSlug() {
         if (isEditMode) return; // Don't update in edit mode
         const pageTitle = document.getElementById('page-title');
@@ -654,7 +592,6 @@
         }
       }
 
-      // SVG icons for alignment buttons (shared by createBlockElement and blockElFromSource)
       const alignSvgs = {
         left: '<svg width="14" height="14" viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="7" x2="9" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
         center: '<svg width="14" height="14" viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="11" x2="12" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
@@ -674,14 +611,11 @@
 
       let blockElFromSource = null;
 
-      // Load editor state from source JSON (compiler format)
       function loadFromSource(sourceData) {
-        // Restore basic fields
         titleInput.value = sourceData.title || '';
         slugInput.value = sourceData.slug || '';
         pageTypeSelect.value = sourceData.pageType || 'post';
 
-        // Helper to create a block element from source data
         blockElFromSource = function (block, depth = 0) {
           const isNested = depth > 0;
           if (block.type === 'bloglist') {
@@ -714,7 +648,6 @@
           }
           if (block.type === 'section') {
             const el = createBlockElement('section', null, '', null, null, isNested);
-            // Set properties
             el.dataset.background = block.background || '#1a1a1a';
             el.dataset.color = block.color || '#ffffff';
             el.dataset.pattern = block.pattern || '';
@@ -724,12 +657,10 @@
             el.dataset.padding = block.padding || '';
             el.dataset.align = block.align || '';
 
-            // Update UI controls
             const bgInput = el.querySelector('.section-controls input[type="color"]');
             if (bgInput) bgInput.value = block.background || '#1a1a1a';
 
             const colorInputs = el.querySelectorAll('.section-inner-wrapper input[type="color"]');
-            // 0=background, 1=text, 2=pattern
             if (colorInputs[1]) colorInputs[1].value = block.color || '#ffffff';
             if (colorInputs[2]) colorInputs[2].value = block.patternColor || '#ffffff';
 
@@ -752,7 +683,6 @@
             const alignSelect = el.querySelector('.section-align-select');
             if (alignSelect) alignSelect.value = block.align || '';
 
-            // Update preview colors
             const preview = el.querySelector('.section-preview');
             if (preview) {
               preview.style.backgroundColor = block.background || '#ffffff';
@@ -762,7 +692,6 @@
               const pClass = Compiler.getPatternClass(block.pattern || '');
               preview.className = 'section-preview ' + pClass;
 
-              // Set PC var
               const opacity = parseFloat(block.patternOpacity || '0.1');
               const hex = block.patternColor || '#ffffff';
               const r = parseInt(hex.substring(1, 3), 16);
@@ -770,7 +699,6 @@
               const b = parseInt(hex.substring(5, 7), 16);
               preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
             }
-            // Load child blocks
             if (block.children && block.children.length > 0) {
               const sectionBlocks = el.querySelector('.section-blocks');
               block.children.forEach(child => {
@@ -787,22 +715,17 @@
             el.dataset.columns = cols;
             el.dataset.rows = rows;
 
-            // Get cell grid and populate
             const cellsGrid = el.querySelector('.layout-cells-grid');
             if (cellsGrid && block.cells && block.cells.length > 0) {
-              // Clear existing cells (keep controls)
               cellsGrid.querySelectorAll(':scope > .layout-cell').forEach(c => c.remove());
 
-              // Recreate cells from data
               block.cells.forEach(cellData => {
                 const cellEl = document.createElement('div');
                 cellEl.className = 'layout-cell';
 
-                // Cell toolbar
                 const toolbar = document.createElement('div');
                 toolbar.className = 'layout-cell-toolbar';
 
-                // Alignment buttons
                 const alignGroup = document.createElement('div');
                 alignGroup.className = 'layout-toolbar-group';
                 ['left', 'center', 'right'].forEach(align => {
@@ -825,7 +748,6 @@
                 });
                 toolbar.appendChild(alignGroup);
 
-                // Padding input
                 const padGroup = document.createElement('label');
                 padGroup.className = 'layout-toolbar-input';
                 padGroup.innerHTML = '<span>P</span>';
@@ -847,7 +769,6 @@
                 padGroup.appendChild(padInput);
                 toolbar.appendChild(padGroup);
 
-                // Margin input
                 const marGroup = document.createElement('label');
                 marGroup.className = 'layout-toolbar-input';
                 marGroup.innerHTML = '<span>M</span>';
@@ -869,7 +790,6 @@
                 marGroup.appendChild(marInput);
                 toolbar.appendChild(marGroup);
 
-                // Delete button
                 const delBtn = document.createElement('button');
                 delBtn.type = 'button';
                 delBtn.className = 'layout-toolbar-delete';
@@ -885,7 +805,6 @@
 
                 cellEl.appendChild(toolbar);
 
-                // Restore alignment
                 if (cellData.textAlign) {
                   cellEl.dataset.textAlign = cellData.textAlign;
                   cellEl.style.textAlign = cellData.textAlign;
@@ -899,7 +818,6 @@
                 }
                 cellEl.appendChild(cellBlocks);
 
-                // Add block button with type picker
                 const addBtn = document.createElement('button');
                 addBtn.type = 'button';
                 addBtn.className = 'layout-cell-add-btn';
@@ -943,7 +861,6 @@
                 cellsGrid.appendChild(cellEl);
               });
 
-              // Update grid styling
               cellsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
               cellsGrid.style.gridTemplateRows = `repeat(${rows}, auto)`;
             }
@@ -956,28 +873,23 @@
           if (block.type === 'blockquote') {
             return applySelectorToBlockElement(createBlockElement('blockquote', null, inlineNodesToHtml(block.children), null, null, isNested), block);
           }
-          // paragraph
           return applySelectorToBlockElement(createBlockElement('paragraph', null, inlineNodesToHtml(block.children), null, null, isNested), block);
         };
 
-        // Restore blocks from content array
         blockEditor.innerHTML = '';
         if (sourceData.content && sourceData.content.length > 0) {
           sourceData.content.forEach(block => {
             blockEditor.appendChild(blockElFromSource(block));
           });
         } else {
-          // Add empty paragraph if no content
           blockEditor.appendChild(createBlockElement('paragraph'));
         }
 
-        // Restore title override
         if (sourceData.titleOverride && typeof sourceData.titleOverride === 'object' && sourceData.titleOverride.enabled) {
           titleOverrideEnabled.checked = true;
           titleOverrideEnabled.dispatchEvent(new Event('change'));
           titleOverrideInput.value = sourceData.titleOverride.title || '';
         } else if (typeof sourceData.titleOverride === 'string' && sourceData.titleOverride) {
-          // Legacy format - titleOverride is just a string
           titleOverrideEnabled.checked = true;
           titleOverrideEnabled.dispatchEvent(new Event('change'));
           titleOverrideInput.value = sourceData.titleOverride;
@@ -986,7 +898,6 @@
           titleOverrideEnabled.dispatchEvent(new Event('change'));
         }
 
-        // Restore navigation
         if (sourceData.navigation && sourceData.navigation.items && sourceData.navigation.items.length > 0) {
           navEnabled.checked = true;
           navEnabled.dispatchEvent(new Event('change'));
@@ -1000,7 +911,6 @@
           loadGlobalNavigation();
         }
 
-        // Restore footer
         if (sourceData.footer && sourceData.footer.content) {
           footerEnabled.checked = true;
           footerEnabled.dispatchEvent(new Event('change'));
@@ -1011,7 +921,6 @@
           loadGlobalFooter();
         }
 
-        // Restore meta
         if (sourceData.meta) {
           metaEnabled.checked = true;
           metaEnabled.dispatchEvent(new Event('change'));
@@ -1023,7 +932,6 @@
           loadGlobalMeta();
         }
 
-        // Restore CSS
         if (sourceData.css && sourceData.css.rules) {
           cssEnabled.checked = true;
           cssEnabled.dispatchEvent(new Event('change'));
@@ -1134,314 +1042,54 @@
       });
 
       // ============ BLOCK EDITOR ============
+      let editorBlockFactory = null;
 
-      function setupListKeyHandlers(listEl) {
-        listEl.addEventListener('keydown', (e) => {
-          const li = e.target.closest('li');
-          if (!li) return;
+      function getEditorBlockFactory() {
+        if (editorBlockFactory) {
+          return editorBlockFactory;
+        }
 
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            const newLi = document.createElement('li');
-            newLi.contentEditable = 'true';
-            newLi.dataset.placeholder = 'List item...';
-            li.after(newLi);
-            newLi.focus();
-            debouncedPreview();
-          } else if (e.key === 'Backspace' && li.innerHTML === '' && listEl.children.length > 1) {
-            e.preventDefault();
-            const prevLi = li.previousElementSibling;
-            li.remove();
-            if (prevLi) {
-              prevLi.focus();
-              // Move cursor to end
-              const range = document.createRange();
-              const sel = window.getSelection();
-              range.selectNodeContents(prevLi);
-              range.collapse(false);
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-            debouncedPreview();
-          }
+        editorBlockFactory = createEditorBlockFactory({
+          Compiler,
+          createInnerAddBlock,
+          createSectionBlock,
+          createLayoutBlock,
+          createTextBlockTypeSelector,
+          createHeadingLevelSelector,
+          createListTypeSelector,
+          createBlockTypeLabel,
+          createFormatButtons,
+          createBlockSelectorControl,
+          createByteIndicator,
+          createBloglistContent,
+          createListContent,
+          createDividerContent,
+          createSpacerContent,
+          createCodeblockContent,
+          createBlockquoteContent,
+          createParagraphContent,
+          createHeadingContent,
+          serializeBlock,
+          updateBlockStyling,
+          moveBlock,
+          insertBlockDirectlyBelow,
+          getBlockElFromSource: () => blockElFromSource,
+          onCostRailChanged: () => updateCostRail(),
+          onPreviewRequested: () => debouncedPreview(),
+          onFormatClick: (cmd, block) => handleFormatClick(cmd, block)
         });
+
+        return editorBlockFactory;
       }
 
-      // Helper: create inner add-block dropdown for sections (no nesting allowed)
-      // Create inner add block using imported utility
-      function createInnerAddBlockWrapper(sectionBlock) {
-        return createInnerAddBlock({
-          onBlockAdd: (config) => {
-            const childBlock = createBlockElement(config.type, config.level, '', config.listType, config.spacerHeight, true);
-            const sectionBlocks = sectionBlock.querySelector('.section-blocks');
-            sectionBlocks.appendChild(childBlock);
-            const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
-            if (focusTarget) focusTarget.focus();
-            debouncedPreview();
-          }
-        });
+      function setupListKeyHandlers(listEl) {
+        return getEditorBlockFactory().setupListKeyHandlers(listEl);
       }
 
       function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null, isNested = false) {
-        const block = document.createElement('div');
-        block.className = 'block-item';
-        block.dataset.type = type;
-        block.dataset.selector = '';
-        if (level) block.dataset.level = level;
-        if (listType) block.dataset.listType = listType;
-        if (type === 'spacer') block.dataset.height = spacerHeight || '1rem';
-
-        function createBlockSelectorControl(currentBlock) {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.className = 'block-selector-input';
-          input.placeholder = '.your-css-class';
-          input.title = 'CSS selector';
-          input.value = currentBlock.dataset.selector || '';
-          input.addEventListener('input', () => {
-            currentBlock.dataset.selector = input.value.trim();
-            updateCostRail();
-            debouncedPreview();
-          });
-
-          return input;
-        }
-
-        // Section block: use builder
-        if (type === 'section') {
-          const sectionBlock = createSectionBlock({
-            isNested,
-            callbacks: {
-              onSelectorChange: (value) => {
-                updateCostRail();
-                debouncedPreview();
-              },
-              onMoveUp: () => moveBlock(sectionBlock, -1),
-              onMoveDown: () => moveBlock(sectionBlock, 1),
-              onDuplicate: () => {
-                const data = serializeBlock(sectionBlock);
-                const clone = blockElFromSource(data);
-                insertBlockDirectlyBelow(sectionBlock, clone);
-                debouncedPreview();
-              },
-              onDelete: () => {
-                sectionBlock.remove();
-                debouncedPreview();
-              },
-              onChange: () => {
-                updateCostRail();
-                debouncedPreview();
-              },
-              createInnerAddBlock: createInnerAddBlockWrapper
-            },
-            Compiler
-          });
-          return sectionBlock;
-        }
-
-        // Layout block: use builder
-        if (type === 'layout') {
-          const layoutBlock = createLayoutBlock({
-            isNested,
-            callbacks: {
-              onSelectorChange: (value) => {
-                updateCostRail();
-                debouncedPreview();
-              },
-              onMoveUp: () => moveBlock(layoutBlock, -1),
-              onMoveDown: () => moveBlock(layoutBlock, 1),
-              onDuplicate: () => {
-                const data = serializeBlock(layoutBlock);
-                const clone = blockElFromSource(data);
-                insertBlockDirectlyBelow(layoutBlock, clone);
-                debouncedPreview();
-              },
-              onDelete: () => {
-                layoutBlock.remove();
-                debouncedPreview();
-              },
-              onChange: () => {
-                updateCostRail();
-                debouncedPreview();
-              },
-              createBlockElement: (type, level, html, listType, spacerHeight, nested) => {
-                return createBlockElement(type, level, html, listType, spacerHeight, nested);
-              }
-            }
-          });
-          return layoutBlock;
-        }
-
-        // Block header with type selector and actions
-        const header = document.createElement('div');
-        header.className = 'block-header';
-
-        // Type selector
-        if (type === 'paragraph' || type === 'blockquote' || type === 'codeblock') {
-          const typeSelect = createTextBlockTypeSelector(type, (newType) => {
-            const oldType = block.dataset.type;
-            block.dataset.type = newType;
-
-            // Handle content conversion
-            const content = block.querySelector('.block-content');
-            if (oldType === 'codeblock' && newType !== 'codeblock') {
-              // From codeblock to rich text - convert plain text
-              content.contentEditable = 'true';
-              content.classList.remove('block-codeblock');
-              content.dataset.placeholder = newType === 'blockquote' ? 'Quote...' : 'Enter text...';
-              // Show format buttons
-              const formatBtns = block.querySelector('.block-format-buttons');
-              if (formatBtns) formatBtns.style.display = '';
-            } else if (oldType !== 'codeblock' && newType === 'codeblock') {
-              // From rich text to codeblock - strip HTML
-              content.textContent = content.textContent;
-              content.contentEditable = 'true';
-              content.classList.add('block-codeblock');
-              content.dataset.placeholder = 'Code...';
-              // Hide format buttons
-              const formatBtns = block.querySelector('.block-format-buttons');
-              if (formatBtns) formatBtns.style.display = 'none';
-            } else {
-              // Just update placeholder
-              content.dataset.placeholder = newType === 'blockquote' ? 'Quote...' : newType === 'codeblock' ? 'Code...' : 'Enter text...';
-            }
-
-            updateBlockStyling(block);
-            updateCostRail();
-            debouncedPreview();
-          });
-          header.appendChild(typeSelect);
-        } else if (type === 'heading') {
-          const typeSelect = createHeadingLevelSelector(level, (newLevel) => {
-            block.dataset.level = newLevel;
-            updateBlockStyling(block);
-            updateCostRail();
-            debouncedPreview();
-          });
-          header.appendChild(typeSelect);
-        } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-          // Normalize type for new blocks - use passed listType or derive from legacy type
-          const effectiveListType = listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
-          block.dataset.type = 'list';
-          block.dataset.listType = effectiveListType;
-
-          const typeSelect = createListTypeSelector(effectiveListType, (newListType) => {
-            block.dataset.listType = newListType;
-            // Update list element tag
-            const oldList = block.querySelector('.editable-list');
-            if (oldList) {
-              const newTag = newListType === 'ordered' ? 'ol' : 'ul';
-              const newList = document.createElement(newTag);
-              newList.className = 'editable-list';
-              // Move all children
-              while (oldList.firstChild) {
-                newList.appendChild(oldList.firstChild);
-              }
-              // Copy event listeners by replacing
-              oldList.replaceWith(newList);
-              setupListKeyHandlers(newList);
-            }
-            updateCostRail();
-            debouncedPreview();
-          });
-          header.appendChild(typeSelect);
-        } else {
-          // Bloglist, Divider or Spacer - just a label
-          header.appendChild(createBlockTypeLabel(type));
-        }
-
-        // Format buttons (nur für rich-text Blöcke)
-        if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock' && type !== 'spacer') {
-          header.appendChild(createFormatButtons(handleFormatClick, block));
-        }
-
-        const actions = document.createElement('div');
-        actions.className = 'block-item-actions';
-        if (!isNested) actions.appendChild(createBlockSelectorControl(block));
-
-        const upBtn = document.createElement('button');
-        upBtn.type = 'button';
-        upBtn.textContent = '↑';
-        upBtn.title = 'Move up';
-        upBtn.addEventListener('click', () => moveBlock(block, -1));
-        actions.appendChild(upBtn);
-
-        const downBtn = document.createElement('button');
-        downBtn.type = 'button';
-        downBtn.textContent = '↓';
-        downBtn.title = 'Move down';
-        downBtn.addEventListener('click', () => moveBlock(block, 1));
-        actions.appendChild(downBtn);
-
-        const copyBtn = document.createElement('button');
-        copyBtn.type = 'button';
-        copyBtn.innerHTML = '⧉';
-        copyBtn.title = 'Duplicate';
-        copyBtn.addEventListener('click', () => {
-          const data = serializeBlock(block);
-          const clone = blockElFromSource(data);
-          insertBlockDirectlyBelow(block, clone);
-          debouncedPreview();
-        });
-        actions.appendChild(copyBtn);
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.textContent = '×';
-        deleteBtn.title = 'Delete';
-        deleteBtn.addEventListener('click', () => block.remove());
-        actions.appendChild(deleteBtn);
-
-        header.appendChild(actions);
-
-        // Byte indicator für diesen Block
-        const byteIndicator = document.createElement('div');
-        byteIndicator.className = 'block-byte-indicator';
-        byteIndicator.textContent = '0 B';
-        block.appendChild(byteIndicator);
-
-        block.appendChild(header);
-
-        // Content area
-        let content;
-        if (type === 'bloglist') {
-          content = createBloglistContent();
-        } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-          const effectiveListType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
-          content = createListContent({
-            listType: effectiveListType,
-            initialHtml,
-            setupListKeyHandlers
-          });
-        } else if (type === 'divider') {
-          content = createDividerContent();
-        } else if (type === 'spacer') {
-          content = createSpacerContent({
-            height: block.dataset.height || spacerHeight || '1rem',
-            block,
-            onChange: () => {
-              updateCostRail();
-              debouncedPreview();
-            }
-          });
-        } else if (type === 'codeblock') {
-          content = createCodeblockContent(initialHtml);
-        } else if (type === 'blockquote') {
-          content = createBlockquoteContent(initialHtml);
-        } else if (type === 'heading') {
-          content = createHeadingContent(initialHtml);
-        } else {
-          content = createParagraphContent(initialHtml);
-        }
-        block.appendChild(content);
-
-        updateBlockStyling(block);
-        return block;
+        return getEditorBlockFactory().createBlockElement(type, level, initialHtml, listType, spacerHeight, isNested);
       }
 
-      // updateBlockStyling now imported from block-operations.js
-
-      // moveBlock wrapper with callbacks
       function moveBlock(block, direction) {
         moveBlockUtil(block, direction, {
           onChange: () => {
@@ -1451,7 +1099,6 @@
         });
       }
 
-      // insertBlockDirectlyBelow now uses imported insertBlockBelow
       function insertBlockDirectlyBelow(referenceBlock, newBlock) {
         insertBlockBelow(referenceBlock, newBlock);
       }
@@ -1459,12 +1106,10 @@
       // ============ FORMAT BUTTONS ============
 
       function handleFormatClick(cmd, block) {
-        // Save selection BEFORE anything else (clicking button may lose it)
         const sel = window.getSelection();
         const hasSelection = sel.rangeCount > 0 && !sel.isCollapsed;
         const currentRange = hasSelection ? sel.getRangeAt(0).cloneRange() : null;
 
-        // For link command, we need a selection
         if (cmd === 'link') {
           if (!hasSelection) {
             alert('Bitte erst Text markieren');
@@ -1475,12 +1120,10 @@
           return;
         }
 
-        // Focus the block content if not already focused
         const content = block.querySelector('.block-content');
         const listItem = block.querySelector('li[contenteditable="true"]');
         const editableEl = listItem || content;
 
-        // Restore selection if we have one
         if (currentRange) {
           sel.removeAllRanges();
           sel.addRange(currentRange);
@@ -1502,56 +1145,6 @@
         debouncedPreview();
       }
 
-      // ============ FLOATING FORMAT TOOLBAR (disabled - using inline buttons) ============
-      /*
-      document.addEventListener('selectionchange', () => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount || sel.isCollapsed) {
-          formatToolbar.classList.add('hidden');
-          return;
-        }
-
-        // Check if selection is within block editor
-        const range = sel.getRangeAt(0);
-        const container = range.commonAncestorContainer;
-        const blockContent = container.nodeType === Node.TEXT_NODE
-          ? container.parentElement.closest('.block-content')
-          : container.closest('.block-content');
-
-        if (!blockContent || !blockEditor.contains(blockContent)) {
-          formatToolbar.classList.add('hidden');
-          return;
-        }
-
-        // Position toolbar above selection
-        const rect = range.getBoundingClientRect();
-        formatToolbar.style.top = (rect.top + window.scrollY - 40) + 'px';
-        formatToolbar.style.left = (rect.left + window.scrollX + rect.width / 2 - 50) + 'px';
-        formatToolbar.classList.remove('hidden');
-      });
-
-      formatToolbar.addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-
-        const cmd = btn.dataset.cmd;
-        if (cmd === 'bold') {
-          document.execCommand('bold', false, null);
-        } else if (cmd === 'italic') {
-          document.execCommand('italic', false, null);
-        } else if (cmd === 'underline') {
-          document.execCommand('underline', false, null);
-        } else if (cmd === 'strikethrough') {
-          document.execCommand('strikeThrough', false, null);
-        } else if (cmd === 'code') {
-          wrapSelectionWithTag('code');
-        } else if (cmd === 'link') {
-          showLinkPopup();
-        }
-      });
-      */
-
-      // wrapSelectionWithTag wrapper using imported toggleSelectionWrap
       function wrapSelectionWithTag(tagName) {
         toggleSelectionWrap(tagName, {
           onChange: () => debouncedPreview()
@@ -1561,10 +1154,8 @@
       // ============ LINK POPUP ============
 
       function showLinkPopup() {
-        // savedSelection should already be set by handleFormatClick
         if (!savedSelection) return;
 
-        // Check if selection is inside a link
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(savedSelection);
@@ -1572,7 +1163,6 @@
         const existingHref = parentLink ? parentLink.getAttribute('href') : '';
         linkHrefInput.value = existingHref;
 
-        // Reset prefix buttons and set active based on existing href
         linkPopup.querySelectorAll('.link-prefix-btn').forEach(btn => {
           const prefix = btn.dataset.prefix;
           if (existingHref.startsWith(prefix)) {
@@ -1582,7 +1172,6 @@
           }
         });
 
-        // Update placeholder based on existing prefix
         if (existingHref.startsWith('https://') || existingHref.startsWith('http://')) {
           linkHrefInput.placeholder = 'www.example.com';
         } else if (existingHref.startsWith('mailto:')) {
@@ -1607,10 +1196,8 @@
           return;
         }
 
-        // Validate href pattern (same as compiler validation)
         const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
         if (!hrefPattern.test(href)) {
-          // Give specific hint based on what user likely meant
           let hint;
           if (/^www\./i.test(href) || /\.(com|de|org|net|io|dev|at|ch)$/i.test(href)) {
             hint = `URLs müssen mit https:// beginnen: https://${href}`;
@@ -1641,7 +1228,6 @@
         savedSelection = null;
       });
 
-      // Link prefix buttons
       const linkPrefixBtns = linkPopup.querySelectorAll('.link-prefix-btn');
       const prefixPlaceholders = {
         'https://': 'www.example.com',
@@ -1654,13 +1240,11 @@
           const prefix = btn.dataset.prefix;
           const currentValue = linkHrefInput.value;
 
-          // Remove any existing prefix
           let cleanValue = currentValue
             .replace(/^https?:\/\//, '')
             .replace(/^mailto:/, '')
             .replace(/^tel:/, '');
 
-          // Toggle: if same prefix was active, just clear it
           if (currentValue.startsWith(prefix)) {
             linkHrefInput.value = cleanValue;
             linkHrefInput.placeholder = '/path or #anchor';
@@ -1692,7 +1276,6 @@
         const spacerHeight = btn.dataset.spacerHeight;
         const block = createBlockElement(type, level, '', listType, spacerHeight);
         blockEditor.appendChild(block);
-        // Focus on first editable element
         const focusTarget = block.querySelector('li[contenteditable="true"]') || block.querySelector('.block-content');
         if (focusTarget) focusTarget.focus();
         addBlockDropdown.classList.add('hidden');
@@ -1813,13 +1396,11 @@
         actions: document.getElementById('modal-actions')
       });
 
-      // Export Modal for inline handlers
       window.Modal = Modal;
 
       // ============ PUBLISH ============
 
       publishBtn.addEventListener('click', async () => {
-        // Validate data
         const validation = validatePublishData({
           title: titleInput.value,
           blockCount: blockEditor.querySelectorAll('.block-item').length
@@ -1836,7 +1417,6 @@
         publishBtn.disabled = true;
 
         try {
-          // Determine pagination strategy
           const paginationResult = await determinePaginationStrategy({
             buildInput,
             App,
@@ -1850,11 +1430,9 @@
             return;
           }
 
-          // Execute publish with determined pagination strategy
           const input = await buildInput(paginationResult.shouldPaginate);
           await executePublish({ input, App, Modal, t });
 
-          // Only clear fields if NOT in edit mode
           if (!isEditMode) {
             resetEditorForm(
               {
@@ -1886,9 +1464,7 @@
             );
           }
 
-          // Re-enable publish button
           publishBtn.disabled = false;
-          // Set appropriate button text based on mode
           publishBtn.textContent = isEditMode ? t('editor.recompile') : t('editor.buildPublish');
         } catch (err) {
           Modal.error(err.message);
@@ -1899,17 +1475,14 @@
 
       // ============ INIT ============
 
-      // Load global values into fields
       loadGlobalNavigation();
       loadGlobalFooter();
       loadGlobalMeta();
       loadGlobalCSS();
 
-      // Set initial disabled states (after loading global values)
       navEditor.classList.remove('hidden');
       addNavLinkBtn.disabled = true;
 
-      // Apply disabled state to navigation chips
       const initialChips = navLinks.querySelectorAll('.nav-chip');
       initialChips.forEach(chip => {
         chip.style.pointerEvents = 'none';
@@ -1924,7 +1497,6 @@
       metaDescription.disabled = true;
       metaAuthor.disabled = true;
 
-      // Title override - disabled by default
       titleOverrideInput.disabled = true;
       updateTitleOverrideHint();
 
@@ -1961,13 +1533,11 @@
           const { sourceData } = await App.clonePage(seedName, 'seed');
           loadFromSource(sourceData);
 
-          // Update title
           const pageTitle = document.getElementById('page-title');
           const pageSubtitle = document.getElementById('page-subtitle');
           pageTitle.textContent = `New (from ${seedName.replace('-', ' ')})`;
           pageSubtitle.textContent = 'Set title and slug to create a new page';
 
-          // Reset dropdown
           this.value = '';
         } catch (err) {
           Modal.error(t('editor.templatesError', { error: err.message }));
@@ -1975,7 +1545,6 @@
         }
       });
 
-      // Load seed templates on page load (only in new mode)
       const urlParams = new URLSearchParams(window.location.search);
       const editSlug = urlParams.get('edit');
       const isCloning = urlParams.get('clone') === 'true';
@@ -1983,22 +1552,16 @@
       if (!editSlug && !isCloning) {
         loadSeedTemplates();
       } else {
-        // Hide template selector in edit/clone mode
         templateSelectorContainer.style.display = 'none';
       }
 
-      // Check for edit mode (recompile from source)
-
-
       if (editSlug) {
-        // Edit mode: load from source
         try {
           const sourceData = await App.getSourceData(editSlug);
           if (sourceData) {
             isEditMode = true;
             editingSlug = editSlug;
             loadFromSource(sourceData);
-            // Show edit mode banner
             showEditModeBanner();
           }
         } catch (err) {
@@ -2006,14 +1569,12 @@
           Modal.error(t('editor.loadSourceError', { error: err.message }));
         }
       } else if (isCloning) {
-        // Clone mode: load from sessionStorage
         try {
           const clonedData = sessionStorage.getItem('clonedSource');
           if (clonedData) {
             const sourceData = JSON.parse(clonedData);
             loadFromSource(sourceData);
             sessionStorage.removeItem('clonedSource');
-            // Show notification
             const pageTitle = document.getElementById('page-title');
             const pageSubtitle = document.getElementById('page-subtitle');
             pageTitle.textContent = 'New (Cloned)';
@@ -2023,11 +1584,9 @@
           console.error('Failed to load cloned source:', err);
         }
       } else {
-        // New document mode: try to restore from auto-save
         loadFromLocalStorage();
       }
 
-      // Show edit mode indicator in title
       function showEditModeBanner() {
         const pageTitle = document.getElementById('page-title');
         const pageSubtitle = document.getElementById('page-subtitle');
@@ -2035,7 +1594,6 @@
         pageSubtitle.textContent = 'Editing source · requires rebuild';
         pageSubtitle.style.display = 'block';
 
-        // Change button text to "Recompile" in edit mode
         publishBtn.setAttribute('data-i18n', 'editor.recompile');
         publishBtn.textContent = t('editor.recompile');
       }
@@ -2046,48 +1604,38 @@
         const confirmed = await Modal.confirm(t('editor.resetConfirm'));
         if (!confirmed) return;
 
-        // Clear all fields
         titleInput.value = '';
         slugInput.value = '';
         blockEditor.innerHTML = '';
 
-        // Add one empty paragraph block
         const emptyBlock = createBlockElement('paragraph');
         blockEditor.appendChild(emptyBlock);
 
-        // Reset title override (disabled)
         titleOverrideEnabled.checked = false;
         titleOverrideEnabled.dispatchEvent(new Event('change'));
         titleOverrideInput.value = '';
 
-        // Reset navigation to global (disabled)
         navEnabled.checked = false;
         navEnabled.dispatchEvent(new Event('change'));
         loadGlobalNavigation();
 
-        // Reset footer to global (disabled)
         footerEnabled.checked = false;
         footerEnabled.dispatchEvent(new Event('change'));
         loadGlobalFooter();
 
-        // Reset meta to global (disabled)
         metaEnabled.checked = false;
         metaEnabled.dispatchEvent(new Event('change'));
         loadGlobalMeta();
 
-        // Reset CSS to global (disabled)
         cssEnabled.checked = false;
         cssEnabled.dispatchEvent(new Event('change'));
         loadGlobalCSS();
 
-        // Reset page type
         pageTypeSelect.value = 'post';
         pageTypeHint.textContent = '';
 
-        // Clear auto-save
         clearAutoSave();
 
-        // Reset byte counter
         updateByteCounter(0, 0);
         updateCostRail();
         updateTitleBytes();
@@ -2097,20 +1645,17 @@
       updateCostRail();
       updateTitleBytes();
 
-      // Auto-update byte counter on content changes
       debouncedPreview = debounce(async () => {
-        saveToLocalStorage(); // Safety backup to localStorage (works in both modes)
+        saveToLocalStorage();
         try {
           const input = await buildInput();
           const result = await App.preview(input);
           updateByteCounter(result.bytes, result.overheadBytes || 0, result.contentBytes, result.breakdown);
 
-          // Clear previous block warnings
           blockEditor.querySelectorAll('.block-item.block-too-large').forEach(el => {
             el.classList.remove('block-too-large');
           });
 
-          // Check if a block is too large for pagination
           if (result.blockTooLarge) {
             const blocks = blockEditor.querySelectorAll('.block-item');
             const blockIndex = result.blockTooLarge.blockIndex;
@@ -2119,11 +1664,9 @@
             }
           }
         } catch (e) {
-          // Ignore preview errors during editing
         }
       }, 500);
 
-      // Listen for content changes
       blockEditor.addEventListener('input', () => {
         debouncedPreview();
         updateCostRail();
@@ -2140,13 +1683,11 @@
       metaEnabled.addEventListener('change', debouncedPreview);
       cssEnabled.addEventListener('change', debouncedPreview);
 
-      // Update cost rail when blocks change
       const observer = new MutationObserver(() => {
         updateCostRail();
       });
       observer.observe(blockEditor, { childList: true });
 
-      // Initial preview to get overhead
       debouncedPreview();
 
     })();
