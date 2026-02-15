@@ -493,7 +493,7 @@
     import { createBloglistContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
 
     // Declare early to avoid initialization order issues
-    let debouncedPreview;
+    let debouncedPreview = () => {};
 
     (async function () {
       // Initialize auth guard and setup
