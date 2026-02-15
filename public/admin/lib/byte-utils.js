@@ -12,7 +12,8 @@ import { minifyHtmlDocument } from './css-utils.js';
  * @returns {number} Byte length
  */
 export function getByteLength(text) {
-  return new TextEncoder().encode(text).length;
+  if (text === null || text === undefined) return 0;
+  return new TextEncoder().encode(String(text)).length;
 }
 
 /**
@@ -21,7 +22,8 @@ export function getByteLength(text) {
  * @returns {string} Formatted string with " B" suffix (e.g., "1.234 B")
  */
 export function formatBytes(bytes) {
-  return bytes.toLocaleString('de-DE') + ' B';
+  const safeBytes = Number.isFinite(bytes) ? Math.max(0, Math.floor(bytes)) : 0;
+  return safeBytes.toLocaleString('de-DE') + ' B';
 }
 
 /**
@@ -34,12 +36,13 @@ export function formatBytes(bytes) {
  * @returns {{html: string, bytes: number}} Finalized HTML and final byte count
  */
 export function finalizeCompiledPageHtml(rawHtml, initialBytes = 0, applyMinification = true) {
-  let bytes = initialBytes;
+  const safeRawHtml = rawHtml === null || rawHtml === undefined ? '' : String(rawHtml);
+  let bytes = Number.isFinite(initialBytes) ? Math.max(0, Math.floor(initialBytes)) : 0;
   let html = '';
 
   // Iterate up to 5 times to converge on final byte count
   for (let i = 0; i < 5; i++) {
-    const withBytes = rawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
+    const withBytes = safeRawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
     html = applyMinification ? minifyHtmlDocument(withBytes) : withBytes;
     const nextBytes = getByteLength(html);
     if (nextBytes === bytes) {
@@ -49,7 +52,7 @@ export function finalizeCompiledPageHtml(rawHtml, initialBytes = 0, applyMinific
   }
 
   // Final iteration if convergence not reached
-  const withBytes = rawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
+  const withBytes = safeRawHtml.replace(/\{\{bytes\}\}/g, String(bytes));
   html = applyMinification ? minifyHtmlDocument(withBytes) : withBytes;
   return { html, bytes: getByteLength(html) };
 }

@@ -48,6 +48,11 @@ describe('parseSelector', () => {
       classes: ['bazqux']
     });
   });
+
+  test('handles non-string selector inputs', () => {
+    expect(parseSelector(42)).toEqual({ id: '', classes: [] });
+    expect(parseSelector({})).toEqual({ id: '', classes: [] });
+  });
 });
 
 describe('selectorToAttributes', () => {
@@ -252,6 +257,32 @@ describe('renderBlockHtml', () => {
     expect(html).toContain('<b>Bold</b>');
     expect(html).toContain('<i>Italic</i>');
   });
+
+  test('returns empty string for invalid block input', () => {
+    expect(renderBlockHtml(null)).toBe('');
+    expect(renderBlockHtml(undefined)).toBe('');
+    expect(renderBlockHtml('not-an-object')).toBe('');
+  });
+
+  test('layout invariant keeps number of rendered cells equal to input cells', () => {
+    const block = {
+      type: 'layout',
+      columns: 3,
+      rows: 2,
+      cells: [
+        { children: [] },
+        { children: [] },
+        { children: [] },
+        { children: [] },
+        { children: [] },
+        { children: [] },
+      ],
+    };
+
+    const html = renderBlockHtml(block);
+    const cellCount = (html.match(/class="cell"/g) || []).length;
+    expect(cellCount).toBe(6);
+  });
 });
 
 describe('estimateBlockSize', () => {
@@ -287,6 +318,11 @@ describe('estimateBlockSize', () => {
     };
     const bytes = estimateBlockSize(block);
     expect(bytes).toBeGreaterThan(30); // Section tags + styles + content
+  });
+
+  test('never returns negative values for invalid input', () => {
+    expect(estimateBlockSize(null)).toBeGreaterThanOrEqual(0);
+    expect(estimateBlockSize(undefined)).toBeGreaterThanOrEqual(0);
   });
 });
 
