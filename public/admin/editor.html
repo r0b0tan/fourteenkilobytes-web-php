@@ -455,6 +455,8 @@
     import { createEditorBuildInputManager } from './lib/editor/build-input.js';
     import { createEditorBlockFactory } from './lib/editor/block-factory.js';
     import { createEditorSourceLoader } from './lib/editor/source-loader.js';
+    import { createEditorRichtextTools } from './lib/editor/richtext-tools.js';
+    import { createEditorBootstrap } from './lib/editor/bootstrap.js';
 
     let debouncedPreview = () => { };
 
@@ -528,7 +530,7 @@
       const piePercent = document.getElementById('pie-percent');
       const pieContentDot = document.querySelector('.pie-dot-content');
 
-      let savedSelection = null;
+      let editorRichtextTools = null;
 
       // ============ AUTO-SAVE ============
       let editorStateManager = null;
@@ -581,6 +583,7 @@
 
       let isEditMode = false;
       let editingSlug = null;
+      let editorBootstrap = null;
 
       function updatePageTitleSlug() {
         if (isEditMode) return; // Don't update in edit mode
@@ -784,6 +787,24 @@
         return getEditorBlockFactory().createBlockElement(type, level, initialHtml, listType, spacerHeight, isNested);
       }
 
+      function getEditorRichtextTools() {
+        if (editorRichtextTools) {
+          return editorRichtextTools;
+        }
+
+        editorRichtextTools = createEditorRichtextTools({
+          linkPopup,
+          linkHrefInput,
+          linkApplyBtn,
+          linkCancelBtn,
+          toggleSelectionWrap,
+          modalInfo: (message) => Modal.info(message),
+          onPreviewRequested: () => debouncedPreview()
+        });
+
+        return editorRichtextTools;
+      }
+
       function moveBlock(block, direction) {
         moveBlockUtil(block, direction, {
           onChange: () => {
@@ -800,159 +821,18 @@
       // ============ FORMAT BUTTONS ============
 
       function handleFormatClick(cmd, block) {
-        const sel = window.getSelection();
-        const hasSelection = sel.rangeCount > 0 && !sel.isCollapsed;
-        const currentRange = hasSelection ? sel.getRangeAt(0).cloneRange() : null;
-
-        if (cmd === 'link') {
-          if (!hasSelection) {
-            alert('Bitte erst Text markieren');
-            return;
-          }
-          savedSelection = currentRange;
-          showLinkPopup();
-          return;
-        }
-
-        const content = block.querySelector('.block-content');
-        const listItem = block.querySelector('li[contenteditable="true"]');
-        const editableEl = listItem || content;
-
-        if (currentRange) {
-          sel.removeAllRanges();
-          sel.addRange(currentRange);
-        } else if (!editableEl.contains(document.activeElement) && editableEl !== document.activeElement) {
-          editableEl.focus();
-        }
-
-        if (cmd === 'bold') {
-          document.execCommand('bold', false, null);
-        } else if (cmd === 'italic') {
-          document.execCommand('italic', false, null);
-        } else if (cmd === 'underline') {
-          document.execCommand('underline', false, null);
-        } else if (cmd === 'strikethrough') {
-          document.execCommand('strikeThrough', false, null);
-        } else if (cmd === 'code') {
-          wrapSelectionWithTag('code');
-        }
-        debouncedPreview();
+        return getEditorRichtextTools().handleFormatClick(cmd, block);
       }
 
       function wrapSelectionWithTag(tagName) {
-        toggleSelectionWrap(tagName, {
-          onChange: () => debouncedPreview()
-        });
+        return getEditorRichtextTools().wrapSelectionWithTag(tagName);
       }
 
       // ============ LINK POPUP ============
 
       function showLinkPopup() {
-        if (!savedSelection) return;
-
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(savedSelection);
-        const parentLink = sel.anchorNode?.parentElement?.closest('a');
-        const existingHref = parentLink ? parentLink.getAttribute('href') : '';
-        linkHrefInput.value = existingHref;
-
-        linkPopup.querySelectorAll('.link-prefix-btn').forEach(btn => {
-          const prefix = btn.dataset.prefix;
-          if (existingHref.startsWith(prefix)) {
-            btn.classList.add('active');
-          } else {
-            btn.classList.remove('active');
-          }
-        });
-
-        if (existingHref.startsWith('https://') || existingHref.startsWith('http://')) {
-          linkHrefInput.placeholder = 'www.example.com';
-        } else if (existingHref.startsWith('mailto:')) {
-          linkHrefInput.placeholder = 'name@example.com';
-        } else if (existingHref.startsWith('tel:')) {
-          linkHrefInput.placeholder = '+49 123 456789';
-        } else {
-          linkHrefInput.placeholder = '/path or #anchor';
-        }
-
-        const rect = savedSelection.getBoundingClientRect();
-        linkPopup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-        linkPopup.style.left = (rect.left + window.scrollX) + 'px';
-        linkPopup.classList.remove('hidden');
-        linkHrefInput.focus();
+        return getEditorRichtextTools().showLinkPopup();
       }
-
-      linkApplyBtn.addEventListener('click', () => {
-        const href = linkHrefInput.value.trim();
-        if (!href) {
-          linkPopup.classList.add('hidden');
-          return;
-        }
-
-        const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
-        if (!hrefPattern.test(href)) {
-          let hint;
-          if (/^www\./i.test(href) || /\.(com|de|org|net|io|dev|at|ch)$/i.test(href)) {
-            hint = `URLs müssen mit https:// beginnen: https://${href}`;
-          } else if (/@/.test(href) && !href.startsWith('mailto:')) {
-            hint = `E-Mail-Links müssen mit mailto: beginnen: mailto:${href}`;
-          } else if (/^[\d\s+()-]+$/.test(href)) {
-            hint = `Telefon-Links müssen mit tel: beginnen: tel:${href.replace(/\s/g, '')}`;
-          } else {
-            hint = 'Ungültiges Link-Format';
-          }
-          Modal.info(hint);
-          return;
-        }
-
-        if (savedSelection) {
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(savedSelection);
-          document.execCommand('createLink', false, href);
-        }
-        linkPopup.classList.add('hidden');
-        savedSelection = null;
-        debouncedPreview();
-      });
-
-      linkCancelBtn.addEventListener('click', () => {
-        linkPopup.classList.add('hidden');
-        savedSelection = null;
-      });
-
-      const linkPrefixBtns = linkPopup.querySelectorAll('.link-prefix-btn');
-      const prefixPlaceholders = {
-        'https://': 'www.example.com',
-        'mailto:': 'name@example.com',
-        'tel:': '+49 123 456789'
-      };
-
-      linkPrefixBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const prefix = btn.dataset.prefix;
-          const currentValue = linkHrefInput.value;
-
-          let cleanValue = currentValue
-            .replace(/^https?:\/\//, '')
-            .replace(/^mailto:/, '')
-            .replace(/^tel:/, '');
-
-          if (currentValue.startsWith(prefix)) {
-            linkHrefInput.value = cleanValue;
-            linkHrefInput.placeholder = '/path or #anchor';
-            linkPrefixBtns.forEach(b => b.classList.remove('active'));
-          } else {
-            linkHrefInput.value = prefix + cleanValue;
-            linkHrefInput.placeholder = prefixPlaceholders[prefix];
-            linkPrefixBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-          }
-
-          linkHrefInput.focus();
-        });
-      });
 
       // ============ ADD BLOCK ============
 
@@ -1081,6 +961,48 @@
         return getEditorMetricsManager().updateTitleBytes();
       }
 
+      function getEditorBootstrap() {
+        if (editorBootstrap) {
+          return editorBootstrap;
+        }
+
+        editorBootstrap = createEditorBootstrap({
+          t,
+          publishBtn,
+          navEditor,
+          addNavLinkBtn,
+          navLinks,
+          footerEditor,
+          footerText,
+          insertBytesBtn,
+          metaEditor,
+          metaDescription,
+          metaAuthor,
+          titleOverrideInput,
+          updateTitleOverrideHint,
+          cssEditor,
+          cssRules,
+          templateSelector: document.getElementById('template-selector'),
+          templateSelectorContainer: document.getElementById('template-selector-container'),
+          loadGlobalNavigation,
+          loadGlobalFooter,
+          loadGlobalMeta,
+          loadGlobalCSS,
+          loadFromSource,
+          loadFromLocalStorage,
+          getSeeds: () => App.getSeeds(),
+          clonePage: (seedName, source) => App.clonePage(seedName, source),
+          getSourceData: (slug) => App.getSourceData(slug),
+          modalError: (message) => Modal.error(message),
+          setEditMode: (slug) => {
+            isEditMode = true;
+            editingSlug = slug;
+          }
+        });
+
+        return editorBootstrap;
+      }
+
       // ============ MODAL SYSTEM ============
 
       const Modal = createModalManager({
@@ -1168,129 +1090,7 @@
       });
 
       // ============ INIT ============
-
-      loadGlobalNavigation();
-      loadGlobalFooter();
-      loadGlobalMeta();
-      loadGlobalCSS();
-
-      navEditor.classList.remove('hidden');
-      addNavLinkBtn.disabled = true;
-
-      const initialChips = navLinks.querySelectorAll('.nav-chip');
-      initialChips.forEach(chip => {
-        chip.style.pointerEvents = 'none';
-        chip.style.opacity = '0.6';
-      });
-
-      footerEditor.classList.remove('hidden');
-      footerText.disabled = true;
-      insertBytesBtn.disabled = true;
-
-      metaEditor.classList.remove('hidden');
-      metaDescription.disabled = true;
-      metaAuthor.disabled = true;
-
-      titleOverrideInput.disabled = true;
-      updateTitleOverrideHint();
-
-      cssEditor.classList.remove('hidden');
-      cssRules.disabled = true;
-
-      // ============ SEED TEMPLATES ============
-
-      const templateSelector = document.getElementById('template-selector');
-      const templateSelectorContainer = document.getElementById('template-selector-container');
-
-      async function loadSeedTemplates() {
-        try {
-          const seeds = await App.getSeeds();
-
-          if (seeds && seeds.length > 0) {
-            seeds.forEach(seed => {
-              const option = document.createElement('option');
-              option.value = seed.name;
-              option.textContent = seed.label;
-              templateSelector.appendChild(option);
-            });
-          }
-        } catch (err) {
-          console.error('Failed to load seed templates:', err);
-        }
-      }
-
-      templateSelector.addEventListener('change', async function () {
-        const seedName = this.value;
-        if (!seedName) return;
-
-        try {
-          const { sourceData } = await App.clonePage(seedName, 'seed');
-          loadFromSource(sourceData);
-
-          const pageTitle = document.getElementById('page-title');
-          const pageSubtitle = document.getElementById('page-subtitle');
-          pageTitle.textContent = `New (from ${seedName.replace('-', ' ')})`;
-          pageSubtitle.textContent = 'Set title and slug to create a new page';
-
-          this.value = '';
-        } catch (err) {
-          Modal.error(t('editor.templatesError', { error: err.message }));
-          this.value = '';
-        }
-      });
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const editSlug = urlParams.get('edit');
-      const isCloning = urlParams.get('clone') === 'true';
-
-      if (!editSlug && !isCloning) {
-        loadSeedTemplates();
-      } else {
-        templateSelectorContainer.style.display = 'none';
-      }
-
-      if (editSlug) {
-        try {
-          const sourceData = await App.getSourceData(editSlug);
-          if (sourceData) {
-            isEditMode = true;
-            editingSlug = editSlug;
-            loadFromSource(sourceData);
-            showEditModeBanner();
-          }
-        } catch (err) {
-          console.error('Failed to load source:', err);
-          Modal.error(t('editor.loadSourceError', { error: err.message }));
-        }
-      } else if (isCloning) {
-        try {
-          const clonedData = sessionStorage.getItem('clonedSource');
-          if (clonedData) {
-            const sourceData = JSON.parse(clonedData);
-            loadFromSource(sourceData);
-            sessionStorage.removeItem('clonedSource');
-            const pageTitle = document.getElementById('page-title');
-            const pageSubtitle = document.getElementById('page-subtitle');
-            pageTitle.textContent = 'New (Cloned)';
-            pageSubtitle.textContent = 'Set title and slug to create a new page';
-          }
-        } catch (err) {
-          console.error('Failed to load cloned source:', err);
-        }
-      } else {
-        loadFromLocalStorage();
-      }
-
-      function showEditModeBanner() {
-        const pageTitle = document.getElementById('page-title');
-        const pageSubtitle = document.getElementById('page-subtitle');
-        pageTitle.innerHTML = `Recompile <span style="font-weight: 400; color: var(--text-secondary);">/ ${editingSlug}</span>`;
-        pageSubtitle.textContent = 'Editing source · requires rebuild';
-        pageSubtitle.style.display = 'block';
-
-        publishBtn.setAttribute('data-i18n', 'editor.recompile');
-        publishBtn.textContent = t('editor.recompile');
-      }
+      await getEditorBootstrap().init();
 
       // ============ CLEAR ALL BUTTON ============
 
