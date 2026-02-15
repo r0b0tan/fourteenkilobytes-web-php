@@ -1,4 +1,4 @@
-export function initDataTab({ document: doc = document, App, t, Toast, Modal, loadSettings }) {
+export function initDataTab({ doc = document, App, t, Toast, Modal, loadSettings }) {
   const exportBtn = doc.getElementById('export-btn');
   const importDropzone = doc.getElementById('import-dropzone');
   const importFile = doc.getElementById('import-file');

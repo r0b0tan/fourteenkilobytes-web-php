@@ -13,7 +13,7 @@ import { initEditorCore } from './lib/settings-page/editor-core.js';
   const Modal = createModal({ doc: document, t });
 
   const { loadSettings } = initEditorCore({
-    document,
+    doc: document,
     App,
     t,
     i18n,
@@ -25,7 +25,7 @@ import { initEditorCore } from './lib/settings-page/editor-core.js';
   });
 
   initDataTab({
-    document,
+    doc: document,
     App,
     t,
     Toast,
@@ -34,7 +34,7 @@ import { initEditorCore } from './lib/settings-page/editor-core.js';
   });
 
   initLogsTab({
-    document,
+    doc: document,
     App,
     t,
     Toast,
