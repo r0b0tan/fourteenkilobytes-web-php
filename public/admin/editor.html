@@ -491,9 +491,13 @@
     import { createTextBlockTypeSelector, createHeadingLevelSelector, createListTypeSelector, createBlockTypeLabel, createFormatButtons } from './lib/block-type-selectors.js';
     // Import block content builders
     import { createBloglistContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
+    // Import editor state manager
+    import { createEditorStateManager } from './lib/editor/state.js';
+    // Import editor metrics manager
+    import { createEditorMetricsManager } from './lib/editor/metrics.js';
 
     // Declare early to avoid initialization order issues
-    let debouncedPreview = () => {};
+    let debouncedPreview = () => { };
 
     (async function () {
       // Initialize auth guard and setup
@@ -580,183 +584,54 @@
       let editingNavLink = null; // The chip element being edited
 
       // ============ AUTO-SAVE ============
+      let editorStateManager = null;
 
-      const AUTOSAVE_KEY = 'editor-autosave';
+      function getEditorStateManager() {
+        if (editorStateManager) {
+          return editorStateManager;
+        }
 
-      // Get current context from URL
+        editorStateManager = createEditorStateManager({
+          titleInput,
+          slugInput,
+          pageTypeSelect,
+          blockEditor,
+          titleOverrideEnabled,
+          titleOverrideInput,
+          navEnabled,
+          navLinks,
+          footerEnabled,
+          footerText,
+          metaEnabled,
+          metaDescription,
+          metaAuthor,
+          cssEnabled,
+          cssRules,
+          getContentFromBlocks,
+          getNavigationItems,
+          loadFromSource,
+          updatePageTitleSlug,
+          createBlockElement,
+          createNavChip
+        });
+
+        return editorStateManager;
+      }
+
       function getCurrentContext() {
-        const params = new URLSearchParams(window.location.search);
-        const editSlug = params.get('edit');
-        return editSlug ? { mode: 'edit', slug: editSlug } : { mode: 'new', slug: null };
+        return getEditorStateManager().getCurrentContext();
       }
 
       function saveToLocalStorage() {
-        const context = getCurrentContext();
-        try {
-          const title = titleInput.value;
-          const slug = slugInput.value;
-          const pageType = pageTypeSelect.value;
-          const content = getContentFromBlocks();
-
-          const data = {
-            // Context for validation on restore
-            context,
-            // Editor state
-            title,
-            slug,
-            pageType,
-            blocks: [],
-            titleOverrideEnabled: titleOverrideEnabled.checked,
-            titleOverride: titleOverrideEnabled.checked ? titleOverrideInput.value : null,
-            navEnabled: navEnabled.checked,
-            navigation: navEnabled.checked ? getNavigationItems() : null,
-            footerEnabled: footerEnabled.checked,
-            footer: footerEnabled.checked ? footerText.value : null,
-            metaEnabled: metaEnabled.checked,
-            metaDescription: metaDescription.value,
-            metaAuthor: metaAuthor.value,
-            cssEnabled: cssEnabled.checked,
-            css: cssEnabled.checked ? cssRules.value : null,
-            source: {
-              title,
-              slug,
-              pageType,
-              content,
-              titleOverride: titleOverrideEnabled.checked && titleOverrideInput.value.trim()
-                ? { enabled: true, title: titleOverrideInput.value.trim() }
-                : null,
-              navigation: navEnabled.checked ? { items: getNavigationItems() } : null,
-              footer: footerEnabled.checked ? { content: footerText.value } : null,
-              meta: metaEnabled.checked ? {
-                description: metaDescription.value,
-                author: metaAuthor.value
-              } : null,
-              css: cssEnabled.checked ? { rules: cssRules.value } : null
-            },
-            timestamp: Date.now()
-          };
-
-          // Save blocks
-          const blocks = blockEditor.querySelectorAll('.block-item');
-          blocks.forEach(blockItem => {
-            const type = blockItem.dataset.type;
-            const level = blockItem.dataset.level || null;
-            const content = blockItem.querySelector('.block-content');
-            if (content) {
-              data.blocks.push({
-                type,
-                level,
-                html: content.innerHTML
-              });
-            }
-          });
-
-          localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
-        } catch (err) {
-          console.warn('Failed to auto-save:', err);
-        }
+        return getEditorStateManager().saveToLocalStorage();
       }
 
       function loadFromLocalStorage() {
-        try {
-          const saved = localStorage.getItem(AUTOSAVE_KEY);
-          if (!saved) return false;
-
-          const data = JSON.parse(saved);
-          const currentContext = getCurrentContext();
-
-          // Only restore if context matches (same mode and slug)
-          if (data.context?.mode !== currentContext.mode ||
-            data.context?.slug !== currentContext.slug) {
-            return false;
-          }
-
-          // Check if data is not too old (older than 7 days)
-          const age = Date.now() - (data.timestamp || 0);
-          if (age > 7 * 24 * 60 * 60 * 1000) {
-            localStorage.removeItem(AUTOSAVE_KEY);
-            return false;
-          }
-
-          // Preferred restore path (v2 autosave): compiler-like source snapshot with nested blocks
-          if (data.source && Array.isArray(data.source.content)) {
-            loadFromSource(data.source);
-            updatePageTitleSlug();
-            return true;
-          }
-
-          // Restore basic fields
-          titleInput.value = data.title || '';
-          slugInput.value = data.slug || '';
-          pageTypeSelect.value = data.pageType || 'post';
-
-          // Restore blocks
-          if (data.blocks && data.blocks.length > 0) {
-            blockEditor.innerHTML = '';
-            data.blocks.forEach(block => {
-              const level = block.level || null;
-              const blockElement = createBlockElement(block.type, level, block.html || '');
-              blockEditor.appendChild(blockElement);
-            });
-          }
-
-          // Restore title override
-          if (data.titleOverrideEnabled) {
-            titleOverrideEnabled.checked = true;
-            titleOverrideEnabled.dispatchEvent(new Event('change'));
-            titleOverrideInput.value = data.titleOverride || '';
-          }
-
-          // Restore navigation
-          if (data.navEnabled) {
-            navEnabled.checked = true;
-            navEnabled.dispatchEvent(new Event('change'));
-            if (data.navigation && data.navigation.length > 0) {
-              navLinks.innerHTML = '';
-              data.navigation.forEach(link => {
-                navLinks.appendChild(createNavChip(link.text, link.href));
-              });
-            }
-          }
-
-          // Restore footer
-          if (data.footerEnabled) {
-            footerEnabled.checked = true;
-            footerEnabled.dispatchEvent(new Event('change'));
-            footerText.value = data.footer || '';
-          }
-
-          // Restore meta
-          if (data.metaEnabled) {
-            metaEnabled.checked = true;
-            metaEnabled.dispatchEvent(new Event('change'));
-            metaDescription.value = data.metaDescription || '';
-            metaAuthor.value = data.metaAuthor || '';
-          }
-
-          // Restore CSS
-          if (data.cssEnabled) {
-            cssEnabled.checked = true;
-            cssEnabled.dispatchEvent(new Event('change'));
-            cssRules.value = data.css || '';
-          }
-
-          // Update page title with restored slug (for new mode)
-          updatePageTitleSlug();
-
-          return true;
-        } catch (err) {
-          console.warn('Failed to restore auto-save:', err);
-          return false;
-        }
+        return getEditorStateManager().loadFromLocalStorage();
       }
 
       function clearAutoSave() {
-        try {
-          localStorage.removeItem(AUTOSAVE_KEY);
-        } catch (err) {
-          console.warn('Failed to clear auto-save:', err);
-        }
+        return getEditorStateManager().clearAutoSave();
       }
 
       // ============ EDIT MODE (Source Editing) ============
@@ -2111,164 +1986,56 @@
       }
 
       // ============ BYTE COUNTER & COST RAIL ============
+      let editorMetricsManager = null;
+
+      function getEditorMetricsManager() {
+        if (editorMetricsManager) {
+          return editorMetricsManager;
+        }
+
+        editorMetricsManager = createEditorMetricsManager({
+          formatBytes,
+          serializeBlock,
+          estimateBlockSize,
+          blockEditor,
+          titleInput,
+          titleOverrideEnabled,
+          titleOverrideInput,
+          titleBytesEl,
+          browserTitleBytesEl,
+          costContentTotal,
+          navBytesEl,
+          metaBytesEl,
+          footerBytesEl,
+          cssBytesEl,
+          breakdownBase,
+          breakdownTitle,
+          breakdownFavicon,
+          breakdownNav,
+          breakdownMeta,
+          breakdownFooter,
+          breakdownCss,
+          breakdownContent,
+          breakdownTotal,
+          pieChart,
+          piePercent,
+          pieContentDot,
+          getGlobalConfig: () => window.globalConfig
+        });
+
+        return editorMetricsManager;
+      }
 
       function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
-        const limit = 14336;
-        const actualContentBytes = contentBytes !== null ? contentBytes : Math.max(0, totalBytes - overheadBytes);
-        const overheadPercent = Math.min((overheadBytes / limit) * 100, 100);
-        const totalPercent = Math.min((totalBytes / limit) * 100, 100);
-
-        // Update Build Summary breakdown
-        if (breakdown) {
-          breakdownBase.textContent = formatBytes(breakdown.base);
-          breakdownTitle.textContent = formatBytes(breakdown.title || 0);
-          breakdownFavicon.textContent = formatBytes(breakdown.favicon || 0);
-          breakdownNav.textContent = formatBytes(breakdown.navigation);
-          breakdownMeta.textContent = formatBytes(breakdown.meta || 0);
-          breakdownFooter.textContent = formatBytes(breakdown.footer);
-          breakdownCss.textContent = formatBytes(breakdown.css);
-          breakdownContent.textContent = formatBytes(breakdown.content);
-          breakdownTotal.textContent = `${formatBytes(totalBytes)} / 14.336 B`;
-
-          // Update rail indicators
-          navBytesEl.textContent = formatBytes(breakdown.navigation);
-          metaBytesEl.textContent = formatBytes(breakdown.meta || 0);
-          footerBytesEl.textContent = formatBytes(breakdown.footer);
-          cssBytesEl.textContent = formatBytes(breakdown.css);
-        }
-
-        // Update Cost Rail content total
-        costContentTotal.textContent = formatBytes(actualContentBytes);
-
-        // Calculate angles for pie chart (360 degrees = 100%)
-        const overheadDeg = (overheadPercent / 100) * 360;
-        const totalDeg = (totalPercent / 100) * 360;
-
-        // Determine content color based on usage
-        let contentColor = 'var(--accent)';
-        pieContentDot.classList.remove('warning', 'danger');
-        if (totalPercent >= 100) {
-          contentColor = '#dc2626';
-          pieContentDot.classList.add('danger');
-        } else if (totalPercent >= 80) {
-          contentColor = '#f59e0b';
-          pieContentDot.classList.add('warning');
-        }
-
-        // Update pie chart with conic-gradient
-        pieChart.style.background = `conic-gradient(
-          var(--gray-400) 0deg ${overheadDeg}deg,
-          ${contentColor} ${overheadDeg}deg ${totalDeg}deg,
-          var(--gray-200) ${totalDeg}deg 360deg
-        )`;
-
-        // Update percentage in center
-        piePercent.textContent = `${Math.round(totalPercent)}%`;
+        return getEditorMetricsManager().updateByteCounter(totalBytes, overheadBytes, contentBytes, breakdown);
       }
 
       function updateCostRail() {
-        let totalContentBytes = 0;
-
-        // Helper to estimate bytes for a DOM block element
-        function estimateBlockBytes(block) {
-          const blockData = serializeBlock(block);
-          return estimateBlockSize(blockData);
-        }
-
-        // Recursive helper to calculate bytes for a block and its children
-        function processBlock(block) {
-          const type = block.dataset.type;
-          let bytes = 0;
-          let label = 'Block';
-
-          if (type === 'section') {
-            label = 'Section';
-            bytes = estimateBlockBytes(block);
-
-            const childrenWrapper = block.querySelector('.section-blocks');
-            if (childrenWrapper) {
-              const children = childrenWrapper.querySelectorAll(':scope > .block-item');
-              children.forEach(child => {
-                processBlock(child);
-              });
-            }
-          } else if (type === 'layout') {
-            label = 'Layout';
-            bytes = estimateBlockBytes(block);
-
-            const cellsGrid = block.querySelector('.layout-cells-grid');
-            if (cellsGrid) {
-              const cellBlocks = cellsGrid.querySelectorAll('.layout-cell .layout-cell-blocks > .block-item');
-              cellBlocks.forEach(child => {
-                processBlock(child);
-              });
-            }
-          } else {
-            bytes = estimateBlockBytes(block);
-
-            // Labels
-            const level = block.dataset.level;
-            const listType = block.dataset.listType;
-            if (type === 'heading') label = `H${level}`;
-            else if (type === 'paragraph') label = 'Paragraph';
-            else if (type === 'bloglist') label = 'Bloglist';
-            else if (type === 'list' || type === 'unordered-list') {
-              if (listType === 'ordered' || type === 'ordered-list') label = 'OL';
-              else label = 'UL';
-            }
-            else if (type === 'blockquote') label = 'Quote';
-            else if (type === 'codeblock') label = 'Code';
-            else if (type === 'divider') label = 'HR';
-            else if (type === 'spacer') label = 'Spacer';
-          }
-
-          // Update this block's indicator
-          let byteIndicator = block.querySelector(':scope > .block-byte-indicator');
-          if (byteIndicator) {
-            byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
-          }
-
-          return bytes;
-        }
-
-        // Only iterate TOP-LEVEL blocks in the editor
-        const topLevelBlocks = blockEditor.querySelectorAll(':scope > .block-item');
-        topLevelBlocks.forEach(block => {
-          totalContentBytes += processBlock(block);
-        });
-
-        // Newlines between top-level blocks
-        if (topLevelBlocks.length > 1) {
-          totalContentBytes += topLevelBlocks.length - 1;
-        }
-
-        // Update content total
-        costContentTotal.textContent = formatBytes(totalContentBytes);
+        return getEditorMetricsManager().updateCostRail();
       }
 
       function updateTitleBytes() {
-        const pageTitle = titleInput.value.trim() || 'Untitled';
-        const titleOverrideValue = titleOverrideInput.value.trim();
-        const siteTitleEnabled = window.globalConfig?.siteTitleEnabled !== false;
-        const siteTitleText = window.globalConfig?.siteTitle;
-
-        // Page Title: just the title input value
-        const pageTitleBytes = new TextEncoder().encode(pageTitle).length;
-        titleBytesEl.textContent = formatBytes(pageTitleBytes);
-
-        // Browser Title: final <title> tag content
-        let browserTitle;
-        if (titleOverrideEnabled.checked && titleOverrideValue) {
-          browserTitle = titleOverrideValue;
-        } else if (siteTitleEnabled && siteTitleText) {
-          browserTitle = `${pageTitle} | ${siteTitleText}`;
-        } else {
-          browserTitle = pageTitle;
-        }
-
-        // <title>TITEL</title> = 15 bytes markup + title bytes
-        const browserTitleBytes = new TextEncoder().encode(browserTitle).length + 15;
-        browserTitleBytesEl.textContent = formatBytes(browserTitleBytes);
+        return getEditorMetricsManager().updateTitleBytes();
       }
 
       // ============ MODAL SYSTEM ============
