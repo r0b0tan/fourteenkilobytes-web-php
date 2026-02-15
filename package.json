@@ -10,7 +10,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
-  "author": "",
+  "author": "Christoph Bauer",
   "license": "ISC",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.18",
