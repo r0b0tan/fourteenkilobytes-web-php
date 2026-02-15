@@ -480,6 +480,17 @@ describe('App Utility Functions', () => {
       expect(result.measurements).toHaveLength(1);
     });
 
+    it('previewOverhead throws when dryRun fails', async () => {
+      compilerMocks.dryRun.mockResolvedValue({
+        wouldSucceed: false,
+        error: { code: 'OVERHEAD_FAIL' },
+      });
+
+      await expect(App.previewOverhead({
+        cssEnabled: false,
+      })).rejects.toThrow('OVERHEAD_FAIL');
+    });
+
     it('getGlobalSettingsInfo aggregates base/header/footer/css overhead', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -658,6 +669,77 @@ describe('App Utility Functions', () => {
       const bloglistBlock = compileInput.content.find((block) => block.type === 'bloglist');
       expect(bloglistBlock.limit).toBe(7);
       expect(bloglistBlock.archiveLink).toEqual({ href: '/archive', text: 'Alle Beiträge' });
+    });
+
+    it('publish merges global settings (title/nav/footer/css/meta/favicon/sections/bloglist)', async () => {
+      compilerMocks.compile.mockResolvedValue({
+        success: true,
+        pages: [{ slug: 'merged', html: '<h1>M</h1>', bytes: 1400, hash: 'h-merged' }],
+      });
+
+      global.fetch = vi.fn((url, options) => {
+        if (url === '/api/settings') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({
+              siteTitleEnabled: true,
+              siteTitle: 'Global Site',
+              header: { enabled: true, links: [{ href: '/home', text: 'Home' }] },
+              footer: { enabled: true, content: 'Global Footer' },
+              cssEnabled: true,
+              cssMode: 'default',
+              pageWidth: '900px',
+              meta: { enabled: true, description: 'Global desc', author: 'Admin' },
+              favicon: '/favicon.ico',
+              bloglist: { limit: 3, archiveEnabled: true, archiveSlug: 'archiv', archiveLinkText: 'Zum Archiv' },
+            }),
+          });
+        }
+        if (url === '/api/posts' && !options?.method) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ posts: [{ slug: 'post-1' }] }) });
+        }
+        if (url === '/admin/presets/default.css') {
+          return Promise.resolve({ ok: true, text: () => Promise.resolve('body{color:black;}') });
+        }
+        if (url === '/admin/presets/light.css' || url === '/admin/presets/dark.css') {
+          return Promise.resolve({ ok: false, text: () => Promise.resolve('') });
+        }
+        if (url === '/admin/sections.css') {
+          return Promise.resolve({ ok: true, text: () => Promise.resolve('.section{padding:1rem;}') });
+        }
+        if (url === '/api/posts' && options?.method === 'POST') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      });
+
+      await App.publish({
+        slug: 'merged',
+        title: 'Merged',
+        content: [
+          { type: 'section', children: [] },
+          { type: 'bloglist' },
+        ],
+        css: { rules: '.page{margin:0;}' },
+        icons: [],
+        allowPagination: true,
+      });
+
+      const compileInput = compilerMocks.compile.mock.calls[0][0];
+      expect(compileInput.siteTitle).toBe('Global Site');
+      expect(compileInput.navigation).toEqual({ items: [{ href: '/home', text: 'Home' }] });
+      expect(compileInput.footer).toEqual({ content: 'Global Footer' });
+      expect(compileInput.meta).toEqual({ description: 'Global desc', author: 'Admin' });
+      expect(compileInput.favicon).toBe('/favicon.ico');
+      expect(compileInput.posts).toEqual([{ slug: 'post-1' }]);
+      expect(compileInput.css.rules).toContain('.section{padding:1rem;}');
+      expect(compileInput.css.rules).toContain('body{color:black;}');
+      expect(compileInput.css.rules).toContain('.page{margin:0;}');
+      expect(compileInput.css.rules).toContain('body{max-width:900px}');
+
+      const bloglistBlock = compileInput.content.find((block) => block.type === 'bloglist');
+      expect(bloglistBlock.limit).toBe(3);
+      expect(bloglistBlock.archiveLink).toEqual({ href: '/archiv', text: 'Zum Archiv' });
     });
   });
 

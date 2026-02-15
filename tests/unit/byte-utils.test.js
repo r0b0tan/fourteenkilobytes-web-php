@@ -34,6 +34,17 @@ describe('Byte Utils Module', () => {
       // &lt; is 4 bytes (as literal characters, not entity)
       expect(getByteLength('&lt;')).toBe(4);
     });
+
+    it('should handle null and undefined as 0 bytes', () => {
+      expect(getByteLength(null)).toBe(0);
+      expect(getByteLength(undefined)).toBe(0);
+    });
+
+    it('should safely handle non-string input via string conversion', () => {
+      expect(getByteLength(1234)).toBe(4);
+      expect(getByteLength(false)).toBe(5);
+      expect(getByteLength(NaN)).toBe(3);
+    });
   });
 
   describe('formatBytes()', () => {
@@ -53,6 +64,52 @@ describe('Byte Utils Module', () => {
       expect(formatBytes(1)).toBe('1 B');
       expect(formatBytes(999)).toBe('999 B');
       expect(formatBytes(1000)).toBe('1.000 B');
+    });
+
+    it('should never return negative values', () => {
+      expect(formatBytes(-1)).toBe('0 B');
+      expect(formatBytes(-9999)).toBe('0 B');
+    });
+
+    it('should handle invalid numeric input safely', () => {
+      expect(formatBytes(NaN)).toBe('0 B');
+      expect(formatBytes(Infinity)).toBe('0 B');
+    });
+
+    it('fuzz: should never return negative or NaN-like output for random inputs', () => {
+      let seed = 1337;
+      const nextRand = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 0x100000000;
+      };
+
+      const randomValues = [
+        undefined,
+        null,
+        NaN,
+        Infinity,
+        -Infinity,
+        true,
+        false,
+        '',
+        '123',
+        'abc',
+        {},
+        [],
+      ];
+
+      for (let i = 0; i < 200; i++) {
+        const randomNumber = Math.floor((nextRand() - 0.5) * 2_000_000);
+        const input = i % 3 === 0 ? randomValues[i % randomValues.length] : randomNumber;
+        const out = formatBytes(input);
+
+        expect(out.endsWith(' B')).toBe(true);
+
+        const numericPart = out.replace(/\sB$/, '').replace(/\./g, '');
+        const parsed = Number(numericPart);
+        expect(Number.isNaN(parsed)).toBe(false);
+        expect(parsed).toBeGreaterThanOrEqual(0);
+      }
     });
   });
 
@@ -129,6 +186,44 @@ describe('Byte Utils Module', () => {
       const html = '<html><head><style>body { color: red; }</style></head><body>{{bytes}}</body></html>';
       const result = finalizeCompiledPageHtml(html, 0, true);
       expect(result.html).toContain('body{color:red}');
+    });
+
+    it('should handle null rawHtml safely', () => {
+      const result = finalizeCompiledPageHtml(null, 0, false);
+      expect(result.html).toBe('');
+      expect(result.bytes).toBe(0);
+    });
+
+    it('should sanitize invalid initial byte values', () => {
+      const html = '<html><body>{{bytes}}</body></html>';
+      const withNaN = finalizeCompiledPageHtml(html, NaN, false);
+      const withNegative = finalizeCompiledPageHtml(html, -100, false);
+
+      expect(withNaN.bytes).toBeGreaterThanOrEqual(0);
+      expect(withNegative.bytes).toBeGreaterThanOrEqual(0);
+    });
+
+    it('fuzz: finalized byte result is always deterministic and non-negative', () => {
+      let seed = 2026;
+      const nextRand = () => {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x80000000;
+      };
+
+      for (let i = 0; i < 100; i++) {
+        const repeated = Math.floor(nextRand() * 20) + 1;
+        const token = `x${Math.floor(nextRand() * 1_000_000)}`;
+        const rawHtml = `<html><body>${token.repeat(repeated)} {{bytes}}</body></html>`;
+        const initialBytes = Math.floor((nextRand() - 0.5) * 50_000);
+
+        const run1 = finalizeCompiledPageHtml(rawHtml, initialBytes, false);
+        const run2 = finalizeCompiledPageHtml(rawHtml, initialBytes, false);
+
+        expect(run1.bytes).toBeGreaterThanOrEqual(0);
+        expect(run1.bytes).toBe(getByteLength(run1.html));
+        expect(run1.html).toBe(run2.html);
+        expect(run1.bytes).toBe(run2.bytes);
+      }
     });
   });
 });
