@@ -148,6 +148,20 @@ describe('dashboard.js update helpers', () => {
       expect(localStorage.getItem('snoozedUpdate')).toBeNull();
       expect(document.querySelector('.update-banner')).toBeNull();
     });
+
+    it('sanitizes non-http release URLs', async () => {
+      const { showUpdateBanner } = await loadDashboardModule();
+      createDashboardRoot();
+
+      showUpdateBanner({
+        latest: '2.1.0',
+        current: '2.0.0',
+        releaseUrl: 'javascript:alert(1)',
+      });
+
+      const releaseLink = document.querySelector('.update-banner a');
+      expect(releaseLink?.getAttribute('href')).toBe('#');
+    });
   });
 
   describe('checkForUpdates()', () => {

@@ -293,12 +293,20 @@ export function initEditorInteractions({
   }
 
   function setFaviconPreview(dataUrl) {
-    faviconPreview.innerHTML = `<img src="${dataUrl}" alt="Favicon">`;
+    faviconPreview.textContent = '';
+    const image = doc.createElement('img');
+    image.src = dataUrl;
+    image.alt = 'Favicon';
+    faviconPreview.appendChild(image);
     faviconRemove.classList.remove('hidden');
   }
 
   function clearFaviconPreview() {
-    faviconPreview.innerHTML = `<span class="favicon-placeholder">${t('settings.faviconNone')}</span>`;
+    faviconPreview.textContent = '';
+    const placeholder = doc.createElement('span');
+    placeholder.className = 'favicon-placeholder';
+    placeholder.textContent = t('settings.faviconNone');
+    faviconPreview.appendChild(placeholder);
     faviconRemove.classList.add('hidden');
   }
 

@@ -421,14 +421,21 @@ export async function init() {
     const endIndex = Math.min(startIndex + effectivePageSize, totalItems);
     const pageItems = items.slice(startIndex, endIndex);
 
-    listEl.innerHTML = pageItems.map(item => `
+    listEl.innerHTML = pageItems.map(item => {
+      const rawSlug = String(item.slug || '');
+      const safeSlugText = App.escapeHtml(rawSlug);
+      const safeSlugAttr = App.escapeHtml(rawSlug);
+      const safeSlugPath = encodeURIComponent(rawSlug);
+      const safeTitle = App.escapeHtml(item.title);
+
+      return `
       <li>
         <div class="post-info">
           <div class="post-title ${item.status === 'tombstone' ? 'status-tombstone' : ''}">
             ${item.status === 'tombstone'
-              ? App.escapeHtml(item.title)
-              : `<a href="/${item.slug}" target="_blank" rel="noopener">
-                  ${App.escapeHtml(item.title)}
+              ? safeTitle
+              : `<a href="/${safeSlugPath}" target="_blank" rel="noopener">
+                  ${safeTitle}
                   <svg class="post-title-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
@@ -438,7 +445,7 @@ export async function init() {
             }
           </div>
           <div class="post-meta">
-            /${item.slug} · ${App.formatDate(item.publishedAt)}
+            /${safeSlugText} · ${App.formatDate(item.publishedAt)}
             ${item.status === 'tombstone' ? ` · <span class="text-muted">${t('dashboard.deleted')}</span>` : ''}
           </div>
         </div>
@@ -451,24 +458,25 @@ export async function init() {
                 <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="actions-dropdown-menu" role="menu">
-                <button type="button" data-action="recompile" data-slug="${item.slug}" role="menuitem">
+                <button type="button" data-action="recompile" data-slug="${safeSlugAttr}" role="menuitem">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                   ${t('dashboard.recompile')}
                 </button>
-                <button type="button" data-action="duplicate" data-slug="${item.slug}" role="menuitem">
+                <button type="button" data-action="duplicate" data-slug="${safeSlugAttr}" role="menuitem">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   ${t('dashboard.duplicate')}
                 </button>
               </div>
             </div>
-            <button type="button" class="btn btn-danger btn-small btn-icon" data-action="delete" data-slug="${item.slug}">
+            <button type="button" class="btn btn-danger btn-small btn-icon" data-action="delete" data-slug="${safeSlugAttr}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               ${t('dashboard.delete')}
             </button>
           ` : ''}
         </div>
       </li>
-    `).join('');
+    `;
+    }).join('');
 
     // Render pagination
     if (totalPages <= 1) {
@@ -677,35 +685,67 @@ export function showUpdateBanner(updateInfo) {
   if (!shouldShowUpdate(updateInfo.latest)) {
     return;
   }
+
+  function toSafeExternalUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.origin);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return parsed.href;
+      }
+    } catch {
+      // invalid URL
+    }
+    return '#';
+  }
   
   const dashboardView = document.getElementById('dashboard-view');
   const banner = document.createElement('div');
   banner.className = 'update-banner';
   banner.setAttribute('role', 'alert');
-  const safeVersion = App.escapeHtml(updateInfo.latest);
-  const safeCurrentVersion = App.escapeHtml(updateInfo.current);
-  const safeReleaseUrl = App.escapeHtml(updateInfo.releaseUrl);
+  const latestVersion = String(updateInfo.latest || '');
+  const currentVersion = String(updateInfo.current || '');
+  const safeReleaseUrl = toSafeExternalUrl(updateInfo.releaseUrl);
 
-  banner.innerHTML = `
-    <div class="update-banner-content">
-      <div class="update-banner-icon">🎉</div>
-      <div class="update-banner-text">
-        <strong>${t('dashboard.updateAvailable', { version: safeVersion })}</strong>
-        <span>${t('dashboard.currentVersion', { version: safeCurrentVersion })}</span>
-      </div>
-      <div class="update-banner-actions">
-        <a href="${safeReleaseUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-small btn-primary">
-          ${t('dashboard.viewRelease')}
-        </a>
-        <button class="btn btn-small btn-text snooze-update" data-version="${safeVersion}">
-          ${t('dashboard.remindLater')}
-        </button>
-        <button class="btn btn-small btn-text dismiss-update" data-version="${safeVersion}">
-          ${t('modal.dismiss')}
-        </button>
-      </div>
-    </div>
-  `;
+  const content = document.createElement('div');
+  content.className = 'update-banner-content';
+
+  const icon = document.createElement('div');
+  icon.className = 'update-banner-icon';
+  icon.textContent = '🎉';
+
+  const textWrap = document.createElement('div');
+  textWrap.className = 'update-banner-text';
+  const title = document.createElement('strong');
+  title.textContent = t('dashboard.updateAvailable', { version: latestVersion });
+  const current = document.createElement('span');
+  current.textContent = t('dashboard.currentVersion', { version: currentVersion });
+  textWrap.append(title, current);
+
+  const actions = document.createElement('div');
+  actions.className = 'update-banner-actions';
+
+  const releaseLink = document.createElement('a');
+  releaseLink.className = 'btn btn-small btn-primary';
+  releaseLink.href = safeReleaseUrl;
+  releaseLink.target = '_blank';
+  releaseLink.rel = 'noopener noreferrer';
+  releaseLink.textContent = t('dashboard.viewRelease');
+
+  const snoozeBtn = document.createElement('button');
+  snoozeBtn.type = 'button';
+  snoozeBtn.className = 'btn btn-small btn-text snooze-update';
+  snoozeBtn.dataset.version = latestVersion;
+  snoozeBtn.textContent = t('dashboard.remindLater');
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.type = 'button';
+  dismissBtn.className = 'btn btn-small btn-text dismiss-update';
+  dismissBtn.dataset.version = latestVersion;
+  dismissBtn.textContent = t('modal.dismiss');
+
+  actions.append(releaseLink, snoozeBtn, dismissBtn);
+  content.append(icon, textWrap, actions);
+  banner.appendChild(content);
   
   // Insert at the top of dashboard
   dashboardView.insertBefore(banner, dashboardView.firstChild);
