@@ -530,10 +530,17 @@
       const piePercent = document.getElementById('pie-percent');
       const pieContentDot = document.querySelector('.pie-dot-content');
 
+      // ============ MANAGER INSTANCES ============
+      let editorStateManager = null;
+      let editorSourceLoader = null;
+      let editorOverridesManager = null;
+      let editorBlockFactory = null;
       let editorRichtextTools = null;
+      let editorBuildInputManager = null;
+      let editorMetricsManager = null;
+      let editorBootstrap = null;
 
       // ============ AUTO-SAVE ============
-      let editorStateManager = null;
 
       function getEditorStateManager() {
         if (editorStateManager) {
@@ -567,6 +574,7 @@
         return editorStateManager;
       }
 
+      // ---- STATE WRAPPERS ----
       function saveToLocalStorage() {
         return getEditorStateManager().saveToLocalStorage();
       }
@@ -579,11 +587,10 @@
         return getEditorStateManager().clearAutoSave();
       }
 
-      // ============ EDIT MODE (Source Editing) ============
+      // ============ EDIT MODE ============
 
       let isEditMode = false;
       let editingSlug = null;
-      let editorBootstrap = null;
 
       function updatePageTitleSlug() {
         if (isEditMode) return; // Don't update in edit mode
@@ -597,7 +604,6 @@
       }
 
       let blockElFromSource = null;
-      let editorSourceLoader = null;
 
       function getEditorSourceLoader() {
         if (editorSourceLoader) {
@@ -622,7 +628,7 @@
           cssEnabled,
           cssRules,
           createBlockElement,
-          setupListKeyHandlers,
+          setupListKeyHandlers: (listEl) => getEditorBlockFactory().setupListKeyHandlers(listEl),
           createNavChip,
           loadGlobalNavigation,
           loadGlobalFooter,
@@ -651,9 +657,8 @@
         }
       });
 
-      // ============ NAVIGATION EDITOR ============
+      // ============ NAVIGATION ============
       const insertBytesBtn = document.getElementById('insert-bytes-btn');
-      let editorOverridesManager = null;
 
       function getEditorOverridesManager() {
         if (editorOverridesManager) {
@@ -695,6 +700,7 @@
         return editorOverridesManager;
       }
 
+      // ---- OVERRIDES WRAPPERS ----
       function loadGlobalNavigation() {
         return getEditorOverridesManager().loadGlobalNavigation();
       }
@@ -719,10 +725,6 @@
         return getEditorOverridesManager().loadGlobalCSS();
       }
 
-      function applyLiveCSS() {
-        return getEditorOverridesManager().applyLiveCSS();
-      }
-
       // ============ AUTO-SLUG ============
 
       titleInput.addEventListener('input', () => {
@@ -739,7 +741,6 @@
       });
 
       // ============ BLOCK EDITOR ============
-      let editorBlockFactory = null;
 
       function getEditorBlockFactory() {
         if (editorBlockFactory) {
@@ -773,16 +774,13 @@
           getBlockElFromSource: () => blockElFromSource,
           onCostRailChanged: () => updateCostRail(),
           onPreviewRequested: () => debouncedPreview(),
-          onFormatClick: (cmd, block) => handleFormatClick(cmd, block)
+          onFormatClick: (cmd, block) => getEditorRichtextTools().handleFormatClick(cmd, block)
         });
 
         return editorBlockFactory;
       }
 
-      function setupListKeyHandlers(listEl) {
-        return getEditorBlockFactory().setupListKeyHandlers(listEl);
-      }
-
+      // ---- BLOCK FACTORY WRAPPERS ----
       function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null, isNested = false) {
         return getEditorBlockFactory().createBlockElement(type, level, initialHtml, listType, spacerHeight, isNested);
       }
@@ -818,22 +816,6 @@
         insertBlockBelow(referenceBlock, newBlock);
       }
 
-      // ============ FORMAT BUTTONS ============
-
-      function handleFormatClick(cmd, block) {
-        return getEditorRichtextTools().handleFormatClick(cmd, block);
-      }
-
-      function wrapSelectionWithTag(tagName) {
-        return getEditorRichtextTools().wrapSelectionWithTag(tagName);
-      }
-
-      // ============ LINK POPUP ============
-
-      function showLinkPopup() {
-        return getEditorRichtextTools().showLinkPopup();
-      }
-
       // ============ ADD BLOCK ============
 
       addBlockBtn.addEventListener('click', () => {
@@ -865,7 +847,6 @@
       });
 
       // ============ BUILD INPUT ============
-      let editorBuildInputManager = null;
 
       function getEditorBuildInputManager() {
         if (editorBuildInputManager) {
@@ -896,6 +877,7 @@
         return editorBuildInputManager;
       }
 
+      // ---- BUILD INPUT WRAPPERS ----
       function getContentFromBlocks() {
         return getEditorBuildInputManager().getContentFromBlocks();
       }
@@ -908,8 +890,7 @@
         return getEditorBuildInputManager().buildInput(allowPagination);
       }
 
-      // ============ BYTE COUNTER & COST RAIL ============
-      let editorMetricsManager = null;
+      // ============ METRICS ============
 
       function getEditorMetricsManager() {
         if (editorMetricsManager) {
@@ -949,6 +930,7 @@
         return editorMetricsManager;
       }
 
+      // ---- METRICS WRAPPERS ----
       function updateByteCounter(totalBytes, overheadBytes = 0, contentBytes = null, breakdown = null) {
         return getEditorMetricsManager().updateByteCounter(totalBytes, overheadBytes, contentBytes, breakdown);
       }
@@ -1003,7 +985,7 @@
         return editorBootstrap;
       }
 
-      // ============ MODAL SYSTEM ============
+      // ============ MODAL ============
 
       const Modal = createModalManager({
         backdrop: document.getElementById('modal-backdrop'),
@@ -1089,10 +1071,10 @@
         }
       });
 
-      // ============ INIT ============
+      // ============ BOOTSTRAP ============
       await getEditorBootstrap().init();
 
-      // ============ CLEAR ALL BUTTON ============
+      // ============ CLEAR ALL ============
 
       document.getElementById('clear-all-btn').addEventListener('click', async () => {
         const confirmed = await Modal.confirm(t('editor.resetConfirm'));
@@ -1135,10 +1117,12 @@
         updateTitleBytes();
       });
 
+      // ============ INITIAL METRICS ============
       updateByteCounter(0, 0);
       updateCostRail();
       updateTitleBytes();
 
+      // ============ DEBOUNCED PREVIEW ============
       debouncedPreview = debounce(async () => {
         saveToLocalStorage();
         try {
@@ -1161,6 +1145,7 @@
         }
       }, 500);
 
+      // ============ PREVIEW TRIGGERS ============
       blockEditor.addEventListener('input', () => {
         debouncedPreview();
         updateCostRail();
@@ -1177,11 +1162,13 @@
       metaEnabled.addEventListener('change', debouncedPreview);
       cssEnabled.addEventListener('change', debouncedPreview);
 
+      // ============ BLOCK OBSERVER ============
       const observer = new MutationObserver(() => {
         updateCostRail();
       });
       observer.observe(blockEditor, { childList: true });
 
+      // ============ INITIAL PREVIEW ============
       debouncedPreview();
 
     })();
