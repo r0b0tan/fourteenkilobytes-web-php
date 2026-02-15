@@ -171,7 +171,10 @@
             <input type="checkbox" id="title-override-enabled">
             <span data-i18n="editor.browserTabTitle">Browser Tab Title</span>
           </label>
-          <p id="title-override-hint" class="override-hint"><svg class="hint-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> <span data-i18n="editor.browserTabTitleHint">Using title only</span></p>
+          <p id="title-override-hint" class="override-hint"><svg class="hint-icon" width="12" height="12"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12" />
+            </svg> <span data-i18n="editor.browserTabTitleHint">Using title only</span></p>
         </div>
         <div id="title-override-editor" class="override-editor">
           <div class="form-group">
@@ -198,11 +201,13 @@
           <div class="meta-row">
             <div class="form-group">
               <label for="meta-description" data-i18n="settings.metaDescription">Description</label>
-              <input type="text" id="meta-description" maxlength="160" data-i18n-placeholder="settings.metaDescriptionPlaceholder" placeholder="Page description...">
+              <input type="text" id="meta-description" maxlength="160"
+                data-i18n-placeholder="settings.metaDescriptionPlaceholder" placeholder="Page description...">
             </div>
             <div class="form-group">
               <label for="meta-author" data-i18n="settings.metaAuthor">Author</label>
-              <input type="text" id="meta-author" maxlength="100" data-i18n-placeholder="settings.metaAuthorPlaceholder" placeholder="Author name">
+              <input type="text" id="meta-author" maxlength="100" data-i18n-placeholder="settings.metaAuthorPlaceholder"
+                placeholder="Author name">
             </div>
           </div>
         </div>
@@ -222,10 +227,12 @@
           <p id="nav-global-hint" class="override-hint" data-i18n="settings.navigationHint">Navigation links</p>
         </div>
         <div id="nav-editor" class="override-editor hidden">
-          <p class="text-small text-muted mb-1" data-i18n="settings.navigationHint">Navigation links (appear on every page)</p>
+          <p class="text-small text-muted mb-1" data-i18n="settings.navigationHint">Navigation links (appear on every
+            page)</p>
           <div class="nav-editor-row">
             <div id="nav-links" class="nav-links"></div>
-            <button type="button" id="add-nav-link" class="btn btn-secondary" data-i18n="settings.navigationAddLink">+ Link</button>
+            <button type="button" id="add-nav-link" class="btn btn-secondary" data-i18n="settings.navigationAddLink">+
+              Link</button>
           </div>
         </div>
       </div>
@@ -245,7 +252,8 @@
       <div class="block-editor-wrapper">
         <div id="block-editor" class="block-editor"></div>
         <div class="block-actions-row">
-          <button type="button" id="add-block-btn" class="btn btn-secondary" data-i18n="editor.addBlock">+ Add Block</button>
+          <button type="button" id="add-block-btn" class="btn btn-secondary" data-i18n="editor.addBlock">+ Add
+            Block</button>
           <div id="add-block-dropdown" class="add-block-dropdown hidden">
             <button type="button" data-type="paragraph" data-i18n="editor.blockParagraph">Paragraph</button>
             <button type="button" data-type="heading" data-level="2" data-i18n="editor.blockHeading">Heading</button>
@@ -282,7 +290,8 @@
         <div id="footer-editor" class="override-editor hidden">
           <div class="footer-editor-row">
             <input type="text" id="footer-text" placeholder="© 2024 My Blog">
-            <button type="button" id="insert-bytes-btn" class="btn btn-secondary" data-i18n="settings.footerBytesBtn">{{bytes}}</button>
+            <button type="button" id="insert-bytes-btn" class="btn btn-secondary"
+              data-i18n="settings.footerBytesBtn">{{bytes}}</button>
           </div>
         </div>
       </div>
@@ -302,7 +311,8 @@
         </div>
         <div id="css-editor" class="override-editor">
           <p class="css-warning-hint" data-i18n="settings.cssCustomHint">Custom CSS rules (embedded in every page)</p>
-          <textarea id="css-rules" rows="10" data-i18n-placeholder="settings.cssCustom" placeholder="/* Additional CSS */"></textarea>
+          <textarea id="css-rules" rows="10" data-i18n-placeholder="settings.cssCustom"
+            placeholder="/* Additional CSS */"></textarea>
         </div>
       </div>
       <div class="rail-item">
@@ -326,7 +336,8 @@
       <div class="popup-actions">
         <button type="button" id="nav-link-save" class="btn btn-primary" data-i18n="linkPopup.save">OK</button>
         <button type="button" id="nav-link-delete" class="btn btn-danger" data-i18n="linkPopup.delete">Delete</button>
-        <button type="button" id="nav-link-cancel" class="btn btn-secondary" data-i18n="linkPopup.cancel">Cancel</button>
+        <button type="button" id="nav-link-cancel" class="btn btn-secondary"
+          data-i18n="linkPopup.cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -346,13 +357,23 @@
   <div id="link-popup" class="link-popup hidden">
     <div class="link-prefix-buttons">
       <button type="button" class="link-prefix-btn" data-prefix="https://" title="URL">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
       </button>
       <button type="button" class="link-prefix-btn" data-prefix="mailto:" title="E-Mail">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,13 2,6" />
+        </svg>
       </button>
       <button type="button" class="link-prefix-btn" data-prefix="tel:" title="Telefon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+        </svg>
       </button>
     </div>
     <input type="text" id="link-href" placeholder="/path or #anchor">
@@ -435,7 +456,8 @@
             </div>
           </div>
         </div>
-        <button id="publish-btn" class="btn btn-primary build-publish-btn" data-i18n="editor.buildPublish">Compile & Publish</button>
+        <button id="publish-btn" class="btn btn-primary build-publish-btn" data-i18n="editor.buildPublish">Compile &
+          Publish</button>
       </div>
     </div>
   </div>
@@ -453,6 +475,8 @@
     import { inlineNodesToHtml, parseInlineNodes, selectorFromSourceBlock, serializeBlock } from './lib/editor-core.js';
     // Import byte utilities
     import { formatBytes } from './lib/byte-utils.js';
+    // Import byte estimation functions
+    import { parseSelector, selectorToAttributes, renderBlockHtml, estimateBlockSize } from './lib/byte-estimation.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
@@ -629,7 +653,7 @@
 
           // Only restore if context matches (same mode and slug)
           if (data.context?.mode !== currentContext.mode ||
-              data.context?.slug !== currentContext.slug) {
+            data.context?.slug !== currentContext.slug) {
             return false;
           }
 
@@ -766,7 +790,7 @@
         pageTypeSelect.value = sourceData.pageType || 'post';
 
         // Helper to create a block element from source data
-        blockElFromSource = function(block, depth = 0) {
+        blockElFromSource = function (block, depth = 0) {
           const isNested = depth > 0;
           if (block.type === 'bloglist') {
             return applySelectorToBlockElement(createBlockElement('bloglist', null, '', null, null, isNested), block);
@@ -811,7 +835,7 @@
             // Update UI controls
             const bgInput = el.querySelector('.section-controls input[type="color"]');
             if (bgInput) bgInput.value = block.background || '#1a1a1a';
-            
+
             const colorInputs = el.querySelectorAll('.section-inner-wrapper input[type="color"]');
             // 0=background, 1=text, 2=pattern
             if (colorInputs[1]) colorInputs[1].value = block.color || '#ffffff';
@@ -821,7 +845,7 @@
             if (patternSelect) patternSelect.value = block.pattern || '';
             const sectionInnerWrapper = el.querySelector('.section-inner-wrapper');
             if (sectionInnerWrapper) sectionInnerWrapper.classList.toggle('has-pattern', !!block.pattern);
-            
+
             const opacityInput = el.querySelector('.section-pattern-row input[type="range"]');
             if (opacityInput) opacityInput.value = block.patternOpacity || '0.1';
             const opacityNumber = el.querySelector('.section-opacity-input');
@@ -845,13 +869,13 @@
               if (block.padding) preview.style.setProperty('--sp', block.padding);
               const pClass = Compiler.getPatternClass(block.pattern || '');
               preview.className = 'section-preview ' + pClass;
-              
+
               // Set PC var
               const opacity = parseFloat(block.patternOpacity || '0.1');
               const hex = block.patternColor || '#ffffff';
-              const r = parseInt(hex.substring(1,3), 16);
-              const g = parseInt(hex.substring(3,5), 16);
-              const b = parseInt(hex.substring(5,7), 16);
+              const r = parseInt(hex.substring(1, 3), 16);
+              const g = parseInt(hex.substring(3, 5), 16);
+              const b = parseInt(hex.substring(5, 7), 16);
               preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
             }
             // Load child blocks
@@ -867,7 +891,7 @@
             const el = createBlockElement('layout', null, '', null, null, isNested);
             const cols = block.columns || 2;
             const rows = block.cells ? Math.ceil(block.cells.length / cols) : 2;
-            
+
             el.dataset.columns = cols;
             el.dataset.rows = rows;
 
@@ -876,7 +900,7 @@
             if (cellsGrid && block.cells && block.cells.length > 0) {
               // Clear existing cells (keep controls)
               cellsGrid.querySelectorAll(':scope > .layout-cell').forEach(c => c.remove());
-              
+
               // Recreate cells from data
               block.cells.forEach(cellData => {
                 const cellEl = document.createElement('div');
@@ -1600,7 +1624,7 @@
           // Controls row: color pickers + pattern selector
           const controls = document.createElement('div');
           controls.className = 'section-controls';
-          
+
           const bgLabel = document.createElement('label');
           bgLabel.innerHTML = '<span data-i18n="editor.sectionBackground">Background</span>:';
           const bgInput = document.createElement('input');
@@ -1681,10 +1705,10 @@
             alSelect.appendChild(o);
           });
           alSelect.addEventListener('change', () => {
-             block.dataset.align = alSelect.value;
-             preview.style.textAlign = alSelect.value;
-             updateCostRail();
-             debouncedPreview();
+            block.dataset.align = alSelect.value;
+            preview.style.textAlign = alSelect.value;
+            updateCostRail();
+            debouncedPreview();
           });
           alLabel.appendChild(alSelect);
           controls.appendChild(alLabel);
@@ -1734,9 +1758,9 @@
             // Update CSS var on preview
             const opacity = parseFloat(block.dataset.patternOpacity || '0.1');
             const hex = pcInput.value;
-            const r = parseInt(hex.substring(1,3), 16);
-            const g = parseInt(hex.substring(3,5), 16);
-            const b = parseInt(hex.substring(5,7), 16);
+            const r = parseInt(hex.substring(1, 3), 16);
+            const g = parseInt(hex.substring(3, 5), 16);
+            const b = parseInt(hex.substring(5, 7), 16);
             preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
             updateCostRail();
             debouncedPreview();
@@ -1764,9 +1788,9 @@
             block.dataset.patternOpacity = val;
             const opacity = parseFloat(val);
             const hex = block.dataset.patternColor || '#ffffff';
-            const r = parseInt(hex.substring(1,3), 16);
-            const g = parseInt(hex.substring(3,5), 16);
-            const b = parseInt(hex.substring(5,7), 16);
+            const r = parseInt(hex.substring(1, 3), 16);
+            const g = parseInt(hex.substring(3, 5), 16);
+            const b = parseInt(hex.substring(5, 7), 16);
             preview.style.setProperty('--pc', `rgba(${r},${g},${b},${opacity})`);
             updateCostRail();
             debouncedPreview();
@@ -2879,221 +2903,78 @@
 
       function updateCostRail() {
         let totalContentBytes = 0;
-        const encoder = new TextEncoder();
 
-        function parseSelector(selector) {
-          if (!selector || typeof selector !== 'string') {
-            return { id: '', classes: [] };
-          }
-
-          const safeToken = token => {
-            if (!token) return '';
-            const cleaned = token.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-            return cleaned;
-          };
-
-          const normalized = selector.trim();
-          if (!normalized) return { id: '', classes: [] };
-
-          if (normalized.startsWith('#')) {
-            const [idToken, ...classTokens] = normalized.slice(1).split('.');
-            const id = safeToken(idToken);
-            const classes = classTokens.map(safeToken).filter(Boolean);
-            return { id, classes };
-          }
-
-          const source = normalized.startsWith('.') ? normalized.slice(1) : normalized;
-          const classes = source
-            .split(/[.\s]+/)
-            .map(safeToken)
-            .filter(Boolean);
-          return { id: '', classes };
-        }
-
-        function selectorAttr(selector, baseClasses = []) {
-          const parsed = parseSelector(selector);
-          const classList = [...baseClasses, ...parsed.classes].filter(Boolean);
-          const idAttr = parsed.id ? ` id="${parsed.id}"` : '';
-          const classAttr = classList.length > 0 ? ` class="${classList.join(' ')}"` : '';
-          return `${idAttr}${classAttr}`;
-        }
-
-        function renderBlockHtmlForBytes(blockData) {
-          if (!blockData || typeof blockData !== 'object') return '';
-
-          if (blockData.type === 'bloglist') {
-            const attrs = selectorAttr(blockData.selector);
-            return `<div${attrs}><!-- bloglist --></div>`;
-          }
-          if (blockData.type === 'divider') {
-            const attrs = selectorAttr(blockData.selector);
-            return `<hr${attrs}>`;
-          }
-          if (blockData.type === 'spacer') {
-            const attrs = selectorAttr(blockData.selector);
-            return `<div${attrs} style="height:${blockData.height || '1rem'}"></div>`;
-          }
-          if (blockData.type === 'codeblock') {
-            const attrs = selectorAttr(blockData.selector);
-            return `<pre${attrs}><code>${escapeHtml(blockData.content || '')}</code></pre>`;
-          }
-          if (blockData.type === 'unordered-list' || blockData.type === 'ordered-list') {
-            const tag = blockData.type === 'unordered-list' ? 'ul' : 'ol';
-            const items = (blockData.items || []).map(item => {
-              const inlineHtml = inlineNodesToHtml(item.children || []);
-              return `<li>${inlineHtml}</li>`;
-            }).join('\n');
-            const attrs = selectorAttr(blockData.selector);
-            return `<${tag}${attrs}>\n${items}\n</${tag}>`;
-          }
-          if (blockData.type === 'layout') {
-            const cellsHtml = (blockData.cells || []).map(cell => {
-              const cellContent = (cell.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
-              const cellStyles = [];
-              if (cell.textAlign && cell.textAlign !== 'left') cellStyles.push(`text-align:${cell.textAlign}`);
-              if (cell.padding && cell.padding !== '10px') cellStyles.push(`padding:${cell.padding}`);
-              if (cell.margin && cell.margin !== '10px') cellStyles.push(`margin:${cell.margin}`);
-              const cellStyle = cellStyles.length ? ` style="${cellStyles.join(';')}"` : '';
-              return `<div class="cell"${cellStyle}>${cellContent}</div>`;
-            }).join('\n');
-
-            const styles = [];
-            styles.push('display:inline-grid');
-            styles.push('width:fit-content');
-            styles.push('max-width:100%');
-            if (blockData.columns !== 1) {
-              styles.push(`grid-template-columns:repeat(${blockData.columns},1fr)`);
-            }
-            if (blockData.rows) {
-              styles.push(`grid-template-rows:repeat(${blockData.rows},auto)`);
-            }
-            const rowGap = blockData.rowGap || '0';
-            const colGap = blockData.columnGap || '0';
-            if (!(rowGap === '0' && colGap === '0')) {
-              if (rowGap === colGap) {
-                styles.push(`gap:${rowGap}`);
-              } else {
-                styles.push(`gap:${rowGap} ${colGap}`);
-              }
-            }
-
-            const classes = ['layout'];
-            if (blockData.className) classes.push(blockData.className);
-            const attrs = selectorAttr(blockData.selector, classes);
-            return `<div${attrs} style="${styles.join(';')}">${cellsHtml}</div>`;
-          }
-          if (blockData.type === 'section') {
-            const childrenHtml = (blockData.children || []).map(child => renderBlockHtmlForBytes(child)).join('\n');
-            const styles = [];
-            if (blockData.background && blockData.background !== 'transparent') styles.push(`--sb:${blockData.background}`);
-            if (blockData.color && blockData.color !== 'inherit') styles.push(`--sc:${blockData.color}`);
-            if (blockData.pattern && blockData.patternColor && blockData.patternOpacity && blockData.patternOpacity !== '0' && blockData.patternOpacity !== 0) {
-              const hex = blockData.patternColor;
-              const opacity = blockData.patternOpacity;
-              const r = parseInt(hex.substring(1, 3), 16);
-              const g = parseInt(hex.substring(3, 5), 16);
-              const b = parseInt(hex.substring(5, 7), 16);
-              styles.push(`--pc:rgba(${r},${g},${b},${opacity})`);
-            }
-            if (blockData.width && blockData.width !== '100%') styles.push(`--sw:${blockData.width}`);
-            if (blockData.padding && blockData.padding !== '3rem') styles.push(`--sp:${blockData.padding}`);
-            if (blockData.align && blockData.align !== 'start') styles.push(`--sa:${blockData.align}`);
-
-            const classes = [];
-            if (blockData.pattern === 'dots') classes.push('bg-pattern-dots');
-            if (blockData.pattern === 'grid') classes.push('bg-pattern-grid');
-            if (blockData.pattern === 'stripes') classes.push('bg-pattern-stripes');
-            if (blockData.pattern === 'cross') classes.push('bg-pattern-cross');
-            if (blockData.pattern === 'hexagons') classes.push('bg-pattern-hexagons');
-
-            const styleAttr = styles.length > 0 ? ` style="${styles.join(';')}"` : '';
-            const attrs = selectorAttr(blockData.selector, classes);
-            return `<section${attrs}${styleAttr}>${childrenHtml}</section>`;
-          }
-
-          const inlineHtml = inlineNodesToHtml(blockData.children || []);
-          const attrs = selectorAttr(blockData.selector);
-          if (blockData.type === 'heading') {
-            const level = blockData.level ?? 1;
-            return `<h${level}${attrs}>${inlineHtml}</h${level}>`;
-          }
-          if (blockData.type === 'blockquote') {
-            return `<blockquote${attrs}>${inlineHtml}</blockquote>`;
-          }
-          return `<p${attrs}>${inlineHtml}</p>`;
-        }
-
+        // Helper to estimate bytes for a DOM block element
         function estimateBlockBytes(block) {
           const blockData = serializeBlock(block);
-          const html = renderBlockHtmlForBytes(blockData);
-          return encoder.encode(html).length;
+          return estimateBlockSize(blockData);
         }
 
         // Recursive helper to calculate bytes for a block and its children
         function processBlock(block) {
-            const type = block.dataset.type;
-            let bytes = 0;
-            let label = 'Block';
+          const type = block.dataset.type;
+          let bytes = 0;
+          let label = 'Block';
 
-            if (type === 'section') {
-                label = 'Section';
-                bytes = estimateBlockBytes(block);
+          if (type === 'section') {
+            label = 'Section';
+            bytes = estimateBlockBytes(block);
 
-                const childrenWrapper = block.querySelector('.section-blocks');
-                if (childrenWrapper) {
-                  const children = childrenWrapper.querySelectorAll(':scope > .block-item');
-                  children.forEach(child => {
-                    processBlock(child);
-                  });
-                }
-            } else if (type === 'layout') {
-                label = 'Layout';
-                bytes = estimateBlockBytes(block);
-
-                const cellsGrid = block.querySelector('.layout-cells-grid');
-                if (cellsGrid) {
-                  const cellBlocks = cellsGrid.querySelectorAll('.layout-cell .layout-cell-blocks > .block-item');
-                  cellBlocks.forEach(child => {
-                    processBlock(child);
-                  });
-                }
-            } else {
-                bytes = estimateBlockBytes(block);
-
-                // Labels
-                const level = block.dataset.level;
-                const listType = block.dataset.listType;
-                if (type === 'heading') label = `H${level}`;
-                else if (type === 'paragraph') label = 'Paragraph';
-                else if (type === 'bloglist') label = 'Bloglist';
-                else if (type === 'list' || type === 'unordered-list') {
-                   if (listType === 'ordered' || type === 'ordered-list') label = 'OL';
-                   else label = 'UL';
-                }
-                else if (type === 'blockquote') label = 'Quote';
-                else if (type === 'codeblock') label = 'Code';
-                else if (type === 'divider') label = 'HR';
-                else if (type === 'spacer') label = 'Spacer';
+            const childrenWrapper = block.querySelector('.section-blocks');
+            if (childrenWrapper) {
+              const children = childrenWrapper.querySelectorAll(':scope > .block-item');
+              children.forEach(child => {
+                processBlock(child);
+              });
             }
+          } else if (type === 'layout') {
+            label = 'Layout';
+            bytes = estimateBlockBytes(block);
 
-            // Update this block's indicator
-            let byteIndicator = block.querySelector(':scope > .block-byte-indicator');
-            if (byteIndicator) {
-                byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
+            const cellsGrid = block.querySelector('.layout-cells-grid');
+            if (cellsGrid) {
+              const cellBlocks = cellsGrid.querySelectorAll('.layout-cell .layout-cell-blocks > .block-item');
+              cellBlocks.forEach(child => {
+                processBlock(child);
+              });
             }
+          } else {
+            bytes = estimateBlockBytes(block);
 
-            return bytes;
+            // Labels
+            const level = block.dataset.level;
+            const listType = block.dataset.listType;
+            if (type === 'heading') label = `H${level}`;
+            else if (type === 'paragraph') label = 'Paragraph';
+            else if (type === 'bloglist') label = 'Bloglist';
+            else if (type === 'list' || type === 'unordered-list') {
+              if (listType === 'ordered' || type === 'ordered-list') label = 'OL';
+              else label = 'UL';
+            }
+            else if (type === 'blockquote') label = 'Quote';
+            else if (type === 'codeblock') label = 'Code';
+            else if (type === 'divider') label = 'HR';
+            else if (type === 'spacer') label = 'Spacer';
+          }
+
+          // Update this block's indicator
+          let byteIndicator = block.querySelector(':scope > .block-byte-indicator');
+          if (byteIndicator) {
+            byteIndicator.innerHTML = `<span>${label}</span><span>${formatBytes(bytes)}</span>`;
+          }
+
+          return bytes;
         }
 
         // Only iterate TOP-LEVEL blocks in the editor
         const topLevelBlocks = blockEditor.querySelectorAll(':scope > .block-item');
         topLevelBlocks.forEach(block => {
-             totalContentBytes += processBlock(block);
+          totalContentBytes += processBlock(block);
         });
 
         // Newlines between top-level blocks
         if (topLevelBlocks.length > 1) {
-            totalContentBytes += topLevelBlocks.length - 1;
+          totalContentBytes += topLevelBlocks.length - 1;
         }
 
         // Update content total
@@ -3398,7 +3279,7 @@
       async function loadSeedTemplates() {
         try {
           const seeds = await App.getSeeds();
-          
+
           if (seeds && seeds.length > 0) {
             seeds.forEach(seed => {
               const option = document.createElement('option');
@@ -3412,20 +3293,20 @@
         }
       }
 
-      templateSelector.addEventListener('change', async function() {
+      templateSelector.addEventListener('change', async function () {
         const seedName = this.value;
         if (!seedName) return;
-        
+
         try {
           const { sourceData } = await App.clonePage(seedName, 'seed');
           loadFromSource(sourceData);
-          
+
           // Update title
           const pageTitle = document.getElementById('page-title');
           const pageSubtitle = document.getElementById('page-subtitle');
           pageTitle.textContent = `New (from ${seedName.replace('-', ' ')})`;
           pageSubtitle.textContent = 'Set title and slug to create a new page';
-          
+
           // Reset dropdown
           this.value = '';
         } catch (err) {
@@ -3438,7 +3319,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const editSlug = urlParams.get('edit');
       const isCloning = urlParams.get('clone') === 'true';
-      
+
       if (!editSlug && !isCloning) {
         loadSeedTemplates();
       } else {
@@ -3493,7 +3374,7 @@
         pageTitle.innerHTML = `Recompile <span style="font-weight: 400; color: var(--text-secondary);">/ ${editingSlug}</span>`;
         pageSubtitle.textContent = 'Editing source · requires rebuild';
         pageSubtitle.style.display = 'block';
-        
+
         // Change button text to "Recompile" in edit mode
         publishBtn.setAttribute('data-i18n', 'editor.recompile');
         publishBtn.textContent = t('editor.recompile');
