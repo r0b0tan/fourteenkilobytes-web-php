@@ -12,7 +12,27 @@ export function createCompilePublishService(deps) {
     finalizeCompiledPageHtml,
     isCompressionEnabled,
     applyGlobalSettings,
+    createBuildId,
   } = deps;
+
+  const makeBuildId = typeof createBuildId === 'function'
+    ? createBuildId
+    : () => crypto.randomUUID();
+
+  function buildSourceData(input) {
+    return {
+      slug: input.slug,
+      title: input.title,
+      content: input.content,
+      navigation: input.navigation,
+      footer: input.footer,
+      css: input.css,
+      meta: input.meta,
+      icons: input.icons,
+      allowPagination: input.allowPagination,
+      pageType: input.pageType,
+    };
+  }
 
   async function preview(input) {
     const useGlobal = input.useGlobalSettings !== false;
@@ -116,18 +136,7 @@ export function createCompilePublishService(deps) {
           pages,
           title: input.title,
           pageType: input.pageType || 'post',
-          sourceData: {
-            slug: input.slug,
-            title: input.title,
-            content: input.content,
-            navigation: input.navigation,
-            footer: input.footer,
-            css: input.css,
-            meta: input.meta,
-            icons: input.icons,
-            allowPagination: input.allowPagination,
-            pageType: input.pageType,
-          },
+          sourceData: buildSourceData(input),
         }),
       });
     }
@@ -145,18 +154,7 @@ export function createCompilePublishService(deps) {
         bytes: finalized.bytes,
         hash: page.hash,
         pageType: input.pageType || 'post',
-        sourceData: {
-          slug: input.slug,
-          title: input.title,
-          content: input.content,
-          navigation: input.navigation,
-          footer: input.footer,
-          css: input.css,
-          meta: input.meta,
-          icons: input.icons,
-          allowPagination: input.allowPagination,
-          pageType: input.pageType,
-        },
+        sourceData: buildSourceData(input),
       }),
     });
   }
@@ -168,7 +166,7 @@ export function createCompilePublishService(deps) {
     const input = {
       ...sourceData,
       posts,
-      buildId: crypto.randomUUID(),
+      buildId: makeBuildId(),
     };
 
     return publish(input);
