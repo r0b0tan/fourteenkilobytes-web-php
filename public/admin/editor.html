@@ -483,6 +483,14 @@
     import { createBlockSelectorControl, createBlockActions, createBlockHeader, createInnerAddBlock, createByteIndicator } from './lib/block-ui-utils.js';
     // Import block builders
     import { createSectionBlock, createLayoutBlock } from './lib/block-builders.js';
+    // Import modal utilities
+    import { createModalManager } from './lib/modal-utils.js';
+    // Import block operations
+    import { updateBlockStyling, insertBlockBelow, moveBlock as moveBlockUtil, toggleSelectionWrap } from './lib/block-operations.js';
+    // Import block type selectors
+    import { createTextBlockTypeSelector, createHeadingLevelSelector, createListTypeSelector, createBlockTypeLabel, createFormatButtons } from './lib/block-type-selectors.js';
+    // Import block content builders
+    import { createBloglistContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
@@ -1581,16 +1589,7 @@
 
         // Type selector
         if (type === 'paragraph' || type === 'blockquote' || type === 'codeblock') {
-          const typeSelect = document.createElement('select');
-          typeSelect.className = 'block-type-select';
-          typeSelect.innerHTML = `
-            <option value="paragraph">Paragraph</option>
-            <option value="blockquote">Blockquote</option>
-            <option value="codeblock">Code Block</option>
-          `;
-          typeSelect.value = type;
-          typeSelect.addEventListener('change', () => {
-            const newType = typeSelect.value;
+          const typeSelect = createTextBlockTypeSelector(type, (newType) => {
             const oldType = block.dataset.type;
             block.dataset.type = newType;
 
@@ -1624,19 +1623,8 @@
           });
           header.appendChild(typeSelect);
         } else if (type === 'heading') {
-          const typeSelect = document.createElement('select');
-          typeSelect.className = 'block-type-select';
-          typeSelect.innerHTML = `
-            <option value="1">H1</option>
-            <option value="2">H2</option>
-            <option value="3">H3</option>
-            <option value="4">H4</option>
-            <option value="5">H5</option>
-            <option value="6">H6</option>
-          `;
-          typeSelect.value = level || '2';
-          typeSelect.addEventListener('change', () => {
-            block.dataset.level = typeSelect.value;
+          const typeSelect = createHeadingLevelSelector(level, (newLevel) => {
+            block.dataset.level = newLevel;
             updateBlockStyling(block);
             updateCostRail();
             debouncedPreview();
@@ -1648,15 +1636,7 @@
           block.dataset.type = 'list';
           block.dataset.listType = effectiveListType;
 
-          const typeSelect = document.createElement('select');
-          typeSelect.className = 'block-type-select';
-          typeSelect.innerHTML = `
-            <option value="unordered">Unordered List</option>
-            <option value="ordered">Ordered List</option>
-          `;
-          typeSelect.value = effectiveListType;
-          typeSelect.addEventListener('change', () => {
-            const newListType = typeSelect.value;
+          const typeSelect = createListTypeSelector(effectiveListType, (newListType) => {
             block.dataset.listType = newListType;
             // Update list element tag
             const oldList = block.querySelector('.editable-list');
@@ -1678,46 +1658,12 @@
           header.appendChild(typeSelect);
         } else {
           // Bloglist, Divider or Spacer - just a label
-          const label = document.createElement('span');
-          label.className = 'block-type-label';
-          if (type === 'divider') {
-            label.setAttribute('data-i18n', 'editor.blockDivider');
-            label.textContent = 'Divider';
-          } else if (type === 'spacer') {
-            label.setAttribute('data-i18n', 'editor.blockSpacer');
-            label.textContent = 'Spacer';
-          } else {
-            label.setAttribute('data-i18n', 'editor.blockBloglist');
-            label.textContent = 'Bloglist';
-          }
-          header.appendChild(label);
+          header.appendChild(createBlockTypeLabel(type));
         }
 
         // Format buttons (nur für rich-text Blöcke)
         if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock' && type !== 'spacer') {
-          const formatBtns = document.createElement('div');
-          formatBtns.className = 'block-format-buttons';
-
-          const formats = [
-            { cmd: 'bold', label: 'B', title: 'Bold', style: 'font-weight:bold' },
-            { cmd: 'italic', label: 'I', title: 'Italic', style: 'font-style:italic' },
-            { cmd: 'underline', label: 'U', title: 'Underline', style: 'text-decoration:underline' },
-            { cmd: 'strikethrough', label: 'S', title: 'Strikethrough', style: 'text-decoration:line-through' },
-            { cmd: 'code', label: '<>', title: 'Code', style: 'font-family:monospace;font-size:11px' },
-            { cmd: 'link', label: '🔗', title: 'Link', style: '' }
-          ];
-
-          formats.forEach(fmt => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.innerHTML = `<span style="${fmt.style}">${fmt.label}</span>`;
-            btn.title = fmt.title;
-            btn.dataset.cmd = fmt.cmd;
-            btn.addEventListener('click', () => handleFormatClick(fmt.cmd, block));
-            formatBtns.appendChild(btn);
-          });
-
-          header.appendChild(formatBtns);
+          header.appendChild(createFormatButtons(handleFormatClick, block));
         }
 
         const actions = document.createElement('div');
@@ -1768,112 +1714,35 @@
         block.appendChild(header);
 
         // Content area
-        const content = document.createElement('div');
-        content.className = 'block-content';
+        let content;
         if (type === 'bloglist') {
-          content.contentEditable = 'false';
-          content.className = 'block-content block-bloglist';
-          content.innerHTML = `
-            <div class="bloglist-config">
-              <div class="bloglist-info">
-                <em style="color: #999;" data-i18n="editor.bloglistPlaceholder">Blog posts will be listed here automatically</em>
-              </div>
-              <div class="bloglist-settings-link">
-                <a href="settings.html#bloglist" style="color: var(--text-secondary); font-size: 12px;" data-i18n="editor.bloglistSettingsLink">Configure in Settings → Bloglist</a>
-              </div>
-            </div>
-          `;
+          content = createBloglistContent();
         } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
-          content.className = 'block-content block-list';
-          // Determine list tag from listType or legacy type
-          const listType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
-          const listEl = document.createElement(listType === 'ordered' ? 'ol' : 'ul');
-          listEl.className = 'editable-list';
-
-          // Check if initialHtml contains a list (for restoring saved data)
-          if (initialHtml && (initialHtml.includes('<li>') || initialHtml.includes('<li '))) {
-            // Parse the saved HTML to extract list items
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = initialHtml;
-            const existingList = tempDiv.querySelector('ul, ol');
-            const existingItems = existingList ? existingList.querySelectorAll('li') : tempDiv.querySelectorAll('li');
-
-            if (existingItems.length > 0) {
-              existingItems.forEach(existingLi => {
-                const li = document.createElement('li');
-                li.contentEditable = 'true';
-                li.dataset.placeholder = 'List item...';
-                li.innerHTML = existingLi.innerHTML;
-                listEl.appendChild(li);
-              });
-            } else {
-              // Fallback: create empty item
-              const li = document.createElement('li');
-              li.contentEditable = 'true';
-              li.dataset.placeholder = 'List item...';
-              listEl.appendChild(li);
-            }
-          } else {
-            // New list: create single empty item
-            const li = document.createElement('li');
-            li.contentEditable = 'true';
-            li.dataset.placeholder = 'List item...';
-            li.innerHTML = initialHtml || '';
-            listEl.appendChild(li);
-          }
-
-          setupListKeyHandlers(listEl);
-          content.appendChild(listEl);
-        } else if (type === 'divider') {
-          content.contentEditable = 'false';
-          content.className = 'block-content block-divider';
-          content.innerHTML = '<hr>';
-        } else if (type === 'spacer') {
-          content.contentEditable = 'false';
-          content.className = 'block-content block-spacer';
-
-          const spacerPreview = document.createElement('div');
-          spacerPreview.className = 'spacer-preview';
-          spacerPreview.style.height = block.dataset.height || '1rem';
-
-          const spacerControls = document.createElement('div');
-          spacerControls.className = 'spacer-controls';
-
-          const spacerLabel = document.createElement('label');
-          spacerLabel.setAttribute('data-i18n', 'editor.spacerHeight');
-          spacerLabel.textContent = 'Height';
-
-          const spacerInput = document.createElement('input');
-          spacerInput.type = 'text';
-          spacerInput.className = 'spacer-height-input';
-          spacerInput.placeholder = '1rem';
-          spacerInput.value = block.dataset.height || '1rem';
-
-          spacerInput.addEventListener('input', () => {
-            const value = spacerInput.value.trim() || '1rem';
-            block.dataset.height = value;
-            spacerPreview.style.height = value;
-            updateCostRail();
-            debouncedPreview();
+          const effectiveListType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
+          content = createListContent({
+            listType: effectiveListType,
+            initialHtml,
+            setupListKeyHandlers
           });
-
-          spacerLabel.appendChild(spacerInput);
-          spacerControls.appendChild(spacerLabel);
-          spacerPreview.appendChild(spacerControls);
-          content.appendChild(spacerPreview);
+        } else if (type === 'divider') {
+          content = createDividerContent();
+        } else if (type === 'spacer') {
+          content = createSpacerContent({
+            height: block.dataset.height || spacerHeight || '1rem',
+            block,
+            onChange: () => {
+              updateCostRail();
+              debouncedPreview();
+            }
+          });
         } else if (type === 'codeblock') {
-          content.contentEditable = 'true';
-          content.className = 'block-content block-codeblock';
-          content.dataset.placeholder = 'Code...';
-          content.textContent = initialHtml || '';
+          content = createCodeblockContent(initialHtml);
         } else if (type === 'blockquote') {
-          content.contentEditable = 'true';
-          content.dataset.placeholder = 'Quote...';
-          content.innerHTML = initialHtml;
+          content = createBlockquoteContent(initialHtml);
+        } else if (type === 'heading') {
+          content = createHeadingContent(initialHtml);
         } else {
-          content.contentEditable = 'true';
-          content.dataset.placeholder = type === 'heading' ? 'Heading...' : 'Enter text...';
-          content.innerHTML = initialHtml;
+          content = createParagraphContent(initialHtml);
         }
         block.appendChild(content);
 
@@ -1881,72 +1750,21 @@
         return block;
       }
 
-      function updateBlockStyling(block) {
-        const content = block.querySelector('.block-content');
-        const type = block.dataset.type;
-        const level = block.dataset.level;
+      // updateBlockStyling now imported from block-operations.js
 
-        // Reset styles
-        content.style.fontSize = '';
-        content.style.fontWeight = '';
-        content.style.fontStyle = '';
-        content.style.borderLeft = '';
-        content.style.paddingLeft = '';
-
-        if (type === 'heading') {
-          content.style.fontWeight = 'bold';
-          const sizes = { 1: '2rem', 2: '1.5rem', 3: '1.25rem', 4: '1.1rem', 5: '1rem', 6: '0.875rem' };
-          content.style.fontSize = sizes[level] || '1rem';
-          content.dataset.placeholder = 'Heading...';
-        } else if (type === 'blockquote') {
-          content.style.fontStyle = 'italic';
-          content.style.borderLeft = '3px solid var(--border)';
-          content.style.paddingLeft = '12px';
-          content.dataset.placeholder = 'Quote...';
-        } else if (type === 'codeblock') {
-          content.dataset.placeholder = 'Code...';
-        } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list' && type !== 'spacer') {
-          content.dataset.placeholder = 'Enter text...';
-        }
-      }
-
+      // moveBlock wrapper with callbacks
       function moveBlock(block, direction) {
-        const parent = block?.parentElement;
-        if (!parent) return;
-
-        const blocks = Array.from(parent.children).filter(el => el.classList?.contains('block-item'));
-        const index = blocks.indexOf(block);
-        const newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= blocks.length) return;
-
-        if (direction < 0) {
-          parent.insertBefore(block, blocks[newIndex]);
-        } else {
-          parent.insertBefore(block, blocks[newIndex].nextSibling);
-        }
-
-        updateCostRail();
-        debouncedPreview();
+        moveBlockUtil(block, direction, {
+          onChange: () => {
+            updateCostRail();
+            debouncedPreview();
+          }
+        });
       }
 
+      // insertBlockDirectlyBelow now uses imported insertBlockBelow
       function insertBlockDirectlyBelow(referenceBlock, newBlock) {
-        const parent = referenceBlock?.parentElement;
-        if (!parent || !newBlock) return;
-
-        const blockSiblings = Array.from(parent.children).filter(el => el.classList?.contains('block-item'));
-        const index = blockSiblings.indexOf(referenceBlock);
-
-        if (index === -1) {
-          parent.appendChild(newBlock);
-          return;
-        }
-
-        const nextBlock = blockSiblings[index + 1] || null;
-        if (nextBlock) {
-          parent.insertBefore(newBlock, nextBlock);
-        } else {
-          parent.appendChild(newBlock);
-        }
+        insertBlockBelow(referenceBlock, newBlock);
       }
 
       // ============ FORMAT BUTTONS ============
@@ -2044,29 +1862,11 @@
       });
       */
 
+      // wrapSelectionWithTag wrapper using imported toggleSelectionWrap
       function wrapSelectionWithTag(tagName) {
-        const sel = window.getSelection();
-        if (!sel.rangeCount || sel.isCollapsed) return;
-
-        const range = sel.getRangeAt(0);
-        const selectedText = range.toString();
-
-        // Check if already wrapped in this tag
-        const parentTag = sel.anchorNode.parentElement.closest(tagName);
-        if (parentTag) {
-          // Unwrap: replace tag with its contents
-          const parent = parentTag.parentNode;
-          while (parentTag.firstChild) {
-            parent.insertBefore(parentTag.firstChild, parentTag);
-          }
-          parent.removeChild(parentTag);
-        } else {
-          // Wrap selection
-          const wrapper = document.createElement(tagName);
-          range.surroundContents(wrapper);
-        }
-
-        debouncedPreview();
+        toggleSelectionWrap(tagName, {
+          onChange: () => debouncedPreview()
+        });
       }
 
       // ============ LINK POPUP ============
@@ -2473,69 +2273,12 @@
 
       // ============ MODAL SYSTEM ============
 
-      const Modal = (() => {
-        const backdrop = document.getElementById('modal-backdrop');
-        const modal = document.getElementById('modal');
-        const message = document.getElementById('modal-message');
-        const actions = document.getElementById('modal-actions');
-
-        function hide() {
-          modal.classList.add('hidden');
-          backdrop.classList.add('hidden');
-          modal.className = 'modal hidden';
-          actions.innerHTML = '';
-        }
-
-        function show(text, buttons, type = '', html = false) {
-          if (html) {
-            message.innerHTML = text;
-          } else {
-            message.textContent = text;
-          }
-          actions.innerHTML = '';
-          modal.className = 'modal' + (type ? ` modal-${type}` : '');
-
-          buttons.forEach(btn => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = btn.text;
-            button.className = btn.class || '';
-            button.addEventListener('click', () => {
-              hide();
-              if (btn.action) btn.action();
-            });
-            actions.appendChild(button);
-          });
-
-          backdrop.classList.remove('hidden');
-          modal.classList.remove('hidden');
-        }
-
-        return {
-          confirm(text) {
-            return new Promise(resolve => {
-              show(text, [
-                { text: 'Yes', class: 'btn-primary', action: () => resolve(true) },
-                { text: 'Cancel', class: 'btn-secondary', action: () => resolve(false) }
-              ]);
-            });
-          },
-
-          success(text, buttons = null, html = false) {
-            show(text, buttons || [{ text: 'OK', class: 'btn-primary' }], 'success', html);
-          },
-
-          error(text, html = false) {
-            show(text, [{ text: 'OK', class: 'btn-primary' }], 'error', html);
-          },
-
-          info(text) {
-            show(text, [{ text: 'OK', class: 'btn-primary' }]);
-          },
-
-          hide
-        };
-      })();
+      const Modal = createModalManager({
+        backdrop: document.getElementById('modal-backdrop'),
+        modal: document.getElementById('modal'),
+        message: document.getElementById('modal-message'),
+        actions: document.getElementById('modal-actions')
+      });
 
       // Export Modal for inline handlers
       window.Modal = Modal;
