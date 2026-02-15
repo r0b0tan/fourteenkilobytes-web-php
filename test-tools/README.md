@@ -1,6 +1,8 @@
-# Testing Utilities
+# Test Tools
 
-This directory contains scripts for generating test data.
+This directory contains helper scripts to generate large amounts of test content for manual QA.
+
+These tools are intended for UI and performance checks (e.g. pagination, list rendering, large datasets), not for automated Vitest unit tests.
 
 ## Generate Test Posts
 
@@ -8,7 +10,7 @@ This directory contains scripts for generating test data.
 
 ```bash
 # Generate 100 test posts
-cd testing
+cd test-tools
 ./generate-test-posts.sh 1 100
 
 # Then update manifest
@@ -18,7 +20,7 @@ python3 update-manifest.py 1 100
 ### Or use the combined command:
 
 ```bash
-cd testing
+cd test-tools
 ./generate-test-posts.sh 1 100 && python3 update-manifest.py 1 100
 ```
 
@@ -56,11 +58,16 @@ Add more posts (21-50):
 python3 update-manifest.py 21 50
 ```
 
-## Testing Scenarios
+## QA Scenarios
 
 - **Test Limit**: Generate 30 posts to test limit of 20 on homepage
 - **Test Pagination**: Generate 100+ posts to test archive pagination
 - **Test Performance**: Generate 500+ posts to test large bloglists
+
+## Relation to Vitest
+
+- Automated unit/integration tests live in [tests](../tests) and run with `vitest`.
+- This folder only prepares persistent content files in `data/` for manual QA-style verification.
 
 ## Notes
 

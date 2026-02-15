@@ -4,16 +4,16 @@ A lightweight, experimental CMS built with PHP that enforces a strict **14,336-b
 
 ## Features
 
-- **14KB Size Limit**: Each published page cannot exceed 14,336 bytes, promoting efficient web design
-- **Automatic Minification**: Published HTML (incl. inline CSS) is minified server-side before size checks/saving
-- **No Database Required**: File-based JSON storage for simplicity and portability
-- **Admin Panel**: Modern single-page application with real-time byte counter
-- **Multi-Language Support**: English and German interfaces
-- **RSS Feed**: Built-in RSS 2.0 feed with configurable options
-- **Theme Presets**: Default, light, and dark CSS themes
-- **Multi-Page Content**: Automatic pagination for larger articles
-- **Template System**: Seed templates for quick content creation
-- **Zero Dependencies**: Pure PHP and vanilla JavaScript
+- **14KB Size Limit**: Every published HTML page is enforced to stay below 14,336 bytes
+- **Server-Side Compression**: Optional HTML/CSS minification before size checks and saving
+- **Class Mangling Optimization**: Optional class-name mangling mode to reduce output size
+- **Block Editor**: Rich block-based editor with real-time byte estimation and breakdown
+- **Advanced Content Blocks**: Section/layout/spacer blocks, duplication, selectors, and edit-mode recompilation
+- **Setup Wizard**: Guided first-run setup with setup status flow and auth bootstrap
+- **Security Hardening**: CSRF protection, strict cookies, rate limiting, audit logs, and setup locking
+- **Blog + Archive Controls**: Bloglist limits, archive behavior, and pagination-aware publishing
+- **Import/Export + Seeds**: Backup/restore, clone existing content, and start from templates
+- **No Database Required**: File-based JSON and HTML storage only
 
 ## Philosophy
 
@@ -101,16 +101,23 @@ fourteenkilobytes/
 │   └── index.php          # REST API entry point
 │
 ├── public/
+│   ├── index.html         # Public entry shell
 │   └── admin/             # Admin panel (SPA)
 │       ├── index.html     # Dashboard
 │       ├── editor.html    # Post/page editor
 │       ├── settings.html  # Site settings
 │       ├── login.html     # Login page
-│       ├── setup.html     # Initial setup
-│       ├── app.js         # Main application module
-│       ├── i18n.js        # Internationalization
-│       ├── compiler.browser.js  # 14KB compiler
-│       └── lang/          # Language files (en.json, de.json)
+│       ├── app.js         # Main admin module
+│       ├── dashboard.js   # Dashboard logic
+│       ├── i18n.js        # Internationalization bootstrap
+│       ├── compiler.browser.js  # 14KB compiler bundle
+│       └── lib/           # Extracted editor/app utility modules
+│
+├── lang/                  # Language files (en.json, de.json)
+│
+├── setup/
+│   ├── index.php          # Setup wizard UI
+│   └── api.php            # Setup helper API
 │
 ├── data/                  # Content storage (auto-created)
 │   ├── instance.json      # Instance configuration
@@ -120,6 +127,8 @@ fourteenkilobytes/
 │   ├── sources/           # Source data for re-compilation
 │   └── seeds/             # Template seeds
 │
+├── tests/                 # Vitest unit/integration tests
+├── test-tools/            # QA helpers for generating large test datasets
 └── dist/                  # Build output (generated)
 ```
 
@@ -250,7 +259,8 @@ Access the admin panel at `/admin/` to:
 
 - **Dashboard**: View and manage all posts/pages
 - **Editor**: Create and edit content with real-time byte counting
-- **Settings**: Configure site title, theme, header/footer, RSS, and metadata
+- **Settings**: Configure site title, layout width, header/footer, RSS, metadata, and optimizations
+- **Archive & Logs**: Manage archive-related behavior and inspect audit logs
 
 ### Creating Content
 
@@ -264,29 +274,46 @@ Access the admin panel at `/admin/` to:
 
 - **Blog Posts**: Displayed on the homepage feed
 - **Static Pages**: Standalone pages accessible via their slug
-- **Multi-Page Articles**: Long content is automatically paginated
+- **Multi-Page Articles**: Long content can be paginated and recompiled from source
+- **Section/Layout Structures**: Nested content sections and grid-based layouts
 
 ### Settings
 
 | Section | Description |
 |---------|-------------|
 | General | Site title, homepage selection, favicon, language |
+| Layout | Page width and section width defaults |
 | Header | Navigation links |
 | Footer | Footer content with byte counter variable |
 | CSS | Theme selection (default/light/dark) and custom CSS |
+| Optimizations | Compression and class mangling controls |
+| Bloglist | Post limit, archive URL/text, and archive behavior |
 | RSS | Feed configuration (URL, language, TTL, max items) |
 | Meta | Site description and author metadata |
+| Security/Audit | Security status checks and audit log controls |
 
 ## API Reference
+
+Most write endpoints require authentication and a valid CSRF token.
+
+### System & Setup
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/setup-status` | GET | Check whether setup is complete |
+| `/api/setup` | POST | Initial admin/password setup |
+| `/api/security-status` | GET | Security checks and file-permission warnings |
+| `/api/check-updates` | GET | Check latest release version from GitHub |
 
 ### Authentication
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/setup` | POST | Initial password setup |
 | `/api/login` | POST | Login with password |
 | `/api/logout` | POST | Clear session |
 | `/api/auth-check` | GET | Verify authentication |
+| `/api/config` | GET | Return runtime auth configuration |
 
 ### Posts
 
@@ -297,6 +324,16 @@ Access the admin panel at `/admin/` to:
 | `/api/posts` | POST | Create new post |
 | `/api/posts/:slug/republish` | POST | Regenerate from source |
 | `/api/posts/:slug` | DELETE | Delete (tombstone) post |
+| `/api/posts` | DELETE | Tombstone all posts |
+
+### Audit & Maintenance
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/audit-log` | GET | Read audit log entries |
+| `/api/audit-log/export` | GET | Download audit log as JSONL |
+| `/api/audit-log` | DELETE | Clear audit log |
+| `/api/icons` | GET | Compiler icon metadata (currently empty response) |
 
 ### Settings & Data
 
@@ -306,9 +343,30 @@ Access the admin panel at `/admin/` to:
 | `/api/settings` | PUT | Update settings |
 | `/api/export` | GET | Export data |
 | `/api/import` | POST | Import backup |
-| `/api/reset` | POST | Factory reset |
+| `/api/reset` | POST | Full reset (including setup state) |
 | `/api/seeds` | GET | List seed templates |
 | `/api/clone` | POST | Clone page or template |
+
+## Testing
+
+### Automated Tests (Vitest)
+
+Run unit/integration tests:
+
+```bash
+npm test
+```
+
+Useful variants:
+
+```bash
+npm run test:watch
+npm run test:coverage
+```
+
+### QA Test Data Tools
+
+The `test-tools/` scripts generate persistent content in `data/` for manual UI and performance checks (e.g. long lists, pagination, archive behavior). They are separate from Vitest tests in `tests/`.
 
 ## The 14KB Constraint
 
