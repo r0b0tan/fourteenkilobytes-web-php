@@ -477,6 +477,8 @@
     import { formatBytes } from './lib/byte-utils.js';
     // Import byte estimation functions
     import { parseSelector, selectorToAttributes, renderBlockHtml, estimateBlockSize } from './lib/byte-estimation.js';
+    // Import publish workflow functions
+    import { validatePublishData, determinePaginationStrategy, executePublish, resetEditorForm } from './lib/publish-workflow.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
@@ -3078,16 +3080,14 @@
       // ============ PUBLISH ============
 
       publishBtn.addEventListener('click', async () => {
-        // Validate title before publish
-        if (!titleInput.value.trim()) {
-          Modal.error(t('editor.buildError', { error: t('editor.titleRequired') }));
-          return;
-        }
+        // Validate data
+        const validation = validatePublishData({
+          title: titleInput.value,
+          blockCount: blockEditor.querySelectorAll('.block-item').length
+        }, t);
 
-        // Validate content before publish
-        const blocks = blockEditor.querySelectorAll('.block-item');
-        if (blocks.length === 0) {
-          Modal.error(t('editor.buildError', { error: t('editor.blockRequired') }));
+        if (!validation.valid) {
+          Modal.error(t('editor.buildError', { error: validation.error }));
           return;
         }
 
@@ -3097,133 +3097,54 @@
         publishBtn.disabled = true;
 
         try {
-          // First, check if pagination would be needed
-          // Use App.preview() to include global settings (navigation, footer, CSS, etc.)
-          const inputPreview = await buildInput(false);
+          // Determine pagination strategy
+          const paginationResult = await determinePaginationStrategy({
+            buildInput,
+            App,
+            Modal,
+            t
+          });
 
-          let shouldPaginate = false;
-
-          // Try compiling without pagination first (with global settings applied)
-          const previewResult = await App.preview(inputPreview);
-
-          // Check if size limit exceeded (App.preview returns exceeded: true instead of throwing)
-          if (previewResult.exceeded) {
-            // Post is too large, try with pagination
-            const inputWithPagination = await buildInput(true);
-            const paginatedResult = await App.preview(inputWithPagination);
-
-            if (!paginatedResult.exceeded && paginatedResult.measurements && paginatedResult.measurements.length > 1) {
-              const estimatedPageCount = paginatedResult.measurements.length;
-
-              // Ask user if they want to split
-              const splitConfirmed = await Modal.confirm(
-                t('editor.splitConfirm', { bytes: previewResult.bytes, pages: estimatedPageCount })
-              );
-
-              if (splitConfirmed) {
-                shouldPaginate = true;
-              } else {
-                // User declined, abort publish
-                Modal.error(t('editor.tooLarge'));
-                publishBtn.disabled = false;
-                return;
-              }
-            } else {
-              // Can't be paginated
-              Modal.error(t('editor.cannotSplit'));
-              publishBtn.disabled = false;
-              return;
-            }
-          } else if (previewResult.bytes > 14336) {
-            // Compiled successfully but over 14KB - offer to split
-            const inputWithPagination = await buildInput(true);
-            const paginatedResult = await App.preview(inputWithPagination);
-
-            if (!paginatedResult.exceeded && paginatedResult.measurements && paginatedResult.measurements.length > 1) {
-              const estimatedPageCount = paginatedResult.measurements.length;
-
-              // Ask user if they want to split
-              const splitConfirmed = await Modal.confirm(
-                t('editor.splitConfirm', { bytes: previewResult.bytes, pages: estimatedPageCount })
-              );
-
-              if (splitConfirmed) {
-                shouldPaginate = true;
-              } else {
-                // User declined, abort publish
-                publishBtn.disabled = false;
-                return;
-              }
-            }
+          if (paginationResult.aborted) {
+            Modal.error(paginationResult.error);
+            publishBtn.disabled = false;
+            return;
           }
 
-          // Now do the actual publish with the user's choice
-          const input = await buildInput(shouldPaginate);
-          const result = await App.publish(input);
-
-          const sizeInfo = result.pageCount && result.pageCount > 1
-            ? `${result.pageCount} pages, ${result.totalBytes} bytes`
-            : `${result.bytes} bytes`;
-
-          Modal.success(
-            `<strong>${t('editor.buildSuccess')}</strong><br>/${result.slug} (${sizeInfo})`,
-            [
-              { text: t('modal.ok'), class: 'btn-secondary' },
-              { text: t('dashboard.view'), class: 'btn-primary', action: () => window.open(`/${result.slug}`, '_blank') }
-            ],
-            true
-          );
+          // Execute publish with determined pagination strategy
+          const input = await buildInput(paginationResult.shouldPaginate);
+          await executePublish({ input, App, Modal, t });
 
           // Only clear fields if NOT in edit mode
-          // In edit mode, preserve the form so user can continue iterating
           if (!isEditMode) {
-            // Clear all fields after publish
-            titleInput.value = '';
-            slugInput.value = '';
-            blockEditor.innerHTML = '';
-
-            // Add one empty paragraph block
-            const emptyBlock = createBlockElement('paragraph');
-            blockEditor.appendChild(emptyBlock);
-
-            // Reset title override
-            titleOverrideEnabled.checked = false;
-            titleOverrideEnabled.dispatchEvent(new Event('change'));
-            titleOverrideInput.value = '';
-
-            // Reset navigation
-            navEnabled.checked = false;
-            navEnabled.dispatchEvent(new Event('change'));
-            loadGlobalNavigation();
-
-            // Reset footer
-            footerEnabled.checked = false;
-            footerEnabled.dispatchEvent(new Event('change'));
-            footerText.value = '';
-
-            // Reset meta
-            metaEnabled.checked = false;
-            metaEnabled.dispatchEvent(new Event('change'));
-            metaDescription.value = '';
-            metaAuthor.value = '';
-
-            // Reset CSS
-            cssEnabled.checked = false;
-            cssEnabled.dispatchEvent(new Event('change'));
-            cssRules.value = '';
-            liveCSS.textContent = '';
-
-            // Reset page type
-            pageTypeSelect.value = 'post';
-            pageTypeHint.textContent = '';
-
-            // Clear auto-save
-            clearAutoSave();
-
-            // Reset byte counter
-            updateByteCounter(0, 0);
-            updateCostRail();
-            updateTitleBytes();
+            resetEditorForm(
+              {
+                titleInput,
+                slugInput,
+                blockEditor,
+                titleOverrideEnabled,
+                titleOverrideInput,
+                navEnabled,
+                footerEnabled,
+                footerText,
+                metaEnabled,
+                metaDescription,
+                metaAuthor,
+                cssEnabled,
+                cssRules,
+                liveCSS,
+                pageTypeSelect,
+                pageTypeHint
+              },
+              {
+                createBlockElement,
+                loadGlobalNavigation,
+                clearAutoSave,
+                updateByteCounter,
+                updateCostRail,
+                updateTitleBytes
+              }
+            );
           }
 
           // Re-enable publish button
