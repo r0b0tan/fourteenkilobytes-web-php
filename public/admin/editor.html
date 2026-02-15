@@ -479,6 +479,8 @@
     import { parseSelector, selectorToAttributes, renderBlockHtml, estimateBlockSize } from './lib/byte-estimation.js';
     // Import publish workflow functions
     import { validatePublishData, determinePaginationStrategy, executePublish, resetEditorForm } from './lib/publish-workflow.js';
+    // Import block UI utilities
+    import { createBlockSelectorControl, createBlockActions, createBlockHeader, createInnerAddBlock, createByteIndicator } from './lib/block-ui-utils.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview;
@@ -1467,65 +1469,18 @@
       }
 
       // Helper: create inner add-block dropdown for sections (no nesting allowed)
-      function createInnerAddBlock(sectionBlock) {
-        const row = document.createElement('div');
-        row.className = 'section-add-row';
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-secondary section-add-block';
-        btn.setAttribute('data-i18n', 'editor.sectionAddBlock');
-        btn.textContent = '+ Add Block';
-
-        const dropdown = document.createElement('div');
-        dropdown.className = 'add-block-dropdown hidden';
-
-        const innerTypes = [
-          { type: 'paragraph', i18n: 'editor.blockParagraph', label: 'Paragraph' },
-          { type: 'heading', i18n: 'editor.blockHeading', label: 'Heading', level: '2' },
-          { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
-          { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' },
-          { type: 'spacer', i18n: 'editor.blockSpacer', label: 'Spacer' },
-          { type: 'layout', i18n: 'editor.blockLayout', label: 'Layout' }
-        ];
-
-        innerTypes.forEach(t => {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.textContent = t.label;
-          b.setAttribute('data-i18n', t.i18n);
-          b.dataset.type = t.type;
-          if (t.level) b.dataset.level = t.level;
-          if (t.listType) b.dataset.listType = t.listType;
-          dropdown.appendChild(b);
-        });
-
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          dropdown.classList.toggle('hidden');
-        });
-
-        dropdown.addEventListener('click', (e) => {
-          const clicked = e.target.closest('button');
-          if (!clicked) return;
-          const childBlock = createBlockElement(clicked.dataset.type, clicked.dataset.level, '', clicked.dataset.listType, clicked.dataset.spacerHeight, true);
-          const sectionBlocks = sectionBlock.querySelector('.section-blocks');
-          sectionBlocks.appendChild(childBlock);
-          const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
-          if (focusTarget) focusTarget.focus();
-          dropdown.classList.add('hidden');
-          debouncedPreview();
-        });
-
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.section-add-row')) {
-            dropdown.classList.add('hidden');
+      // Create inner add block using imported utility
+      function createInnerAddBlockWrapper(sectionBlock) {
+        return createInnerAddBlock({
+          onBlockAdd: (config) => {
+            const childBlock = createBlockElement(config.type, config.level, '', config.listType, config.spacerHeight, true);
+            const sectionBlocks = sectionBlock.querySelector('.section-blocks');
+            sectionBlocks.appendChild(childBlock);
+            const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
+            if (focusTarget) focusTarget.focus();
+            debouncedPreview();
           }
         });
-
-        row.appendChild(btn);
-        row.appendChild(dropdown);
-        return row;
       }
 
       function createBlockElement(type, level, initialHtml = '', listType = null, spacerHeight = null, isNested = false) {
@@ -1807,7 +1762,7 @@
           contentWrapper.appendChild(patternRow);
 
           // Inner add-block button (preview was already created above)
-          preview.appendChild(createInnerAddBlock(block));
+          preview.appendChild(createInnerAddBlockWrapper(block));
 
           contentWrapper.appendChild(preview);
 
