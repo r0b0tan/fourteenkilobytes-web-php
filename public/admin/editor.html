@@ -457,6 +457,8 @@
     import { createEditorSourceLoader } from './lib/editor/source-loader.js';
     import { createEditorRichtextTools } from './lib/editor/richtext-tools.js';
     import { createEditorBootstrap } from './lib/editor/bootstrap.js';
+    import { getEditorDomRefs } from './lib/editor/dom-refs.js';
+    import { wireEditorEvents } from './lib/editor/event-wiring.js';
 
     let debouncedPreview = () => { };
 
@@ -466,69 +468,73 @@
       window.globalConfig = settings;
       hideLoadingOverlay();
       setupLogoutHandler();
-      const pageTypeSelect = document.getElementById('page-type');
-      const pageTypeHint = document.getElementById('page-type-hint');
-      const titleInput = document.getElementById('title');
-      const slugInput = document.getElementById('slug');
-      const blockEditor = document.getElementById('block-editor');
-      const addBlockBtn = document.getElementById('add-block-btn');
-      const addBlockDropdown = document.getElementById('add-block-dropdown');
-      const linkPopup = document.getElementById('link-popup');
-      const linkHrefInput = document.getElementById('link-href');
-      const linkApplyBtn = document.getElementById('link-apply');
-      const linkCancelBtn = document.getElementById('link-cancel');
-      const navEnabled = document.getElementById('nav-enabled');
-      const navEditor = document.getElementById('nav-editor');
-      const navGlobalHint = document.getElementById('nav-global-hint');
-      const navLinks = document.getElementById('nav-links');
-      const addNavLinkBtn = document.getElementById('add-nav-link');
-      const navLinkPopup = document.getElementById('nav-link-popup');
-      const navLinkText = document.getElementById('nav-link-text');
-      const navLinkHref = document.getElementById('nav-link-href');
-      const navLinkSave = document.getElementById('nav-link-save');
-      const navLinkDelete = document.getElementById('nav-link-delete');
-      const navLinkCancel = document.getElementById('nav-link-cancel');
-      const footerEnabled = document.getElementById('footer-enabled');
-      const footerEditor = document.getElementById('footer-editor');
-      const footerGlobalHint = document.getElementById('footer-global-hint');
-      const footerText = document.getElementById('footer-text');
-      const titleOverrideEnabled = document.getElementById('title-override-enabled');
-      const titleOverrideEditor = document.getElementById('title-override-editor');
-      const titleOverrideHint = document.getElementById('title-override-hint');
-      const titleOverrideInput = document.getElementById('title-override');
-      const metaEnabled = document.getElementById('meta-enabled');
-      const metaEditor = document.getElementById('meta-editor');
-      const metaGlobalHint = document.getElementById('meta-global-hint');
-      const metaDescription = document.getElementById('meta-description');
-      const metaAuthor = document.getElementById('meta-author');
-      const cssEnabled = document.getElementById('css-enabled');
-      const cssEditor = document.getElementById('css-editor');
-      const cssGlobalHint = document.getElementById('css-global-hint');
-      const cssRules = document.getElementById('css-rules');
-      const liveCSS = document.getElementById('live-css');
-      const publishBtn = document.getElementById('publish-btn');
-
-      const costContentTotal = document.getElementById('cost-content-total');
-      const contentRail = document.getElementById('content-rail');
-      const titleBytesEl = document.getElementById('title-bytes');
-      const browserTitleBytesEl = document.getElementById('browser-title-bytes');
-      const navBytesEl = document.getElementById('nav-bytes');
-      const metaBytesEl = document.getElementById('meta-bytes');
-      const footerBytesEl = document.getElementById('footer-bytes');
-      const cssBytesEl = document.getElementById('css-bytes');
-
-      const breakdownBase = document.getElementById('breakdown-base');
-      const breakdownTitle = document.getElementById('breakdown-title');
-      const breakdownFavicon = document.getElementById('breakdown-favicon');
-      const breakdownNav = document.getElementById('breakdown-nav');
-      const breakdownMeta = document.getElementById('breakdown-meta');
-      const breakdownFooter = document.getElementById('breakdown-footer');
-      const breakdownCss = document.getElementById('breakdown-css');
-      const breakdownContent = document.getElementById('breakdown-content');
-      const breakdownTotal = document.getElementById('breakdown-total');
-      const pieChart = document.getElementById('pie-chart');
-      const piePercent = document.getElementById('pie-percent');
-      const pieContentDot = document.querySelector('.pie-dot-content');
+      const editorElements = getEditorDomRefs();
+      const {
+        pageTypeSelect,
+        titleInput,
+        slugInput,
+        blockEditor,
+        linkPopup,
+        linkHrefInput,
+        linkApplyBtn,
+        linkCancelBtn,
+        navEnabled,
+        navEditor,
+        navGlobalHint,
+        navLinks,
+        addNavLinkBtn,
+        navLinkPopup,
+        navLinkText,
+        navLinkHref,
+        navLinkSave,
+        navLinkDelete,
+        navLinkCancel,
+        footerEnabled,
+        footerEditor,
+        footerGlobalHint,
+        footerText,
+        titleOverrideEnabled,
+        titleOverrideHint,
+        titleOverrideInput,
+        metaEnabled,
+        metaEditor,
+        metaGlobalHint,
+        metaDescription,
+        metaAuthor,
+        cssEnabled,
+        cssEditor,
+        cssGlobalHint,
+        cssRules,
+        liveCSS,
+        publishBtn,
+        costContentTotal,
+        titleBytesEl,
+        browserTitleBytesEl,
+        navBytesEl,
+        metaBytesEl,
+        footerBytesEl,
+        cssBytesEl,
+        breakdownBase,
+        breakdownTitle,
+        breakdownFavicon,
+        breakdownNav,
+        breakdownMeta,
+        breakdownFooter,
+        breakdownCss,
+        breakdownContent,
+        breakdownTotal,
+        pieChart,
+        piePercent,
+        pieContentDot,
+        templateSelector,
+        templateSelectorContainer,
+        modalBackdrop,
+        modal,
+        modalMessage,
+        modalActions,
+        pageTitle,
+        insertBytesBtn
+      } = editorElements;
 
       // ============ MANAGER INSTANCES ============
       let editorStateManager = null;
@@ -594,7 +600,6 @@
 
       function updatePageTitleSlug() {
         if (isEditMode) return; // Don't update in edit mode
-        const pageTitle = document.getElementById('page-title');
         const slug = slugInput.value.trim();
         if (slug) {
           pageTitle.innerHTML = `New <span style="font-weight: 400; color: var(--text-secondary);">/ ${slug}</span>`;
@@ -646,19 +651,7 @@
         blockElFromSource = getEditorSourceLoader().getBlockElFromSource();
       }
 
-      // ============ PAGE TYPE ============
-
-      pageTypeSelect.addEventListener('change', () => {
-        const type = pageTypeSelect.value;
-        if (type === 'page') {
-          pageTypeHint.textContent = '(not in feed)';
-        } else {
-          pageTypeHint.textContent = '';
-        }
-      });
-
       // ============ NAVIGATION ============
-      const insertBytesBtn = document.getElementById('insert-bytes-btn');
 
       function getEditorOverridesManager() {
         if (editorOverridesManager) {
@@ -724,21 +717,6 @@
       function loadGlobalCSS() {
         return getEditorOverridesManager().loadGlobalCSS();
       }
-
-      // ============ AUTO-SLUG ============
-
-      titleInput.addEventListener('input', () => {
-        if (!slugInput.dataset.manual) {
-          slugInput.value = App.slugify(titleInput.value);
-          updatePageTitleSlug();
-        }
-        updateTitleBytes();
-      });
-
-      slugInput.addEventListener('input', () => {
-        slugInput.dataset.manual = 'true';
-        updatePageTitleSlug();
-      });
 
       // ============ BLOCK EDITOR ============
 
@@ -815,36 +793,6 @@
       function insertBlockDirectlyBelow(referenceBlock, newBlock) {
         insertBlockBelow(referenceBlock, newBlock);
       }
-
-      // ============ ADD BLOCK ============
-
-      addBlockBtn.addEventListener('click', () => {
-        addBlockDropdown.classList.toggle('hidden');
-      });
-
-      addBlockDropdown.addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-
-        const type = btn.dataset.type;
-        const level = btn.dataset.level;
-        const listType = btn.dataset.listType;
-        const spacerHeight = btn.dataset.spacerHeight;
-        const block = createBlockElement(type, level, '', listType, spacerHeight);
-        blockEditor.appendChild(block);
-        const focusTarget = block.querySelector('li[contenteditable="true"]') || block.querySelector('.block-content');
-        if (focusTarget) focusTarget.focus();
-        addBlockDropdown.classList.add('hidden');
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.block-actions-row')) {
-          addBlockDropdown.classList.add('hidden');
-        }
-        if (!e.target.closest('.nav-link-popup') && !e.target.closest('#add-nav-link') && !e.target.closest('.nav-chip')) {
-          navLinkPopup.classList.add('hidden');
-        }
-      });
 
       // ============ BUILD INPUT ============
 
@@ -964,8 +912,8 @@
           updateTitleOverrideHint,
           cssEditor,
           cssRules,
-          templateSelector: document.getElementById('template-selector'),
-          templateSelectorContainer: document.getElementById('template-selector-container'),
+          templateSelector,
+          templateSelectorContainer,
           loadGlobalNavigation,
           loadGlobalFooter,
           loadGlobalMeta,
@@ -988,133 +936,40 @@
       // ============ MODAL ============
 
       const Modal = createModalManager({
-        backdrop: document.getElementById('modal-backdrop'),
-        modal: document.getElementById('modal'),
-        message: document.getElementById('modal-message'),
-        actions: document.getElementById('modal-actions')
+        backdrop: modalBackdrop,
+        modal,
+        message: modalMessage,
+        actions: modalActions
       });
 
       window.Modal = Modal;
 
-      // ============ PUBLISH ============
-
-      publishBtn.addEventListener('click', async () => {
-        const validation = validatePublishData({
-          title: titleInput.value,
-          blockCount: blockEditor.querySelectorAll('.block-item').length
-        }, t);
-
-        if (!validation.valid) {
-          Modal.error(t('editor.buildError', { error: validation.error }));
-          return;
-        }
-
-        const confirmed = await Modal.confirm(t('editor.buildConfirm'));
-        if (!confirmed) return;
-
-        publishBtn.disabled = true;
-
-        try {
-          const paginationResult = await determinePaginationStrategy({
-            buildInput,
-            App,
-            Modal,
-            t
-          });
-
-          if (paginationResult.aborted) {
-            Modal.error(paginationResult.error);
-            publishBtn.disabled = false;
-            return;
-          }
-
-          const input = await buildInput(paginationResult.shouldPaginate);
-          await executePublish({ input, App, Modal, t });
-
-          if (!isEditMode) {
-            resetEditorForm(
-              {
-                titleInput,
-                slugInput,
-                blockEditor,
-                titleOverrideEnabled,
-                titleOverrideInput,
-                navEnabled,
-                footerEnabled,
-                footerText,
-                metaEnabled,
-                metaDescription,
-                metaAuthor,
-                cssEnabled,
-                cssRules,
-                liveCSS,
-                pageTypeSelect,
-                pageTypeHint
-              },
-              {
-                createBlockElement,
-                loadGlobalNavigation,
-                clearAutoSave,
-                updateByteCounter,
-                updateCostRail,
-                updateTitleBytes
-              }
-            );
-          }
-
-          publishBtn.disabled = false;
-          publishBtn.textContent = isEditMode ? t('editor.recompile') : t('editor.buildPublish');
-        } catch (err) {
-          Modal.error(err.message);
-          console.error(err);
-          publishBtn.disabled = false;
-        }
-      });
-
       // ============ BOOTSTRAP ============
       await getEditorBootstrap().init();
 
-      // ============ CLEAR ALL ============
-
-      document.getElementById('clear-all-btn').addEventListener('click', async () => {
-        const confirmed = await Modal.confirm(t('editor.resetConfirm'));
-        if (!confirmed) return;
-
-        titleInput.value = '';
-        slugInput.value = '';
-        blockEditor.innerHTML = '';
-
-        const emptyBlock = createBlockElement('paragraph');
-        blockEditor.appendChild(emptyBlock);
-
-        titleOverrideEnabled.checked = false;
-        titleOverrideEnabled.dispatchEvent(new Event('change'));
-        titleOverrideInput.value = '';
-
-        navEnabled.checked = false;
-        navEnabled.dispatchEvent(new Event('change'));
-        loadGlobalNavigation();
-
-        footerEnabled.checked = false;
-        footerEnabled.dispatchEvent(new Event('change'));
-        loadGlobalFooter();
-
-        metaEnabled.checked = false;
-        metaEnabled.dispatchEvent(new Event('change'));
-        loadGlobalMeta();
-
-        cssEnabled.checked = false;
-        cssEnabled.dispatchEvent(new Event('change'));
-        loadGlobalCSS();
-
-        pageTypeSelect.value = 'post';
-        pageTypeHint.textContent = '';
-
-        clearAutoSave();
-
-        updateByteCounter(0, 0);
-        updateCostRail();
-        updateTitleBytes();
+      // ============ EVENT WIRING ============
+      wireEditorEvents({
+        elements: editorElements,
+        app: App,
+        t,
+        modal: Modal,
+        getDebouncedPreview: () => debouncedPreview,
+        updatePageTitleSlug,
+        updateTitleBytes,
+        updateByteCounter,
+        updateCostRail,
+        clearAutoSave,
+        loadGlobalNavigation,
+        loadGlobalFooter,
+        loadGlobalMeta,
+        loadGlobalCSS,
+        createBlockElement,
+        buildInput,
+        isEditMode: () => isEditMode,
+        resetEditorForm,
+        validatePublishData,
+        determinePaginationStrategy,
+        executePublish
       });
 
       // ============ INITIAL METRICS ============
@@ -1144,29 +999,6 @@
         } catch (e) {
         }
       }, 500);
-
-      // ============ PREVIEW TRIGGERS ============
-      blockEditor.addEventListener('input', () => {
-        debouncedPreview();
-        updateCostRail();
-      });
-      titleInput.addEventListener('input', debouncedPreview);
-      titleOverrideInput.addEventListener('input', debouncedPreview);
-      titleOverrideEnabled.addEventListener('change', debouncedPreview);
-      footerText.addEventListener('input', debouncedPreview);
-      cssRules.addEventListener('input', debouncedPreview);
-      metaDescription.addEventListener('input', debouncedPreview);
-      metaAuthor.addEventListener('input', debouncedPreview);
-      navEnabled.addEventListener('change', debouncedPreview);
-      footerEnabled.addEventListener('change', debouncedPreview);
-      metaEnabled.addEventListener('change', debouncedPreview);
-      cssEnabled.addEventListener('change', debouncedPreview);
-
-      // ============ BLOCK OBSERVER ============
-      const observer = new MutationObserver(() => {
-        updateCostRail();
-      });
-      observer.observe(blockEditor, { childList: true });
 
       // ============ INITIAL PREVIEW ============
       debouncedPreview();
