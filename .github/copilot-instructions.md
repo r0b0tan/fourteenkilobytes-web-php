@@ -44,3 +44,18 @@ Vor Code-Änderungen kurz prüfen:
 
 - Bei Änderungen an Setup-bezogenen Dateien (`/setup/*`, Routing-Weiterleitungen, Setup-Status-Logik) die Checkliste aus `SETUP_TESTING.md` berücksichtigen.
 - Nach Möglichkeit relevante Setup-Checks kurz ausführen oder klar benennen, welche manuell zu prüfen sind.
+
+## 8) Pflicht: Tests nach nicht-trivialen Änderungen
+
+- Nach jeder **nicht-trivialen Code-Änderung** (Logik, Datenfluss, Rendering, API-Verhalten, Refactoring) müssen passende Tests ausgeführt werden.
+- Bevorzugte Reihenfolge:
+	1. zuerst zielgerichtete Tests für die geänderten Module/Dateien,
+	2. danach (wenn sinnvoll verfügbar) ein breiterer Lauf, z. B. `npm test` oder `npm run test:coverage`.
+- Ziel ist, Regressionsfehler früh zu erkennen; Testergebnisse kurz im Ergebnisbericht erwähnen.
+
+### Definition: trivial vs. nicht-trivial
+
+- **Trivial** = rein mechanische Änderungen ohne Verhaltensauswirkung (z. B. Rechtschreibung, Kommentare, reine Formatierung, Umbenennung ohne Logikänderung).
+- **Nicht-trivial** = jede Änderung mit möglicher Verhaltensauswirkung (z. B. Bedingungen/Branches, Datenfluss/State, API-Handling, Rendering/Event-Logik, Fehlerpfade, Refactoring mit Funktionsumbau).
+- **Daumenregel**: Wenn sich Nutzerverhalten, Rückgabewerte, Seiteneffekte oder Fehlerverhalten ändern **können**, gilt die Änderung als nicht-trivial.
+- **Im Zweifel** immer als nicht-trivial einstufen und mindestens zielgerichtete Tests ausführen.
