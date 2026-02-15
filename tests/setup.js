@@ -18,6 +18,14 @@ window.App = {
   getSettings: vi.fn(() => Promise.resolve({})),
 };
 
+// Prevent real network calls during module side-effect initialization
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({}),
+  })
+);
+
 // Mock window.location
 delete window.location;
 window.location = {
