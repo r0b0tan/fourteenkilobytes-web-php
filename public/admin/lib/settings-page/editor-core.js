@@ -1,7 +1,7 @@
 import { initEditorInteractions } from './editor-interactions.js';
 import { createEditorRuntime } from './editor-runtime.js';
 
-export function initEditorCore({ document: doc = document, App, t, i18n, debounce, formatBytes, showNavigationOverlay, Modal, Toast }) {
+export function initEditorCore({ doc = document, App, t, i18n, debounce, formatBytes, showNavigationOverlay, Modal, Toast }) {
   const elements = {
     adminLanguage: doc.getElementById('admin-language'),
     homepageSelect: doc.getElementById('homepage-select'),

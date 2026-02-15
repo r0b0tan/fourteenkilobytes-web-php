@@ -1,4 +1,4 @@
-export function initLogsTab({ document: doc = document, App, t, Toast, Modal, debounce, tabBtns }) {
+export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, tabBtns }) {
   const logsSearch = doc.getElementById('logs-search');
   const logsFilter = doc.getElementById('logs-filter');
   const logsBody = doc.getElementById('logs-body');
