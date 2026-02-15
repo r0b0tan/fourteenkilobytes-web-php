@@ -29,27 +29,28 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
     trash: '<svg class="log-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
   };
 
-  function getActionLabel(action) {
+  function getActionMeta(action) {
     const labels = {
-      'login_success': `${logIcons.check} Login`,
-      'login_failed': `${logIcons.x} Login fehlgeschlagen`,
-      'logout': `${logIcons.logout} Logout`,
-      'post_create': `${logIcons.plus} Post erstellt`,
-      'post_delete': `${logIcons.minus} Post gelöscht`,
-      'posts_delete_all': `${logIcons.alert} Alle Posts gelöscht`,
-      'settings_update': `${logIcons.settings} Einstellungen`,
-      'csrf_failure': `${logIcons.alert} CSRF-Fehler`,
-      'full_reset': `${logIcons.alert} Reset`,
-      'setup_complete': `${logIcons.check} Setup`,
-      'audit_log_cleared': `${logIcons.trash} Logs gelöscht`
+      'login_success': { icon: logIcons.check, label: 'Login' },
+      'login_failed': { icon: logIcons.x, label: 'Login fehlgeschlagen' },
+      'logout': { icon: logIcons.logout, label: 'Logout' },
+      'post_create': { icon: logIcons.plus, label: 'Post erstellt' },
+      'post_delete': { icon: logIcons.minus, label: 'Post gelöscht' },
+      'posts_delete_all': { icon: logIcons.alert, label: 'Alle Posts gelöscht' },
+      'settings_update': { icon: logIcons.settings, label: 'Einstellungen' },
+      'csrf_failure': { icon: logIcons.alert, label: 'CSRF-Fehler' },
+      'full_reset': { icon: logIcons.alert, label: 'Reset' },
+      'setup_complete': { icon: logIcons.check, label: 'Setup' },
+      'audit_log_cleared': { icon: logIcons.trash, label: 'Logs gelöscht' }
     };
-    return labels[action] || action;
+    return labels[action] || { icon: '', label: action || '—' };
   }
 
   function getActionClass(action) {
-    if (action.includes('failed') || action.includes('failure')) return 'log-error';
-    if (action.includes('delete') || action.includes('reset') || action.includes('clear')) return 'log-warning';
-    if (action.includes('success') || action.includes('create') || action.includes('setup')) return 'log-success';
+    const actionText = String(action || '');
+    if (actionText.includes('failed') || actionText.includes('failure')) return 'log-error';
+    if (actionText.includes('delete') || actionText.includes('reset') || actionText.includes('clear')) return 'log-warning';
+    if (actionText.includes('success') || actionText.includes('create') || actionText.includes('setup')) return 'log-success';
     return '';
   }
 
@@ -59,12 +60,27 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
     for (const [key, value] of Object.entries(details)) {
       if (key === 'ip') continue;
       if (typeof value === 'object') {
-        parts.push(`${key}: ${JSON.stringify(value)}`);
+        try {
+          parts.push(`${key}: ${JSON.stringify(value)}`);
+        } catch {
+          parts.push(`${key}: [unserializable]`);
+        }
       } else {
         parts.push(`${key}: ${value}`);
       }
     }
     return parts.join(', ') || '—';
+  }
+
+  function setStatusRow(text) {
+    logsBody.textContent = '';
+    const tr = document.createElement('tr');
+    tr.className = 'logs-empty';
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.textContent = text;
+    tr.appendChild(td);
+    logsBody.appendChild(tr);
   }
 
   function renderLogs() {
@@ -81,16 +97,45 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
     });
 
     if (filtered.length === 0) {
-      logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsEmpty')}</td></tr>`;
+      setStatusRow(t('settings.logsEmpty'));
     } else {
-      logsBody.innerHTML = filtered.map(e => `
-        <tr class="${getActionClass(e.action)}">
-          <td class="log-time" title="${e.timestamp}">${formatLogTime(e.timestamp)}</td>
-          <td class="log-action">${getActionLabel(e.action)}</td>
-          <td class="log-ip">${e.ip || '—'}</td>
-          <td class="log-details" title="${formatDetails(e.details)}">${formatDetails(e.details)}</td>
-        </tr>
-      `).join('');
+      logsBody.textContent = '';
+      filtered.forEach((entry) => {
+        const tr = document.createElement('tr');
+        tr.className = getActionClass(entry.action);
+
+        const timeTd = document.createElement('td');
+        timeTd.className = 'log-time';
+        timeTd.title = String(entry.timestamp || '');
+        timeTd.textContent = formatLogTime(entry.timestamp);
+        tr.appendChild(timeTd);
+
+        const actionTd = document.createElement('td');
+        actionTd.className = 'log-action';
+        const action = getActionMeta(entry.action);
+        if (action.icon) {
+          const iconSpan = document.createElement('span');
+          iconSpan.innerHTML = action.icon;
+          actionTd.appendChild(iconSpan);
+          actionTd.appendChild(document.createTextNode(' '));
+        }
+        actionTd.appendChild(document.createTextNode(String(action.label || '—')));
+        tr.appendChild(actionTd);
+
+        const ipTd = document.createElement('td');
+        ipTd.className = 'log-ip';
+        ipTd.textContent = String(entry.ip || '—');
+        tr.appendChild(ipTd);
+
+        const details = formatDetails(entry.details);
+        const detailsTd = document.createElement('td');
+        detailsTd.className = 'log-details';
+        detailsTd.title = details;
+        detailsTd.textContent = details;
+        tr.appendChild(detailsTd);
+
+        logsBody.appendChild(tr);
+      });
     }
 
     logsCount.textContent = t('settings.logsCountDisplay', { shown: filtered.length, total: allLogs.length });
@@ -98,14 +143,14 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
 
   async function loadLogs() {
     try {
-      logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsLoading')}</td></tr>`;
+      setStatusRow(t('settings.logsLoading'));
       const action = logsFilter.value || undefined;
       const data = await App.getAuditLogs({ limit: 200, action });
       allLogs = data.entries || [];
       logsLoaded = true;
       renderLogs();
     } catch (err) {
-      logsBody.innerHTML = `<tr class="logs-empty"><td colspan="4">${t('settings.logsError')}: ${err.message}</td></tr>`;
+      setStatusRow(`${t('settings.logsError')}: ${err?.message || 'Unknown error'}`);
     }
   }
 
