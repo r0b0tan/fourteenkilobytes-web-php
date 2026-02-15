@@ -19,7 +19,7 @@ import { initEditorCore } from './lib/settings-page/editor-core.js';
     i18n,
     debounce,
     formatBytes,
-    showNavigationOverlay: globalThis.showNavigationOverlay,
+    showNavigationOverlay: () => globalThis.showNavigationOverlay?.(),
     Modal,
     Toast,
   });
