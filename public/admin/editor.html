@@ -497,6 +497,8 @@
     import { createEditorMetricsManager } from './lib/editor/metrics.js';
     // Import editor overrides manager
     import { createEditorOverridesManager } from './lib/editor/overrides.js';
+    // Import editor build input manager
+    import { createEditorBuildInputManager } from './lib/editor/build-input.js';
 
     // Declare early to avoid initialization order issues
     let debouncedPreview = () => { };
@@ -1706,95 +1708,47 @@
       });
 
       // ============ BUILD INPUT ============
+      let editorBuildInputManager = null;
+
+      function getEditorBuildInputManager() {
+        if (editorBuildInputManager) {
+          return editorBuildInputManager;
+        }
+
+        editorBuildInputManager = createEditorBuildInputManager({
+          blockEditor,
+          navLinks,
+          slugInput,
+          titleInput,
+          pageTypeSelect,
+          titleOverrideEnabled,
+          titleOverrideInput,
+          navEnabled,
+          footerEnabled,
+          footerText,
+          metaEnabled,
+          metaDescription,
+          metaAuthor,
+          cssEnabled,
+          cssRules,
+          serializeBlock,
+          getPosts: () => App.getPosts(),
+          getGlobalConfig: () => window.globalConfig
+        });
+
+        return editorBuildInputManager;
+      }
 
       function getContentFromBlocks() {
-        const blocks = blockEditor.querySelectorAll(':scope > .block-item');
-        const content = [];
-        for (const block of blocks) {
-          content.push(serializeBlock(block));
-        }
-        return content;
+        return getEditorBuildInputManager().getContentFromBlocks();
       }
 
       function getNavigationItems() {
-        const chips = navLinks.querySelectorAll('.nav-chip');
-        return Array.from(chips).map(chip => ({
-          text: chip.textContent,
-          href: chip.dataset.href
-        }));
+        return getEditorBuildInputManager().getNavigationItems();
       }
 
-
       async function buildInput(allowPagination = false) {
-        const content = getContentFromBlocks();
-
-        // For preview with empty content, use minimal placeholder
-        const finalContent = content.length > 0
-          ? content
-          : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
-
-        // Load posts if bloglist block is present
-        let posts = [];
-        const hasBloglist = finalContent.some(block => block.type === 'bloglist');
-        if (hasBloglist) {
-          try {
-            posts = await App.getPosts();
-          } catch (err) {
-            console.warn('Failed to load posts for bloglist:', err);
-          }
-        }
-
-        let navigation = null;
-        if (navEnabled.checked) {
-          const items = getNavigationItems();
-          if (items.length > 0) {
-            navigation = { items };
-          }
-        }
-
-        let footer = null;
-        if (footerEnabled.checked && footerText.value.trim()) {
-          footer = { content: footerText.value.trim() };
-        }
-
-        let css = null;
-        if (cssEnabled.checked && cssRules.value.trim()) {
-          css = { rules: cssRules.value.trim() };
-        }
-
-        let meta = null;
-        if (metaEnabled.checked) {
-          const description = metaDescription.value.trim();
-          const author = metaAuthor.value.trim();
-          if (description || author) {
-            meta = {};
-            if (description) meta.description = description;
-            if (author) meta.author = author;
-          }
-        }
-
-        // Title override
-        let titleOverride = null;
-        if (titleOverrideEnabled.checked && titleOverrideInput.value.trim()) {
-          titleOverride = titleOverrideInput.value.trim();
-        }
-
-        return {
-          slug: slugInput.value.trim() || 'untitled',
-          title: titleInput.value.trim() || 'Untitled',
-          siteTitle: (window.globalConfig?.siteTitleEnabled !== false) ? (window.globalConfig?.siteTitle || null) : null,
-          titleOverride,
-          content: finalContent,
-          navigation,
-          footer,
-          css,
-          meta,
-          icons: [],
-          posts,
-          allowPagination,
-          buildId: crypto.randomUUID(),
-          pageType: pageTypeSelect.value,
-        };
+        return getEditorBuildInputManager().buildInput(allowPagination);
       }
 
       // ============ BYTE COUNTER & COST RAIL ============
