@@ -192,8 +192,12 @@ export function createEditorRuntime({
 
   async function loadSettings() {
     try {
-      let settings = await App.getSettings();
-      let allPosts = await App.getPosts();
+      let settings;
+      let allPosts;
+      [settings, allPosts] = await Promise.all([
+        App.getSettings(),
+        App.getPosts(),
+      ]);
 
       if (!settings.homepageSlug) {
         const existingHomepage = allPosts.find(p => p.slug === 'startseite' && p.status === 'published');
@@ -210,7 +214,6 @@ export function createEditorRuntime({
         if (homepage) {
           settings.homepageSlug = 'startseite';
           await App.saveSettings(settings);
-          settings = await App.getSettings();
         }
       }
 
@@ -295,13 +298,12 @@ export function createEditorRuntime({
       classManglingMode.value = classMangling.mode === 'aggressive' ? 'aggressive' : 'safe';
       classManglingMode.disabled = !classManglingEnabled.checked;
 
-      await updateOverhead();
-
       state.initialSettings = JSON.stringify(buildSettings());
       state.hasUnsavedChanges = false;
       updateSaveButton();
 
       doc.getElementById('loading-overlay')?.remove();
+      void updateOverhead();
     } catch (e) {
       console.error('Failed to load settings:', e);
       doc.getElementById('loading-overlay')?.remove();

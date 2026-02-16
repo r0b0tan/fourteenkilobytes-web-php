@@ -104,6 +104,8 @@ export async function init() {
   let searchQuery = '';
   let dateFrom = null;
   let dateTo = null;
+  let dateFromStartTs = null;
+  let dateToEndTs = null;
   let isLoading = false;
 
   // Debounce helper
@@ -145,17 +147,19 @@ export async function init() {
     }
   }
 
-  // Check if setup is complete
+  // Check setup first
+  let status;
   try {
-    const status = await App.getSetupStatus();
-    if (!status.setupComplete) {
-      window.location.href = '/setup/';
-      return;
-    }
+    status = await App.getSetupStatus();
   } catch (err) {
     document.getElementById('loading-overlay')?.remove();
     dashboardView.classList.remove('hidden');
     showError(t('errors.network'));
+    return;
+  }
+
+  if (!status.setupComplete) {
+    window.location.href = '/setup/';
     return;
   }
 
@@ -223,12 +227,36 @@ export async function init() {
     }
   }
 
+  function updateDateBounds() {
+    dateFromStartTs = null;
+    dateToEndTs = null;
+
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      const fromTs = fromDate.getTime();
+      if (!Number.isNaN(fromTs)) {
+        dateFromStartTs = fromTs;
+      }
+    }
+
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      const toTs = toDate.getTime();
+      if (!Number.isNaN(toTs)) {
+        dateToEndTs = toTs;
+      }
+    }
+  }
+
   // Clear dates button
   clearDatesBtn.addEventListener('click', () => {
     dateFromInput.value = '';
     dateToInput.value = '';
     dateFrom = null;
     dateTo = null;
+    updateDateBounds();
     postsPage = 1;
     pagesPage = 1;
     archivePage = 1;
@@ -256,6 +284,7 @@ export async function init() {
   // Date range handlers
   dateFromInput.addEventListener('change', () => {
     dateFrom = dateFromInput.value;
+    updateDateBounds();
     postsPage = 1;
     pagesPage = 1;
     archivePage = 1;
@@ -265,6 +294,7 @@ export async function init() {
 
   dateToInput.addEventListener('change', () => {
     dateTo = dateToInput.value;
+    updateDateBounds();
     postsPage = 1;
     pagesPage = 1;
     archivePage = 1;
@@ -273,6 +303,7 @@ export async function init() {
   });
 
   updateDateRangeLabel();
+  updateDateBounds();
 
   // Logout handler
   logoutBtn.addEventListener('click', async (e) => {
@@ -374,19 +405,26 @@ export async function init() {
 
     try {
       const allContent = await App.getPosts();
+      const normalizedContent = allContent.map(item => {
+        const publishedTs = Date.parse(item.publishedAt || '');
+        return {
+          ...item,
+          _publishedTs: Number.isNaN(publishedTs) ? null : publishedTs,
+        };
+      });
 
       // Split into posts, pages, and archive (tombstones), sort by date
-      allPosts = allContent
+      allPosts = normalizedContent
         .filter(item => item.pageType !== 'page' && item.status !== 'tombstone')
-        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+        .sort((a, b) => (b._publishedTs || 0) - (a._publishedTs || 0));
 
-      allPages = allContent
+      allPages = normalizedContent
         .filter(item => item.pageType === 'page' && item.status !== 'tombstone')
-        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+        .sort((a, b) => (b._publishedTs || 0) - (a._publishedTs || 0));
 
-      allArchive = allContent
+      allArchive = normalizedContent
         .filter(item => item.status === 'tombstone')
-        .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+        .sort((a, b) => (b._publishedTs || 0) - (a._publishedTs || 0));
 
       isLoading = false;
       renderCurrentView();
@@ -420,23 +458,12 @@ export async function init() {
       }
 
       // Date range filter
-      if (dateFrom || dateTo) {
-        if (!item.publishedAt) return false;
+      if (dateFromStartTs !== null || dateToEndTs !== null) {
+        const itemTs = item._publishedTs;
+        if (!Number.isFinite(itemTs)) return false;
 
-        const itemDate = new Date(item.publishedAt);
-        itemDate.setHours(0, 0, 0, 0);
-
-        if (dateFrom) {
-          const fromDate = new Date(dateFrom);
-          fromDate.setHours(0, 0, 0, 0);
-          if (itemDate < fromDate) return false;
-        }
-
-        if (dateTo) {
-          const toDate = new Date(dateTo);
-          toDate.setHours(23, 59, 59, 999);
-          if (itemDate > toDate) return false;
-        }
+        if (dateFromStartTs !== null && itemTs < dateFromStartTs) return false;
+        if (dateToEndTs !== null && itemTs > dateToEndTs) return false;
       }
 
       return true;
