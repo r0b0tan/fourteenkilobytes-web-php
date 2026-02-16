@@ -312,6 +312,48 @@ describe('editor/build-input', () => {
     expect(input.slug).toBe('untitled');
     expect(input.title).toBe('Untitled');
   });
+
+  it('loads posts when bloglist is nested inside section content', async () => {
+    const blockEditor = document.createElement('div');
+    const blockEl = document.createElement('div');
+    blockEl.className = 'block-item';
+    blockEditor.appendChild(blockEl);
+
+    const getPosts = vi.fn(async () => [
+      { slug: 'nested-a', title: 'Nested A', publishedAt: '2026-01-01', status: 'published', pageType: 'post' }
+    ]);
+
+    const manager = createEditorBuildInputManager({
+      blockEditor,
+      navLinks: document.createElement('div'),
+      serializeBlock: vi.fn(() => ({
+        type: 'section',
+        children: [
+          { type: 'bloglist' }
+        ]
+      })),
+      getPosts,
+      slugInput: { value: 'nested' },
+      titleInput: { value: 'Nested Bloglist' },
+      pageTypeSelect: { value: 'page' },
+      titleOverrideEnabled: { checked: false },
+      titleOverrideInput: { value: '' },
+      navEnabled: { checked: false },
+      footerEnabled: { checked: false },
+      footerText: { value: '' },
+      metaEnabled: { checked: false },
+      metaDescription: { value: '' },
+      metaAuthor: { value: '' },
+      cssEnabled: { checked: false },
+      cssRules: { value: '' },
+      getGlobalConfig: vi.fn(() => ({})),
+    });
+
+    const input = await manager.buildInput(false);
+
+    expect(getPosts).toHaveBeenCalledTimes(1);
+    expect(input.posts).toHaveLength(1);
+  });
 });
 
 describe('editor/dom-refs', () => {

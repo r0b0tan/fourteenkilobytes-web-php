@@ -4,6 +4,31 @@
 
 import { buildInputFromData } from '../editor-core.js';
 
+function contentHasBlockType(content, blockType) {
+  if (!Array.isArray(content) || content.length === 0) return false;
+
+  const hasTypeInBlock = (block) => {
+    if (!block || typeof block !== 'object') return false;
+    if (block.type === blockType) return true;
+
+    if (Array.isArray(block.children) && block.children.some(hasTypeInBlock)) {
+      return true;
+    }
+
+    if (Array.isArray(block.cells)) {
+      for (const cell of block.cells) {
+        if (Array.isArray(cell?.children) && cell.children.some(hasTypeInBlock)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  return content.some(hasTypeInBlock);
+}
+
 export function createEditorBuildInputManager(deps) {
   function getContentFromBlocks() {
     const blocks = deps.blockEditor.querySelectorAll(':scope > .block-item');
@@ -30,7 +55,7 @@ export function createEditorBuildInputManager(deps) {
       ? content
       : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
 
-    const hasBloglist = finalContent.some(block => block.type === 'bloglist');
+    const hasBloglist = contentHasBlockType(finalContent, 'bloglist');
     if (hasBloglist) {
       try {
         posts = await deps.getPosts();

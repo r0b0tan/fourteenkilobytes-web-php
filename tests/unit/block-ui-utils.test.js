@@ -222,9 +222,10 @@ describe('createInnerAddBlock', () => {
     const dropdown = row.querySelector('.add-block-dropdown');
     const buttons = dropdown.querySelectorAll('button');
 
-    expect(buttons.length).toBe(6); // paragraph, heading, list, divider, spacer, layout
+    expect(buttons.length).toBe(7); // paragraph, heading, list, divider, spacer, bloglist, layout
     expect(buttons[0].textContent).toBe('Paragraph');
     expect(buttons[1].textContent).toBe('Heading');
+    expect(dropdown.querySelector('[data-type="bloglist"]')).toBeTruthy();
   });
 
   test('calls onBlockAdd with block config when type selected', () => {
@@ -271,6 +272,22 @@ describe('createInnerAddBlock', () => {
       type: 'list',
       level: undefined,
       listType: 'unordered',
+      spacerHeight: undefined
+    });
+  });
+
+  test('calls onBlockAdd for bloglist', () => {
+    const onBlockAdd = vi.fn();
+    const row = createInnerAddBlock({ onBlockAdd });
+    const dropdown = row.querySelector('.add-block-dropdown');
+    const bloglistBtn = dropdown.querySelector('[data-type="bloglist"]');
+
+    bloglistBtn.click();
+
+    expect(onBlockAdd).toHaveBeenCalledWith({
+      type: 'bloglist',
+      level: undefined,
+      listType: undefined,
       spacerHeight: undefined
     });
   });
