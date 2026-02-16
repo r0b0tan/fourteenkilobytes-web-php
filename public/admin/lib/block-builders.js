@@ -466,7 +466,12 @@ export function createLayoutBlock(config) {
     dropdown.className = 'layout-cell-dropdown hidden';
     const innerTypes = [
       { type: 'paragraph', label: 'Paragraph' },
-      { type: 'heading', label: 'Heading', level: '2' },
+      { type: 'heading', label: 'H1', level: '1' },
+      { type: 'heading', label: 'H2', level: '2' },
+      { type: 'heading', label: 'H3', level: '3' },
+      { type: 'heading', label: 'H4', level: '4' },
+      { type: 'heading', label: 'H5', level: '5' },
+      { type: 'heading', label: 'H6', level: '6' },
       { type: 'list', label: 'List', listType: 'unordered' },
       { type: 'divider', label: 'Divider' },
       { type: 'spacer', label: 'Spacer' }

@@ -164,7 +164,12 @@ export function createInnerAddBlock(config) {
     onBlockAdd,
     blockTypes = [
       { type: 'paragraph', i18n: 'editor.blockParagraph', label: 'Paragraph' },
-      { type: 'heading', i18n: 'editor.blockHeading', label: 'Heading', level: '2' },
+      { type: 'heading', label: 'H1', level: '1' },
+      { type: 'heading', label: 'H2', level: '2' },
+      { type: 'heading', label: 'H3', level: '3' },
+      { type: 'heading', label: 'H4', level: '4' },
+      { type: 'heading', label: 'H5', level: '5' },
+      { type: 'heading', label: 'H6', level: '6' },
       { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
       { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' },
       { type: 'spacer', i18n: 'editor.blockSpacer', label: 'Spacer' },

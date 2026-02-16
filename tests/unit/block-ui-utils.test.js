@@ -226,9 +226,10 @@ describe('createInnerAddBlock', () => {
     const dropdown = row.querySelector('.add-block-dropdown');
     const buttons = dropdown.querySelectorAll('button');
 
-    expect(buttons.length).toBe(8); // paragraph, heading, list, divider, spacer, author, bloglist, layout
+    expect(buttons.length).toBe(13); // paragraph, H1-H6, list, divider, spacer, author, bloglist, layout
     expect(buttons[0].textContent).toBe('Paragraph');
-    expect(buttons[1].textContent).toBe('Heading');
+    expect(buttons[1].textContent).toBe('H1');
+    expect(buttons[2].textContent).toBe('H2');
     expect(dropdown.querySelector('[data-type="author"]')).toBeTruthy();
     expect(dropdown.querySelector('[data-type="bloglist"]')).toBeTruthy();
   });
@@ -253,7 +254,7 @@ describe('createInnerAddBlock', () => {
     const onBlockAdd = vi.fn();
     const row = createInnerAddBlock({ onBlockAdd });
     const dropdown = row.querySelector('.add-block-dropdown');
-    const headingBtn = dropdown.querySelector('[data-type="heading"]');
+    const headingBtn = dropdown.querySelector('[data-type="heading"][data-level="2"]');
 
     headingBtn.click();
 
