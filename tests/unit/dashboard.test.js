@@ -411,7 +411,7 @@ describe('dashboard.js update helpers', () => {
       expect(dateRangeTrigger?.classList.contains('active')).toBe(false);
     });
 
-    it('opens and closes actions dropdown via click, outside click and Escape key', async () => {
+    it('renders direct action buttons without dropdown', async () => {
       const { init } = await loadDashboardModule();
       createDashboardInitDom();
 
@@ -434,23 +434,15 @@ describe('dashboard.js update helpers', () => {
 
       await init();
 
-      const toggle = document.querySelector('[data-action="toggle-dropdown"]');
-      const dropdown = document.querySelector('.actions-dropdown');
+      const recompileBtn = document.querySelector('[data-action="recompile"]');
+      const duplicateBtn = document.querySelector('[data-action="duplicate"]');
+      const deleteBtn = document.querySelector('[data-action="delete"]');
 
-      toggle.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-      dropdown?.classList.add('open');
-      toggle?.setAttribute('aria-expanded', 'true');
-
-      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      expect(dropdown?.classList.contains('open')).toBe(false);
-      expect(toggle?.getAttribute('aria-expanded')).toBe('false');
-
-      dropdown?.classList.add('open');
-      toggle?.setAttribute('aria-expanded', 'true');
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      expect(dropdown?.classList.contains('open')).toBe(false);
-      expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+      expect(recompileBtn).not.toBeNull();
+      expect(duplicateBtn).not.toBeNull();
+      expect(deleteBtn).not.toBeNull();
+      expect(document.querySelector('[data-action="toggle-dropdown"]')).toBeNull();
+      expect(document.querySelector('.actions-dropdown')).toBeNull();
     });
 
     it('shows error modal when duplicate or delete action fails', async () => {

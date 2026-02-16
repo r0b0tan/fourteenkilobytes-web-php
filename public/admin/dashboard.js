@@ -541,23 +541,15 @@ export async function init() {
         </div>
         <div class="post-actions">
           ${item.status === 'published' ? `
-            <div class="actions-dropdown">
-              <button type="button" class="btn btn-secondary btn-small btn-icon actions-dropdown-toggle" data-action="toggle-dropdown" aria-haspopup="true" aria-expanded="false">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                ${t('dashboard.actions')}
-                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div class="actions-dropdown-menu" role="menu">
-                <button type="button" data-action="recompile" data-slug="${safeSlugAttr}" role="menuitem">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                  ${t('dashboard.recompile')}
-                </button>
-                <button type="button" data-action="duplicate" data-slug="${safeSlugAttr}" role="menuitem">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  ${t('dashboard.duplicate')}
-                </button>
-              </div>
-            </div>
+            <button type="button" class="btn btn-secondary btn-small btn-icon" data-action="recompile" data-slug="${safeSlugAttr}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              ${t('dashboard.recompile')}
+            </button>
+            <button type="button" class="btn btn-secondary btn-small btn-icon" data-action="duplicate" data-slug="${safeSlugAttr}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              ${t('dashboard.duplicate')}
+            </button>
+            <span class="action-separator" aria-hidden="true"></span>
             <button type="button" class="btn btn-danger btn-small btn-icon" data-action="delete" data-slug="${safeSlugAttr}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               ${t('dashboard.delete')}
@@ -655,25 +647,6 @@ export async function init() {
     const slug = target.dataset.slug;
 
     switch (action) {
-      case 'toggle-dropdown': {
-        e.stopPropagation();
-        const dropdown = target.closest('.actions-dropdown');
-        const wasOpen = dropdown.classList.contains('open');
-
-        // Close all other dropdowns
-        document.querySelectorAll('.actions-dropdown.open').forEach(d => {
-          d.classList.remove('open');
-          d.querySelector('.actions-dropdown-toggle')?.setAttribute('aria-expanded', 'false');
-        });
-
-        // Toggle this one
-        if (!wasOpen) {
-          dropdown.classList.add('open');
-          target.setAttribute('aria-expanded', 'true');
-        }
-        break;
-      }
-
       case 'delete': {
         const confirmed = await Modal.confirm(t('dashboard.deleteConfirm', { slug }));
         if (!confirmed) return;
@@ -702,27 +675,6 @@ export async function init() {
         }
         break;
       }
-    }
-  });
-
-  // Close dropdowns when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.actions-dropdown')) {
-      document.querySelectorAll('.actions-dropdown.open').forEach(d => {
-        d.classList.remove('open');
-        d.querySelector('.actions-dropdown-toggle')?.setAttribute('aria-expanded', 'false');
-      });
-    }
-  });
-
-  // Keyboard navigation for dropdowns
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.actions-dropdown.open').forEach(d => {
-        d.classList.remove('open');
-        d.querySelector('.actions-dropdown-toggle')?.setAttribute('aria-expanded', 'false');
-        d.querySelector('.actions-dropdown-toggle')?.focus();
-      });
     }
   });
 }

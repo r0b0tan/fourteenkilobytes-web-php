@@ -647,67 +647,6 @@ button:disabled {
   margin: 0 4px;
 }
 
-/* Actions Dropdown */
-.actions-dropdown {
-  position: relative;
-}
-
-.actions-dropdown-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.actions-dropdown-toggle .chevron {
-  transition: transform 0.15s ease;
-}
-
-.actions-dropdown.open .actions-dropdown-toggle .chevron {
-  transform: rotate(180deg);
-}
-
-.actions-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  min-width: 160px;
-  display: none;
-}
-
-.actions-dropdown.open .actions-dropdown-menu {
-  display: block;
-}
-
-.actions-dropdown-menu a,
-.actions-dropdown-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  background: none;
-  color: var(--text-primary);
-  border: none;
-  padding: 10px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.actions-dropdown-menu a:hover,
-.actions-dropdown-menu button:hover {
-  background: var(--gray-100);
-}
-
-.actions-dropdown-menu svg {
-  flex-shrink: 0;
-}
-
 .status-tombstone {
   color: var(--text-muted);
   text-decoration: line-through;
