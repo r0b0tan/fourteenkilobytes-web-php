@@ -66,25 +66,9 @@ export function createEditorMetricsManager(deps) {
       if (type === 'section') {
         label = 'Section';
         bytes = estimateBlockBytes(block);
-
-        const childrenWrapper = block.querySelector('.section-blocks');
-        if (childrenWrapper) {
-          const children = childrenWrapper.querySelectorAll(':scope > .block-item');
-          children.forEach(child => {
-            processBlock(child);
-          });
-        }
       } else if (type === 'layout') {
         label = 'Layout';
         bytes = estimateBlockBytes(block);
-
-        const cellsGrid = block.querySelector('.layout-cells-grid');
-        if (cellsGrid) {
-          const cellBlocks = cellsGrid.querySelectorAll('.layout-cell .layout-cell-blocks > .block-item');
-          cellBlocks.forEach(child => {
-            processBlock(child);
-          });
-        }
       } else {
         bytes = estimateBlockBytes(block);
 

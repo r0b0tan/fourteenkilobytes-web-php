@@ -245,7 +245,9 @@ export function createEditorBlockFactory(deps) {
 
     header.appendChild(actions);
 
-    block.appendChild(deps.createByteIndicator('0 B'));
+    if (!isNested) {
+      block.appendChild(deps.createByteIndicator('0 B'));
+    }
     block.appendChild(header);
 
     let content;

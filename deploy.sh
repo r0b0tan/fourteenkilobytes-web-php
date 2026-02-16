@@ -29,6 +29,9 @@ Options (SSH):
     -h HOST     SSH host (user@server)
     -p PATH     Remote path (e.g., /var/www/fourteenkilobytes)
     -s          Setup nginx config and permissions (requires sudo)
+    -v VERSION  Deploy as versioned release (creates releases/VERSION + current symlink)
+    -k COUNT    Keep COUNT latest releases in release mode (default: 5)
+    -U URL      Health check URL after switch (optional, release mode)
     
 Options (FTP):
     -H HOST     FTP host
@@ -38,6 +41,8 @@ Options (FTP):
     
 Options (Local):
     -p PATH     Local destination path
+    -v VERSION  Deploy as versioned release (creates releases/VERSION + current symlink)
+    -k COUNT    Keep COUNT latest releases in release mode (default: 5)
     
 Examples:
     ./deploy.sh ssh -h user@example.com -p /var/www/site -s
@@ -59,12 +64,18 @@ function deploy_ssh() {
     local HOST=""
     local PATH=""
     local SETUP=false
+    local VERSION=""
+    local KEEP_RELEASES=5
+    local HEALTH_URL=""
     
-    while getopts "h:p:s" opt; do
+    while getopts "h:p:sv:k:U:" opt; do
         case $opt in
             h) HOST="$OPTARG" ;;
             p) PATH="$OPTARG" ;;
             s) SETUP=true ;;
+            v) VERSION="$OPTARG" ;;
+            k) KEEP_RELEASES="$OPTARG" ;;
+            U) HEALTH_URL="$OPTARG" ;;
             *) show_usage; exit 1 ;;
         esac
     done
@@ -76,20 +87,80 @@ function deploy_ssh() {
     fi
     
     echo -e "${GREEN}Deploying to $HOST:$PATH via SSH...${NC}"
-    
-    # Create remote directory
-    ssh "$HOST" "mkdir -p $PATH"
-    
-    # Sync files
-    rsync -avz --delete \
-        --exclude='data/instance.json' \
-        --exclude='data/settings.json' \
-        --exclude='data/manifest.json' \
-        --exclude='data/sessions.json' \
-        --exclude='data/rate-limits.json' \
-        --exclude='data/posts/*.html' \
-        --exclude='data/sources/*.json' \
-        "$DIST_DIR/" "$HOST:$PATH/"
+
+    if [ -n "$VERSION" ]; then
+        local RELEASE_PATH="$PATH/releases/$VERSION"
+
+        ssh "$HOST" "mkdir -p '$PATH' '$PATH/releases' '$PATH/data/posts' '$PATH/data/sources' '$RELEASE_PATH'"
+
+        rsync -avz --delete \
+            --exclude='data/**' \
+            "$DIST_DIR/" "$HOST:$RELEASE_PATH/"
+
+        ssh "$HOST" "BASE_PATH='$PATH' RELEASE_PATH='$RELEASE_PATH' KEEP_RELEASES='$KEEP_RELEASES' HEALTH_URL='$HEALTH_URL' bash -s" << 'REMOTE_RELEASE'
+set -e
+
+if [ ! -d "$RELEASE_PATH" ]; then
+    echo "Release path does not exist: $RELEASE_PATH"
+    exit 1
+fi
+
+PREVIOUS_TARGET=""
+if [ -L "$BASE_PATH/current" ]; then
+    PREVIOUS_TARGET="$(readlink -f "$BASE_PATH/current" || true)"
+fi
+
+ln -sfn "$BASE_PATH/data" "$RELEASE_PATH/data"
+ln -sfn "$RELEASE_PATH" "$BASE_PATH/current"
+
+if [ -n "$HEALTH_URL" ]; then
+    HEALTH_OK=false
+    for _ in 1 2 3 4 5; do
+        if curl -fsS --max-time 5 "$HEALTH_URL" >/dev/null 2>&1; then
+            HEALTH_OK=true
+            break
+        fi
+        sleep 1
+    done
+
+    if [ "$HEALTH_OK" != "true" ]; then
+        if [ -n "$PREVIOUS_TARGET" ] && [ -d "$PREVIOUS_TARGET" ]; then
+            ln -sfn "$PREVIOUS_TARGET" "$BASE_PATH/current"
+        fi
+        echo "Health check failed after switch: $HEALTH_URL"
+        exit 1
+    fi
+fi
+
+if [ "$KEEP_RELEASES" -gt 0 ] 2>/dev/null; then
+    mapfile -t ALL_RELEASES < <(find "$BASE_PATH/releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -rn | awk '{print $2}')
+    INDEX=0
+    for REL in "${ALL_RELEASES[@]}"; do
+        INDEX=$((INDEX + 1))
+        if [ "$INDEX" -le "$KEEP_RELEASES" ]; then
+            continue
+        fi
+        if [ "$REL" != "$(readlink -f "$BASE_PATH/current" || true)" ]; then
+            rm -rf "$REL"
+        fi
+    done
+fi
+REMOTE_RELEASE
+    else
+        # Create remote directory
+        ssh "$HOST" "mkdir -p $PATH"
+
+        # Sync files
+        rsync -avz --delete \
+            --exclude='data/instance.json' \
+            --exclude='data/settings.json' \
+            --exclude='data/manifest.json' \
+            --exclude='data/sessions.json' \
+            --exclude='data/rate-limits.json' \
+            --exclude='data/posts/*.html' \
+            --exclude='data/sources/*.json' \
+            "$DIST_DIR/" "$HOST:$PATH/"
+    fi
     
     # Setup permissions and config
     if [ "$SETUP" = true ]; then
@@ -182,10 +253,14 @@ EOF
 
 function deploy_local() {
     local PATH=""
+    local VERSION=""
+    local KEEP_RELEASES=5
     
-    while getopts "p:" opt; do
+    while getopts "p:v:k:" opt; do
         case $opt in
             p) PATH="$OPTARG" ;;
+            v) VERSION="$OPTARG" ;;
+            k) KEEP_RELEASES="$OPTARG" ;;
             *) show_usage; exit 1 ;;
         esac
     done
@@ -197,12 +272,43 @@ function deploy_local() {
     fi
     
     echo -e "${GREEN}Copying to $PATH...${NC}"
-    
-    mkdir -p "$PATH"
-    rsync -av --delete \
-        --exclude='data/instance.json' \
-        --exclude='data/settings.json' \
-        "$DIST_DIR/" "$PATH/"
+
+    if [ -n "$VERSION" ]; then
+        local RELEASE_PATH="$PATH/releases/$VERSION"
+        mkdir -p "$PATH/releases" "$PATH/data/posts" "$PATH/data/sources" "$RELEASE_PATH"
+
+        rsync -av --delete \
+            --exclude='data/**' \
+            "$DIST_DIR/" "$RELEASE_PATH/"
+
+        if [ -d "$DIST_DIR/data/seeds" ] && [ ! -d "$PATH/data/seeds" ]; then
+            mkdir -p "$PATH/data"
+            cp -r "$DIST_DIR/data/seeds" "$PATH/data/"
+        fi
+
+        ln -sfn "$PATH/data" "$RELEASE_PATH/data"
+        ln -sfn "$RELEASE_PATH" "$PATH/current"
+
+        if [ "$KEEP_RELEASES" -gt 0 ] 2>/dev/null; then
+            mapfile -t ALL_RELEASES < <(find "$PATH/releases" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -rn | awk '{print $2}')
+            INDEX=0
+            for REL in "${ALL_RELEASES[@]}"; do
+                INDEX=$((INDEX + 1))
+                if [ "$INDEX" -le "$KEEP_RELEASES" ]; then
+                    continue
+                fi
+                if [ "$REL" != "$(readlink -f "$PATH/current" || true)" ]; then
+                    rm -rf "$REL"
+                fi
+            done
+        fi
+    else
+        mkdir -p "$PATH"
+        rsync -av --delete \
+            --exclude='data/instance.json' \
+            --exclude='data/settings.json' \
+            "$DIST_DIR/" "$PATH/"
+    fi
     
     echo -e "${GREEN}✓ Local deployment complete!${NC}"
     echo -e "${YELLOW}Visit http://localhost/ to begin setup${NC}"

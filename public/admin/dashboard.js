@@ -5,6 +5,40 @@
  * Extracted from inline script for better maintainability.
  */
 
+function resetDashboardOverlays() {
+  const modalBackdrop = document.getElementById('modal-backdrop');
+  const modal = document.getElementById('modal');
+  const modalActions = document.getElementById('modal-actions');
+  const modalMessage = document.getElementById('modal-message');
+
+  if (modalBackdrop) {
+    modalBackdrop.classList.add('hidden');
+    modalBackdrop.setAttribute('aria-hidden', 'true');
+  }
+
+  if (modal) {
+    modal.className = 'modal hidden';
+  }
+
+  if (modalActions) {
+    modalActions.innerHTML = '';
+  }
+
+  if (modalMessage) {
+    modalMessage.textContent = '';
+  }
+}
+
+window.addEventListener('pageshow', () => {
+  resetDashboardOverlays();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    resetDashboardOverlays();
+  }
+});
+
 // Wait for dependencies
 async function waitForDependencies() {
   await i18nReady();
@@ -17,6 +51,8 @@ async function waitForDependencies() {
 // Initialize dashboard
 export async function init() {
   await waitForDependencies();
+
+  resetDashboardOverlays();
 
   const dashboardView = document.getElementById('dashboard-view');
   const logoutBtn = document.getElementById('logout-btn');
@@ -37,6 +73,25 @@ export async function init() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
   const errorAlert = document.getElementById('error-alert');
+
+  const modalBackdrop = document.getElementById('modal-backdrop');
+  const modal = document.getElementById('modal');
+  const modalActions = document.getElementById('modal-actions');
+  const modalMessage = document.getElementById('modal-message');
+
+  function clearStaleModalBackdrop() {
+    if (!modal || !modalBackdrop) return;
+    if (modal.classList.contains('hidden') && !modalBackdrop.classList.contains('hidden')) {
+      modalBackdrop.classList.add('hidden');
+      modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  if (modalBackdrop) modalBackdrop.classList.add('hidden');
+  if (modal) modal.className = 'modal hidden';
+  if (modalActions) modalActions.innerHTML = '';
+  if (modalMessage) modalMessage.textContent = '';
+  clearStaleModalBackdrop();
 
   // Pagination & Search State
   let allPosts = [];
@@ -131,6 +186,9 @@ export async function init() {
   checkForUpdates();
 
   // Date range picker dropdown
+  dateRangeDropdown.classList.add('hidden');
+  dateRangeTrigger.classList.remove('active');
+
   dateRangeTrigger.addEventListener('click', (e) => {
     e.stopPropagation();
     dateRangeDropdown.classList.toggle('hidden');
@@ -214,6 +272,8 @@ export async function init() {
     renderCurrentView();
   });
 
+  updateDateRangeLabel();
+
   // Logout handler
   logoutBtn.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -236,6 +296,7 @@ export async function init() {
     function hide() {
       modal.classList.add('hidden');
       backdrop.classList.add('hidden');
+      backdrop.setAttribute('aria-hidden', 'true');
       modal.className = 'modal hidden';
       actions.innerHTML = '';
     }
@@ -258,6 +319,7 @@ export async function init() {
       });
 
       backdrop.classList.remove('hidden');
+      backdrop.setAttribute('aria-hidden', 'false');
       modal.classList.remove('hidden');
 
       // Focus first button for accessibility
@@ -382,6 +444,8 @@ export async function init() {
   }
 
   function renderCurrentView() {
+    clearStaleModalBackdrop();
+
     const filteredPosts = filterItems(allPosts);
     const filteredPages = filterItems(allPages);
     const filteredArchive = filterItems(allArchive);
@@ -735,10 +799,6 @@ export function showUpdateBanner(updateInfo) {
   const content = document.createElement('div');
   content.className = 'update-banner-content';
 
-  const icon = document.createElement('div');
-  icon.className = 'update-banner-icon';
-  icon.textContent = '🎉';
-
   const textWrap = document.createElement('div');
   textWrap.className = 'update-banner-text';
   const title = document.createElement('strong');
@@ -770,7 +830,7 @@ export function showUpdateBanner(updateInfo) {
   dismissBtn.textContent = t('modal.dismiss');
 
   actions.append(releaseLink, snoozeBtn, dismissBtn);
-  content.append(icon, textWrap, actions);
+  content.append(textWrap, actions);
   banner.appendChild(content);
   
   // Insert at the top of dashboard

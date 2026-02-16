@@ -251,6 +251,79 @@ The Docker setup includes:
 4. Configure web server (copy .htaccess for Apache or nginx.conf.example for nginx)
 5. Visit your site (auto-redirects to setup wizard)
 
+### Versioned Releases (Recommended for upgrades)
+
+You can deploy in a versioned release layout and switch atomically via a `current` symlink.
+
+Target layout:
+
+```text
+/var/www/fourteenkilobytes/
+   current -> /var/www/fourteenkilobytes/releases/1.0.0
+   releases/
+      1.0.0/
+      1.0.1/
+   data/
+```
+
+Important:
+- Keep `data/` shared and persistent outside release folders.
+- Point your web server document root to `.../current`.
+
+Deploy a versioned release:
+
+```bash
+./deploy.sh ssh -h user@example.com -p /var/www/fourteenkilobytes -v 1.0.0 -k 5 -U https://your-domain.tld/api/health
+```
+
+Local versioned deploy:
+
+```bash
+./deploy.sh local -p /var/www/fourteenkilobytes -v 1.0.0 -k 5
+```
+
+Automated GitHub upgrade on server:
+
+```bash
+./upgrade.sh --base-dir /var/www/fourteenkilobytes --version latest --keep-releases 5
+```
+
+Rollback to previous release:
+
+```bash
+./rollback.sh --base-dir /var/www/fourteenkilobytes
+```
+
+Rollback to a specific release:
+
+```bash
+./rollback.sh --base-dir /var/www/fourteenkilobytes --to 1.0.0
+```
+
+### Automated Release Flow
+
+Use `release.sh` to run tests/build, bump versions, create git tag/push, optionally create a GitHub release, and optionally trigger remote upgrade.
+
+Basic release:
+
+```bash
+./release.sh --version 1.0.0
+```
+
+Release + remote server upgrade:
+
+```bash
+./release.sh --version 1.0.1 \
+   --upgrade-host user@example.com \
+   --upgrade-base-dir /var/www/fourteenkilobytes
+```
+
+Useful flags:
+- `--skip-tests` to skip `npm test`
+- `--skip-build` to skip `./build.sh`
+- `--no-gh-release` to skip `gh release create`
+- `--allow-dirty` to allow running with uncommitted changes
+
 ## Usage
 
 ### Admin Panel

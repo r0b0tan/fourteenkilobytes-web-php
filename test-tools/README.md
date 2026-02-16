@@ -44,6 +44,41 @@ Updates `manifest.json` and `page-types.json` to register the test posts.
 - `start`: First post number (default: 1)  
 - `end`: Last post number (default: 100)
 
+### `toggle-update-check.sh`
+Enables/disables a mocked update-check cache so the dashboard update banner can be tested even when GitHub API is unreachable.
+
+**Modes:**
+- `on [latestVersion] [releaseUrl]`: Writes `data/update-check-cache.json`
+- `on-auto [releaseUrl]`: Uses `version.json` and writes patch+1 as mocked latest version
+- `off`: Removes `data/update-check-cache.json`
+- `status`: Shows current mock state
+- `check [apiUrl]`: Calls `/api/check-updates` and prints response + expected banner state
+
+**Examples:**
+```bash
+cd test-tools
+./toggle-update-check.sh on 1.0.1
+./toggle-update-check.sh on-auto
+./toggle-update-check.sh check http://localhost:8000/api/check-updates
+./toggle-update-check.sh status
+./toggle-update-check.sh off
+```
+
+You can also use npm shortcuts from project root:
+
+```bash
+npm run update:mock:on
+npm run update:mock:check
+npm run update:mock:off
+```
+
+After enabling, clear browser localStorage keys once for a clean banner test:
+
+```js
+localStorage.removeItem('dismissedUpdateVersion');
+localStorage.removeItem('snoozedUpdate');
+```
+
 ## Examples
 
 Generate only 20 test posts:

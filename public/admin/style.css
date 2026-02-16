@@ -2036,6 +2036,11 @@ input.block-selector-input {
   display: none;
 }
 
+/* Hide nested byte indicators inside sections (section shows aggregate only) */
+.section-blocks > .block-item > .block-byte-indicator {
+  display: none;
+}
+
 /* Per-cell toolbar — hover only */
 .layout-cell-toolbar {
   position: absolute;

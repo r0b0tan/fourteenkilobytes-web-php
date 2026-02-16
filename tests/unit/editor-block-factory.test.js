@@ -225,4 +225,12 @@ describe('editor/block-factory', () => {
     expect(listBlock.querySelector('ol.editable-list')).not.toBeNull();
     expect(deps.onPreviewRequested).toHaveBeenCalled();
   });
+
+  it('does not render byte indicator for nested blocks', () => {
+    const deps = createDeps();
+    const { createBlockElement } = createEditorBlockFactory(deps);
+
+    const nestedBlock = createBlockElement('paragraph', null, '', null, null, true);
+    expect(nestedBlock.querySelector('.block-byte-indicator')).toBeNull();
+  });
 });
