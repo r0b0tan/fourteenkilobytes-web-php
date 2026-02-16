@@ -298,6 +298,7 @@ export function createSectionBlock(config) {
  */
 export function createLayoutBlock(config) {
   const { isNested, callbacks } = config;
+  const MAX_BLOCKS_PER_CELL = 2;
 
   const block = document.createElement('div');
   block.className = 'block-item block-layout';
@@ -437,6 +438,7 @@ export function createLayoutBlock(config) {
       e.stopPropagation();
       const cellBlocks = cell.querySelector('.layout-cell-blocks');
       cellBlocks.innerHTML = '';
+      updateCellCapacityState();
       if (callbacks.onChange) callbacks.onChange();
     });
     toolbar.appendChild(delBtn);
@@ -446,6 +448,13 @@ export function createLayoutBlock(config) {
     const cellBlocks = document.createElement('div');
     cellBlocks.className = 'layout-cell-blocks';
     cell.appendChild(cellBlocks);
+
+    function updateCellCapacityState() {
+      const blockCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+      const isMaxed = blockCount >= MAX_BLOCKS_PER_CELL;
+      cell.classList.toggle('layout-cell-maxed', isMaxed);
+      if (isMaxed) dropdown.classList.add('hidden');
+    }
 
     // Add block button with dropdown
     const addBtn = document.createElement('button');
@@ -469,10 +478,16 @@ export function createLayoutBlock(config) {
       b.textContent = t.label;
       b.addEventListener('click', (e) => {
         e.stopPropagation();
+        const currentCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+        if (currentCount >= MAX_BLOCKS_PER_CELL) {
+          dropdown.classList.add('hidden');
+          return;
+        }
         if (callbacks.createBlockElement) {
           const childBlock = callbacks.createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight, true);
           cellBlocks.appendChild(childBlock);
           dropdown.classList.add('hidden');
+          updateCellCapacityState();
           const focusTarget = childBlock.querySelector('li[contenteditable="true"]') || childBlock.querySelector('.block-content');
           if (focusTarget) focusTarget.focus();
           if (callbacks.onChange) callbacks.onChange();
@@ -483,12 +498,19 @@ export function createLayoutBlock(config) {
 
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      const currentCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+      if (currentCount >= MAX_BLOCKS_PER_CELL) {
+        dropdown.classList.add('hidden');
+        return;
+      }
       dropdown.classList.toggle('hidden');
     });
     document.addEventListener('click', () => dropdown.classList.add('hidden'));
 
     cell.appendChild(addBtn);
     cell.appendChild(dropdown);
+
+    updateCellCapacityState();
 
     return cell;
   }

@@ -122,6 +122,7 @@ export function createEditorSourceLoader(deps) {
       }
       if (block.type === 'layout') {
         const el = deps.createBlockElement('layout', null, '', null, null, isNested);
+        const MAX_BLOCKS_PER_CELL = 2;
         const cols = block.columns || 2;
         const rows = block.cells ? Math.ceil(block.cells.length / cols) : 2;
 
@@ -212,6 +213,7 @@ export function createEditorSourceLoader(deps) {
               e.stopPropagation();
               const cb = cellEl.querySelector('.layout-cell-blocks');
               cb.innerHTML = '';
+              cellEl.classList.remove('layout-cell-maxed');
               deps.onPreviewRequested();
             });
             toolbar.appendChild(delBtn);
@@ -226,10 +228,18 @@ export function createEditorSourceLoader(deps) {
             const cellBlocks = document.createElement('div');
             cellBlocks.className = 'layout-cell-blocks';
             if (cellData.children && cellData.children.length > 0) {
-              const child = cellData.children[0];
-              cellBlocks.appendChild(blockElFromSource(child, depth + 1));
+              cellData.children.slice(0, MAX_BLOCKS_PER_CELL).forEach((child) => {
+                cellBlocks.appendChild(blockElFromSource(child, depth + 1));
+              });
             }
             cellEl.appendChild(cellBlocks);
+
+            const updateCellCapacityState = () => {
+              const blockCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+              const isMaxed = blockCount >= MAX_BLOCKS_PER_CELL;
+              cellEl.classList.toggle('layout-cell-maxed', isMaxed);
+              if (isMaxed) dropdown.classList.add('hidden');
+            };
 
             const addBtn = document.createElement('button');
             addBtn.type = 'button';
@@ -252,9 +262,15 @@ export function createEditorSourceLoader(deps) {
               b.textContent = t.label;
               b.addEventListener('click', (e) => {
                 e.stopPropagation();
+                const currentCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+                if (currentCount >= MAX_BLOCKS_PER_CELL) {
+                  dropdown.classList.add('hidden');
+                  return;
+                }
                 const newBlock = deps.createBlockElement(t.type, t.level, '', t.listType, t.spacerHeight, true);
                 cellBlocks.appendChild(newBlock);
                 dropdown.classList.add('hidden');
+                updateCellCapacityState();
                 const focusTarget = newBlock.querySelector('li[contenteditable="true"]') || newBlock.querySelector('.block-content');
                 if (focusTarget) focusTarget.focus();
                 deps.onPreviewRequested();
@@ -264,12 +280,18 @@ export function createEditorSourceLoader(deps) {
 
             addBtn.addEventListener('click', (e) => {
               e.stopPropagation();
+              const currentCount = cellBlocks.querySelectorAll(':scope > .block-item').length;
+              if (currentCount >= MAX_BLOCKS_PER_CELL) {
+                dropdown.classList.add('hidden');
+                return;
+              }
               dropdown.classList.toggle('hidden');
             });
             document.addEventListener('click', () => dropdown.classList.add('hidden'));
 
             cellEl.appendChild(addBtn);
             cellEl.appendChild(dropdown);
+            updateCellCapacityState();
 
             cellsGrid.appendChild(cellEl);
           });

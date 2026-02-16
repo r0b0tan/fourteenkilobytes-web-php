@@ -337,4 +337,40 @@ describe('editor/source-loader', () => {
     deleteBtn.click();
     expect(cell.querySelector('.layout-cell-blocks').children.length).toBe(0);
   });
+
+  it('restores up to two blocks per layout cell', () => {
+    const deps = createDeps();
+    const loader = createEditorSourceLoader(deps);
+
+    loader.loadFromSource({
+      title: 'Two items',
+      slug: 'two-items',
+      pageType: 'post',
+      content: [
+        {
+          type: 'layout',
+          columns: 1,
+          cells: [
+            {
+              children: [
+                { type: 'heading', level: 2, children: [{ type: 'text', text: 'Headline' }] },
+                { type: 'paragraph', children: [{ type: 'text', text: 'Body text' }] },
+              ],
+            },
+          ],
+        },
+      ],
+      navigation: null,
+      footer: null,
+      meta: null,
+      css: null,
+    });
+
+    const layout = deps.blockEditor.querySelector('[data-type="layout"]');
+    const cell = layout.querySelector('.layout-cell');
+    const cellBlocks = cell.querySelector('.layout-cell-blocks');
+
+    expect(cellBlocks.children.length).toBe(2);
+    expect(cell.classList.contains('layout-cell-maxed')).toBe(true);
+  });
 });

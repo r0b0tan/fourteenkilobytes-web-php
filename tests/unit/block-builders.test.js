@@ -909,6 +909,40 @@ describe('createLayoutBlock', () => {
     expect(cell.querySelector('.layout-cell-blocks').children.length).toBe(1);
   });
 
+  test('allows up to two nested blocks per layout cell', () => {
+    const child = document.createElement('div');
+    child.className = 'block-item';
+    child.appendChild(document.createElement('div')).className = 'block-content';
+
+    const callbacks = {
+      onChange: vi.fn(),
+      createBlockElement: vi.fn().mockImplementation(() => {
+        const clone = child.cloneNode(true);
+        return clone;
+      })
+    };
+
+    const block = createLayoutBlock({
+      isNested: false,
+      callbacks
+    });
+
+    const cell = block.querySelector('.layout-cell');
+    const addBtn = cell.querySelector('.layout-cell-add-btn');
+    const dropdown = cell.querySelector('.layout-cell-dropdown');
+    const firstTypeBtn = dropdown.querySelector('button');
+
+    addBtn.click();
+    firstTypeBtn.click();
+    addBtn.click();
+    firstTypeBtn.click();
+    addBtn.click();
+    firstTypeBtn.click();
+
+    expect(cell.querySelector('.layout-cell-blocks').children.length).toBe(2);
+    expect(cell.classList.contains('layout-cell-maxed')).toBe(true);
+  });
+
   test('handles cell interactions and add-block without onChange callback', () => {
     const child = document.createElement('div');
     child.appendChild(document.createElement('div')).className = 'block-content';

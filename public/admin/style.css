@@ -2172,8 +2172,8 @@ input.block-selector-input {
   opacity: 1;
 }
 
-/* Hide + button when cell already has a block */
-.layout-cell-blocks:not(:empty) ~ .layout-cell-add-btn {
+/* Hide + button when cell reached max number of blocks */
+.layout-cell.layout-cell-maxed .layout-cell-add-btn {
   display: none;
 }
 
