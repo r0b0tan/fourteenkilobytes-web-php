@@ -447,6 +447,22 @@ export function createLayoutBlock(config) {
     widthGroup.appendChild(widthInput);
     toolbar.appendChild(widthGroup);
 
+    // Class input
+    const classGroup = document.createElement('label');
+    classGroup.className = 'layout-toolbar-input';
+    classGroup.innerHTML = '<span>C</span>';
+    const classInput = document.createElement('input');
+    classInput.type = 'text';
+    classInput.placeholder = 'frame';
+    classInput.title = 'CSS class (z.B. frame-accent)';
+    classInput.addEventListener('input', () => {
+      const value = classInput.value.trim();
+      cell.dataset.className = value;
+      if (callbacks.onChange) callbacks.onChange();
+    });
+    classGroup.appendChild(classInput);
+    toolbar.appendChild(classGroup);
+
     // Delete button
     const delBtn = document.createElement('button');
     delBtn.type = 'button';

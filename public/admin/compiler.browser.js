@@ -808,6 +808,14 @@ function normalizeCssLength(value) {
   }
   return normalized;
 }
+function normalizeClassNames(value) {
+  if (value === null || value === void 0)
+    return [];
+  const normalized = String(value).trim();
+  if (!normalized)
+    return [];
+  return normalized.split(/\s+/).map((token) => token.replace(/[^a-zA-Z0-9_-]/g, "")).filter(Boolean);
+}
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -1037,29 +1045,40 @@ ${items}
 </${tag}>`;
   }
   if (block.type === "layout") {
-    const cellsHtml = block.cells.map((cell) => {
+    const normalizedCellWidths = block.cells.map((cell) => normalizeCssLength(cell.width));
+    const hasExplicitCellWidths = normalizedCellWidths.some((value) => !!value);
+    const cellsHtml = block.cells.map((cell, index) => {
       const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
       const cellStyles = [];
       const textAlign = normalizeAlignment(cell.textAlign);
-      const width = normalizeCssLength(cell.width);
+      const width = normalizedCellWidths[index];
       const padding = normalizeCssLength(cell.padding);
       const margin = normalizeCssLength(cell.margin);
       if (textAlign && !isLayoutCellDefaultTextAlign(textAlign))
         cellStyles.push(`text-align:${textAlign}`);
-      if (width)
+      if (width) {
         cellStyles.push(`width:${width}`);
+        cellStyles.push(`justify-self:start`);
+      }
       if (padding && padding !== DEFAULTS.layoutCell.padding)
         cellStyles.push(`padding:${padding}`);
       if (margin && margin !== DEFAULTS.layoutCell.margin)
         cellStyles.push(`margin:${margin}`);
       const cellStyle = cellStyles.length ? ` style="${cellStyles.join(";")}"` : "";
-      return `<div class="${mangleGeneratedClass("cell", classManglingEnabled, classManglingMode)}"${cellStyle}>${cellContent}</div>`;
+      const cellClasses = [mangleGeneratedClass("cell", classManglingEnabled, classManglingMode), ...normalizeClassNames(cell.className)];
+      return `<div class="${cellClasses.join(" ")}"${cellStyle}>${cellContent}</div>`;
     }).join("\n");
     const styles = [];
     styles.push(`display:inline-grid`);
     styles.push(`width:fit-content`);
     styles.push(`max-width:100%`);
-    if (block.columns !== DEFAULTS.layout.columns) {
+    if (hasExplicitCellWidths) {
+      const columnsTemplate = [];
+      for (let col = 0; col < block.columns; col++) {
+        columnsTemplate.push(normalizedCellWidths[col] || "1fr");
+      }
+      styles.push(`grid-template-columns:${columnsTemplate.join(" ")}`);
+    } else if (block.columns !== DEFAULTS.layout.columns) {
       styles.push(`grid-template-columns:repeat(${block.columns},1fr)`);
     }
     if (block.rows) {

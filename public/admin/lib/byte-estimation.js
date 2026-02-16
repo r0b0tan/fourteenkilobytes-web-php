@@ -22,6 +22,16 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+function normalizeClassNames(value) {
+  if (!value) return [];
+  const normalized = String(value).trim();
+  if (!normalized) return [];
+  return normalized
+    .split(/\s+/)
+    .map(token => token.replace(/[^a-zA-Z0-9_-]/g, ''))
+    .filter(Boolean);
+}
+
 /**
  * Parses a CSS selector string into id and classes
  * @param {string} selector - CSS selector (e.g., "#foo.bar.baz" or ".class1.class2")
@@ -114,22 +124,43 @@ export function renderBlockHtml(blockData) {
     return `<${tag}${attrs}>\n${items}\n</${tag}>`;
   }
   if (blockData.type === 'layout') {
-    const cellsHtml = (blockData.cells || []).map(cell => {
+    const normalizedCellWidths = (blockData.cells || []).map(cell => {
+      if (!cell?.width) return null;
+      const width = String(cell.width).trim();
+      if (!width) return null;
+      if (/^-?\d+(?:\.\d+)?$/.test(width)) return `${width}px`;
+      return width;
+    });
+    const hasExplicitCellWidths = normalizedCellWidths.some(Boolean);
+
+    const cellsHtml = (blockData.cells || []).map((cell, index) => {
       const cellContent = (cell.children || []).map(child => renderBlockHtml(child)).join('\n');
       const cellStyles = [];
       if (cell.textAlign && cell.textAlign !== 'left') cellStyles.push(`text-align:${cell.textAlign}`);
       if (cell.padding && cell.padding !== '10px') cellStyles.push(`padding:${cell.padding}`);
       if (cell.margin && cell.margin !== '10px') cellStyles.push(`margin:${cell.margin}`);
-      if (cell.width && cell.width !== 'auto') cellStyles.push(`width:${cell.width}`);
+      const normalizedWidth = normalizedCellWidths[index];
+      if (normalizedWidth && normalizedWidth !== 'auto') {
+        cellStyles.push(`width:${normalizedWidth}`);
+        cellStyles.push('justify-self:start');
+      }
       const cellStyle = cellStyles.length ? ` style="${cellStyles.join(';')}"` : '';
-      return `<div class="cell"${cellStyle}>${cellContent}</div>`;
+      const cellClasses = ['cell', ...normalizeClassNames(cell.className)];
+      return `<div class="${cellClasses.join(' ')}"${cellStyle}>${cellContent}</div>`;
     }).join('\n');
 
     const styles = [];
     styles.push('display:inline-grid');
     styles.push('width:fit-content');
     styles.push('max-width:100%');
-    if (blockData.columns !== 1) {
+    if (hasExplicitCellWidths) {
+      const columnCount = Number.parseInt(String(blockData.columns || 1), 10) || 1;
+      const columnsTemplate = [];
+      for (let col = 0; col < columnCount; col++) {
+        columnsTemplate.push(normalizedCellWidths[col] || '1fr');
+      }
+      styles.push(`grid-template-columns:${columnsTemplate.join(' ')}`);
+    } else if (blockData.columns !== 1) {
       styles.push(`grid-template-columns:repeat(${blockData.columns},1fr)`);
     }
     if (blockData.rows) {

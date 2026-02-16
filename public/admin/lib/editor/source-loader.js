@@ -243,6 +243,25 @@ export function createEditorSourceLoader(deps) {
             widthGroup.appendChild(widthInput);
             toolbar.appendChild(widthGroup);
 
+            const classGroup = document.createElement('label');
+            classGroup.className = 'layout-toolbar-input';
+            classGroup.innerHTML = '<span>C</span>';
+            const classInput = document.createElement('input');
+            classInput.type = 'text';
+            classInput.placeholder = 'frame';
+            classInput.title = 'CSS class (z.B. frame-accent)';
+            if (cellData.className) {
+              classInput.value = cellData.className;
+              cellEl.dataset.className = cellData.className;
+            }
+            classInput.addEventListener('input', () => {
+              const value = classInput.value.trim();
+              cellEl.dataset.className = value;
+              deps.onPreviewRequested();
+            });
+            classGroup.appendChild(classInput);
+            toolbar.appendChild(classGroup);
+
             const delBtn = document.createElement('button');
             delBtn.type = 'button';
             delBtn.className = 'layout-toolbar-delete';
@@ -267,6 +286,10 @@ export function createEditorSourceLoader(deps) {
             if (cellData.width) {
               cellEl.dataset.width = cellData.width;
               cellBlocks.style.width = cellData.width;
+            }
+
+            if (cellData.className) {
+              cellEl.dataset.className = cellData.className;
             }
 
             if (cellData.children && cellData.children.length > 0) {

@@ -241,13 +241,18 @@ export function serializeBlock(block) {
       for (const childBlock of cellBlocks.querySelectorAll(':scope > .block-item')) {
         children.push(serializeBlock(childBlock));
       }
-      cells.push({
+      const className = (cell.dataset.className || '').trim();
+      const cellData = {
         children,
         textAlign: cell.dataset.textAlign || null,
         padding: cell.dataset.padding || null,
         margin: cell.dataset.margin || null,
         width: cell.dataset.width || null
-      });
+      };
+      if (className) {
+        cellData.className = className;
+      }
+      cells.push(cellData);
     }
     return withSelector({
       type: 'layout',
