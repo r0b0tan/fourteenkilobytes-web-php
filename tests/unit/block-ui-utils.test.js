@@ -191,6 +191,10 @@ describe('createBlockHeader', () => {
 });
 
 describe('createInnerAddBlock', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
   test('creates add block row with button and dropdown', () => {
     const onBlockAdd = vi.fn();
     const row = createInnerAddBlock({ onBlockAdd });
@@ -336,6 +340,43 @@ describe('createInnerAddBlock', () => {
 
     const btn = row.querySelector('.section-add-block');
     expect(btn.textContent).toBe('Custom Label');
+  });
+
+  test('clamps dropdown horizontally when it would overflow viewport', () => {
+    const row = createInnerAddBlock({ onBlockAdd: vi.fn() });
+    document.body.appendChild(row);
+
+    const btn = row.querySelector('.section-add-block');
+    const dropdown = row.querySelector('.add-block-dropdown');
+
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 320,
+    });
+
+    const rectSpy = vi.spyOn(dropdown, 'getBoundingClientRect').mockReturnValue({
+      x: -20,
+      y: 0,
+      left: -20,
+      top: 0,
+      right: 140,
+      bottom: 100,
+      width: 160,
+      height: 100,
+      toJSON: () => ({})
+    });
+
+    btn.click();
+
+    expect(dropdown.classList.contains('hidden')).toBe(false);
+    expect(dropdown.style.getPropertyValue('--dropdown-shift-x')).toBe('28px');
+
+    rectSpy.mockRestore();
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: originalInnerWidth,
+    });
   });
 });
 

@@ -1876,9 +1876,10 @@ input.block-selector-input {
   position: absolute;
   bottom: 100%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(calc(-50% + var(--dropdown-shift-x, 0px)));
   margin-bottom: 4px;
   z-index: 120;
+  max-width: calc(100vw - 16px);
 }
 
 /* Layout blocks - transparent grid with dashed lines */

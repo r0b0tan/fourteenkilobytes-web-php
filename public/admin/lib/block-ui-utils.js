@@ -187,6 +187,26 @@ export function createInnerAddBlock(config) {
   const dropdown = document.createElement('div');
   dropdown.className = 'add-block-dropdown hidden';
 
+  function positionDropdownWithinViewport() {
+    if (dropdown.classList.contains('hidden')) return;
+
+    dropdown.style.setProperty('--dropdown-shift-x', '0px');
+
+    const viewportPadding = 8;
+    const rect = dropdown.getBoundingClientRect();
+    let shiftX = 0;
+
+    if (rect.left < viewportPadding) {
+      shiftX = viewportPadding - rect.left;
+    } else if (rect.right > window.innerWidth - viewportPadding) {
+      shiftX = (window.innerWidth - viewportPadding) - rect.right;
+    }
+
+    if (shiftX !== 0) {
+      dropdown.style.setProperty('--dropdown-shift-x', `${shiftX}px`);
+    }
+  }
+
   blockTypes.forEach(t => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -202,6 +222,13 @@ export function createInnerAddBlock(config) {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     dropdown.classList.toggle('hidden');
+    if (!dropdown.classList.contains('hidden')) {
+      positionDropdownWithinViewport();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    positionDropdownWithinViewport();
   });
 
   dropdown.addEventListener('click', (e) => {
