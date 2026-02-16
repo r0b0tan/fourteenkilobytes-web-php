@@ -367,6 +367,8 @@ export function createLayoutBlock(config) {
   function createLayoutCell() {
     const cell = document.createElement('div');
     cell.className = 'layout-cell';
+    const cellBlocks = document.createElement('div');
+    cellBlocks.className = 'layout-cell-blocks';
 
     // Cell toolbar
     const toolbar = document.createElement('div');
@@ -405,7 +407,7 @@ export function createLayoutBlock(config) {
     padInput.addEventListener('input', () => {
       const value = padInput.value.trim();
       cell.dataset.padding = value;
-      cell.style.padding = value || '';
+      cellBlocks.style.padding = value || '';
       if (callbacks.onChange) callbacks.onChange();
     });
     padGroup.appendChild(padInput);
@@ -422,7 +424,7 @@ export function createLayoutBlock(config) {
     marInput.addEventListener('input', () => {
       const value = marInput.value.trim();
       cell.dataset.margin = value;
-      cell.style.margin = value || '';
+      cellBlocks.style.margin = value || '';
       if (callbacks.onChange) callbacks.onChange();
     });
     marGroup.appendChild(marInput);
@@ -444,9 +446,6 @@ export function createLayoutBlock(config) {
     toolbar.appendChild(delBtn);
 
     cell.appendChild(toolbar);
-
-    const cellBlocks = document.createElement('div');
-    cellBlocks.className = 'layout-cell-blocks';
     cell.appendChild(cellBlocks);
 
     function updateCellCapacityState() {

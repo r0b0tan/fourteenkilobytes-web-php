@@ -793,6 +793,7 @@ describe('createLayoutBlock', () => {
     });
 
     const cell = block.querySelector('.layout-cell');
+    const cellBlocks = cell.querySelector('.layout-cell-blocks');
     const [padInput, marInput] = cell.querySelectorAll('.layout-toolbar-input input');
 
     padInput.value = ' 1rem ';
@@ -801,16 +802,16 @@ describe('createLayoutBlock', () => {
     marInput.dispatchEvent(new Event('input'));
 
     expect(cell.dataset.padding).toBe('1rem');
-    expect(cell.style.padding).toBe('1rem');
+    expect(cellBlocks.style.padding).toBe('1rem');
     expect(cell.dataset.margin).toBe('8px');
-    expect(cell.style.margin).toBe('8px');
+    expect(cellBlocks.style.margin).toBe('8px');
 
     padInput.value = '   ';
     padInput.dispatchEvent(new Event('input'));
     marInput.value = '   ';
     marInput.dispatchEvent(new Event('input'));
-    expect(cell.style.padding).toBe('');
-    expect(cell.style.margin).toBe('');
+    expect(cellBlocks.style.padding).toBe('');
+    expect(cellBlocks.style.margin).toBe('');
   });
 
   test('delete button clears nested cell blocks', () => {

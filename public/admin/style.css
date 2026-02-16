@@ -1962,7 +1962,7 @@ input.block-selector-input {
   border: none;
   border-right: 1px dashed rgba(128, 128, 128, 0.5);
   border-bottom: 1px dashed rgba(128, 128, 128, 0.5);
-  padding: 12px;
+  padding: 0;
   min-height: 80px;
   display: flex;
   flex-direction: column;
@@ -1987,6 +1987,9 @@ input.block-selector-input {
 
 .layout-cell-blocks {
   flex: 1;
+  box-sizing: border-box;
+  padding: 12px;
+  margin: 0;
 }
 
 .layout-cell-blocks .block-item {

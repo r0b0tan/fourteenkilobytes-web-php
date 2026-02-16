@@ -152,6 +152,8 @@ export function createEditorSourceLoader(deps) {
           block.cells.forEach(cellData => {
             const cellEl = document.createElement('div');
             cellEl.className = 'layout-cell';
+            const cellBlocks = document.createElement('div');
+            cellBlocks.className = 'layout-cell-blocks';
 
             const toolbar = document.createElement('div');
             toolbar.className = 'layout-cell-toolbar';
@@ -188,12 +190,12 @@ export function createEditorSourceLoader(deps) {
             if (cellData.padding) {
               padInput.value = cellData.padding;
               cellEl.dataset.padding = cellData.padding;
-              cellEl.style.padding = cellData.padding;
+              cellBlocks.style.padding = cellData.padding;
             }
             padInput.addEventListener('input', () => {
               const value = padInput.value.trim();
               cellEl.dataset.padding = value;
-              cellEl.style.padding = value || '';
+              cellBlocks.style.padding = value || '';
               deps.onPreviewRequested();
             });
             padGroup.appendChild(padInput);
@@ -209,12 +211,12 @@ export function createEditorSourceLoader(deps) {
             if (cellData.margin) {
               marInput.value = cellData.margin;
               cellEl.dataset.margin = cellData.margin;
-              cellEl.style.margin = cellData.margin;
+              cellBlocks.style.margin = cellData.margin;
             }
             marInput.addEventListener('input', () => {
               const value = marInput.value.trim();
               cellEl.dataset.margin = value;
-              cellEl.style.margin = value || '';
+              cellBlocks.style.margin = value || '';
               deps.onPreviewRequested();
             });
             marGroup.appendChild(marInput);
@@ -241,8 +243,6 @@ export function createEditorSourceLoader(deps) {
               cellEl.style.textAlign = cellData.textAlign;
             }
 
-            const cellBlocks = document.createElement('div');
-            cellBlocks.className = 'layout-cell-blocks';
             if (cellData.children && cellData.children.length > 0) {
               cellData.children.slice(0, MAX_BLOCKS_PER_CELL).forEach((child) => {
                 cellBlocks.appendChild(blockElFromSource(child, depth + 1));
