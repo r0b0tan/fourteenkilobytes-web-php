@@ -412,7 +412,7 @@ describe('settings-page/editor-runtime', () => {
     expect(env.elements.homepageSelect.value).toBe('startseite');
     expect(env.helpers.createLinkChip).toHaveBeenCalled();
     expect(env.helpers.setFaviconPreview).toHaveBeenCalled();
-    expect(env.helpers.updateCssModeUI).toHaveBeenCalled();
+    expect(env.helpers.updateCssModeUI).toHaveBeenCalledWith({ skipOverhead: true });
     expect(env.helpers.updateRssFeedUrlPreview).toHaveBeenCalled();
     expect(document.getElementById('loading-overlay')).toBeNull();
     expect(env.state.initialSettings).toBeTruthy();

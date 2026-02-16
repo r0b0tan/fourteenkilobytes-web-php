@@ -245,6 +245,8 @@ The Docker setup includes:
 ### Manual Deployment
 
 1. Run `./build.sh` to generate `dist/` (HTML/CSS in `dist/public` and `dist/setup` is minified by default)
+   - Build guard: `build.sh` aborts if `version.json` and `package.json` contain different `version` values.
+   - Troubleshooting: If this fails, run `./release.sh --version X.Y.Z` (preferred) or manually align both version fields.
    - Disable build minification if needed: `MINIFY_ASSETS=0 ./build.sh`
 2. Upload `dist/` contents to your server
 3. Ensure `data/` is writable by web server

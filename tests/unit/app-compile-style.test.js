@@ -29,6 +29,40 @@ function collectBloglists(blocks) {
 }
 
 describe('createCompileStyleService', () => {
+  it('reuses one in-flight preset load for parallel requests', async () => {
+    const fetchMock = vi.fn(async (url) => ({
+      ok: true,
+      async text() {
+        if (url.includes('default.css')) return '/*a*/body{color:black;}';
+        if (url.includes('light.css')) return 'body{color:#111;}';
+        if (url.includes('dark.css')) return 'body{color:#eee;}';
+        return '';
+      },
+    }));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const service = createCompileStyleService({
+      getSettings: vi.fn(async () => ({ cssEnabled: true, cssMode: 'default' })),
+      getPosts: vi.fn(async () => []),
+      stripCssComments: (css) => css.replace(/\/\*[\s\S]*?\*\//g, ''),
+      isClassManglingEnabledForSettings: () => false,
+      getClassManglingModeForSettings: () => 'safe',
+      contentHasSections: () => false,
+    });
+
+    const [a, b] = await Promise.all([
+      service.loadCssPresets(),
+      service.loadCssPresets(),
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(a).toEqual(b);
+    expect(a.default).toBe('body{color:black;}');
+
+    vi.unstubAllGlobals();
+  });
+
   it('handles nested bloglist blocks in applyGlobalSettings', async () => {
     const getPosts = vi.fn(async () => [
       { slug: 'post-a', title: 'Post A', publishedAt: '2026-01-01', status: 'published', pageType: 'post' }

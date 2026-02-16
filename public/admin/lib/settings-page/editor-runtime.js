@@ -246,7 +246,7 @@ export function createEditorRuntime({
       cssMode.value = settings.cssMode || 'default';
       globalCss.value = settings.globalCss || '';
       pageWidth.value = settings.pageWidth || '';
-      updateCssModeUI();
+      updateCssModeUI({ skipOverhead: true });
 
       metaEnabled.checked = settings.meta?.enabled !== false;
       metaEditor.classList.toggle('hidden', !metaEnabled.checked);

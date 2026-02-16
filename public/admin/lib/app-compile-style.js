@@ -80,6 +80,7 @@ export function createCompileStyleService(deps) {
 
   const CSS_PRESET_NAMES = ['default', 'light', 'dark'];
   let cssPresetsCache = null;
+  let cssPresetsPromise = null;
   let sectionCssCache = null;
 
   async function isCompressionEnabled() {
@@ -108,20 +109,32 @@ export function createCompileStyleService(deps) {
       return cssPresetsCache;
     }
 
-    const presets = {};
-    await Promise.all(CSS_PRESET_NAMES.map(async (name) => {
-      try {
-        const res = await fetch(`/admin/presets/${name}.css`);
-        if (res.ok) {
-          presets[name] = stripCssComments(await res.text()).trim();
-        }
-      } catch (e) {
-        console.warn(`Failed to load preset ${name}:`, e);
-      }
-    }));
+    if (cssPresetsPromise) {
+      return cssPresetsPromise;
+    }
 
-    cssPresetsCache = presets;
-    return presets;
+    cssPresetsPromise = (async () => {
+      const presets = {};
+      await Promise.all(CSS_PRESET_NAMES.map(async (name) => {
+        try {
+          const res = await fetch(`/admin/presets/${name}.css`);
+          if (res.ok) {
+            presets[name] = stripCssComments(await res.text()).trim();
+          }
+        } catch (e) {
+          console.warn(`Failed to load preset ${name}:`, e);
+        }
+      }));
+
+      cssPresetsCache = presets;
+      return presets;
+    })();
+
+    try {
+      return await cssPresetsPromise;
+    } finally {
+      cssPresetsPromise = null;
+    }
   }
 
   async function getPresetCSS(cssMode, customCss = '') {

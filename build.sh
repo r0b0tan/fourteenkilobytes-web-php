@@ -4,8 +4,43 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="$SCRIPT_DIR/dist"
+VERSION_JSON="$SCRIPT_DIR/version.json"
+PACKAGE_JSON="$SCRIPT_DIR/package.json"
 
 echo "Building to $DIST_DIR..."
+
+echo "Checking version consistency..."
+read -r VERSION_JSON_VALUE PACKAGE_JSON_VALUE < <(
+	python3 - "$VERSION_JSON" "$PACKAGE_JSON" << 'PY'
+import json
+import sys
+
+version_file, package_file = sys.argv[1:3]
+
+with open(version_file, 'r', encoding='utf-8') as f:
+		version_data = json.load(f)
+
+with open(package_file, 'r', encoding='utf-8') as f:
+		package_data = json.load(f)
+
+print((version_data.get('version') or '').strip(), (package_data.get('version') or '').strip())
+PY
+)
+
+if [ -z "$VERSION_JSON_VALUE" ] || [ -z "$PACKAGE_JSON_VALUE" ]; then
+	echo "Error: Could not read version from version.json or package.json"
+	exit 1
+fi
+
+if [ "$VERSION_JSON_VALUE" != "$PACKAGE_JSON_VALUE" ]; then
+	echo "Error: Version mismatch detected"
+	echo "  version.json:  $VERSION_JSON_VALUE"
+	echo "  package.json:  $PACKAGE_JSON_VALUE"
+	echo "Please align both versions before building."
+	exit 1
+fi
+
+echo "Version check passed ($VERSION_JSON_VALUE)."
 
 # Clean dist directory
 rm -rf "$DIST_DIR"
@@ -19,6 +54,10 @@ cp "$SCRIPT_DIR/.htaccess" "$DIST_DIR/"
 cp "$SCRIPT_DIR/nginx.conf.example" "$DIST_DIR/"
 cp "$SCRIPT_DIR/version.json" "$DIST_DIR/"
 cp "$SCRIPT_DIR/fix-permissions.sh" "$DIST_DIR/"
+cp "$SCRIPT_DIR/upgrade.sh" "$DIST_DIR/"
+cp "$SCRIPT_DIR/rollback.sh" "$DIST_DIR/"
+
+chmod +x "$DIST_DIR/fix-permissions.sh" "$DIST_DIR/upgrade.sh" "$DIST_DIR/rollback.sh"
 
 # Copy directories
 cp -r "$SCRIPT_DIR/api" "$DIST_DIR/"

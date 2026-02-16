@@ -419,7 +419,8 @@ export function initEditorInteractions({
     state.cssPreviewLoaded = true;
   }
 
-  function updateCssModeUI() {
+  function updateCssModeUI(options = {}) {
+    const { skipOverhead = false } = options;
     const mode = cssMode.value;
     const isCustom = mode === 'custom';
 
@@ -434,7 +435,9 @@ export function initEditorInteractions({
         state.cssPreviewLoaded = false;
       }
     }
-    updateOverhead();
+    if (!skipOverhead) {
+      updateOverhead();
+    }
   }
 
   cssEnabled.addEventListener('change', () => {
