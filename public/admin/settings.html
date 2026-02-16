@@ -123,7 +123,7 @@
         <button type="button" class="tab-btn active" data-tab="general" data-i18n="tabs.general">General</button>
         <button type="button" class="tab-btn" data-tab="header" data-i18n="tabs.header">Header</button>
         <button type="button" class="tab-btn" data-tab="footer" data-i18n="tabs.footer">Footer</button>
-        <button type="button" class="tab-btn" data-tab="bloglist" data-i18n="tabs.bloglist">Bloglist</button>
+        <button type="button" class="tab-btn" data-tab="bloglist" data-i18n="tabs.blog">Blog</button>
         <button type="button" class="tab-btn" data-tab="css" data-i18n="tabs.css">CSS</button>
         <button type="button" class="tab-btn" data-tab="optimizations" data-i18n="tabs.optimizations">Optimizations</button>
         <button type="button" class="tab-btn" data-tab="rss" data-i18n="tabs.rss">RSS</button>
@@ -312,10 +312,22 @@
         </div>
       </div>
 
-      <!-- Bloglist Tab -->
+      <!-- Blog Tab -->
       <div id="tab-bloglist" class="tab-content hidden">
-        <!-- Limit Section -->
+        <!-- Global Author Section -->
         <div class="override-section override-section-first">
+          <h3 class="override-section-title" data-i18n="settings.blogAuthorSection">AUTHOR</h3>
+          <div id="blog-author-editor" class="override-editor" style="display: block;">
+            <p class="text-small text-muted mb-1" data-i18n="settings.blogAuthorHint">Global fallback author for metadata and author blocks</p>
+            <div class="form-group">
+              <label for="blog-author" data-i18n="settings.blogAuthorLabel">Author</label>
+              <input type="text" id="blog-author" maxlength="100" data-i18n-placeholder="settings.blogAuthorPlaceholder" placeholder="John Doe">
+            </div>
+          </div>
+        </div>
+
+        <!-- Limit Section -->
+        <div class="override-section">
           <h3 class="override-section-title" data-i18n="settings.bloglistLimit">POST LIMIT</h3>
           <div id="bloglist-limit-editor" class="override-editor" style="display: block;">
             <p class="text-small text-muted mb-1" data-i18n="settings.bloglistLimitHint">Maximum number of posts shown in bloglist blocks</p>

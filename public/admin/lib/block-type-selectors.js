@@ -99,6 +99,9 @@ export function createBlockTypeLabel(type) {
   } else if (type === 'bloglist') {
     label.setAttribute('data-i18n', 'editor.blockBloglist');
     label.textContent = 'Bloglist';
+  } else if (type === 'author') {
+    label.setAttribute('data-i18n', 'editor.blockAuthor');
+    label.textContent = 'Author';
   }
 
   return label;

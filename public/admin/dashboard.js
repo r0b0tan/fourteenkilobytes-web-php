@@ -421,12 +421,39 @@ export async function init() {
     const endIndex = Math.min(startIndex + effectivePageSize, totalItems);
     const pageItems = items.slice(startIndex, endIndex);
 
+    function buildMetaText(item, safeSlugText) {
+      const metaParts = [`/${safeSlugText}`];
+
+      const publishedAt = item.publishedAt ? new Date(item.publishedAt) : null;
+      const modifiedAt = item.modifiedAt ? new Date(item.modifiedAt) : null;
+      const hasPublished = publishedAt && !Number.isNaN(publishedAt.getTime());
+      const hasModified = modifiedAt && !Number.isNaN(modifiedAt.getTime());
+
+      if (hasModified && (!hasPublished || modifiedAt.getTime() > publishedAt.getTime())) {
+        metaParts.push(t('dashboard.modifiedAt', { date: App.formatDate(item.modifiedAt) }));
+      } else if (hasPublished) {
+        metaParts.push(t('dashboard.publishedAt', { date: App.formatDate(item.publishedAt) }));
+      }
+
+      const author = String(item.author || '').trim();
+      if (author) {
+        metaParts.push(t('dashboard.byAuthor', { author: App.escapeHtml(author) }));
+      }
+
+      if (item.status === 'tombstone') {
+        metaParts.push(`<span class="text-muted">${t('dashboard.deleted')}</span>`);
+      }
+
+      return metaParts.join(' · ');
+    }
+
     listEl.innerHTML = pageItems.map(item => {
       const rawSlug = String(item.slug || '');
       const safeSlugText = App.escapeHtml(rawSlug);
       const safeSlugAttr = App.escapeHtml(rawSlug);
       const safeSlugPath = encodeURIComponent(rawSlug);
       const safeTitle = App.escapeHtml(item.title);
+      const metaText = buildMetaText(item, safeSlugText);
 
       return `
       <li>
@@ -445,8 +472,7 @@ export async function init() {
             }
           </div>
           <div class="post-meta">
-            /${safeSlugText} · ${App.formatDate(item.publishedAt)}
-            ${item.status === 'tombstone' ? ` · <span class="text-muted">${t('dashboard.deleted')}</span>` : ''}
+            ${metaText}
           </div>
         </div>
         <div class="post-actions">

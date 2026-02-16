@@ -168,6 +168,7 @@ export function createInnerAddBlock(config) {
       { type: 'list', i18n: 'editor.blockList', label: 'List', listType: 'unordered' },
       { type: 'divider', i18n: 'editor.blockDivider', label: 'Divider' },
       { type: 'spacer', i18n: 'editor.blockSpacer', label: 'Spacer' },
+      { type: 'author', i18n: 'editor.blockAuthor', label: 'Author' },
       { type: 'bloglist', i18n: 'editor.blockBloglist', label: 'Bloglist' },
       { type: 'layout', i18n: 'editor.blockLayout', label: 'Layout' }
     ],

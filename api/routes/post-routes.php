@@ -2,19 +2,49 @@
 
 declare(strict_types=1);
 
+function resolvePostAuthor($sourceData, array $settings): ?string {
+    $sourceAuthor = '';
+    if (is_array($sourceData) && isset($sourceData['meta']) && is_array($sourceData['meta']) && isset($sourceData['meta']['author'])) {
+        $sourceAuthor = trim((string) $sourceData['meta']['author']);
+    }
+    if ($sourceAuthor !== '') {
+        return $sourceAuthor;
+    }
+
+    $blogAuthor = trim((string) ($settings['blog']['author'] ?? ''));
+    if ($blogAuthor !== '') {
+        return $blogAuthor;
+    }
+
+    $metaAuthor = trim((string) ($settings['meta']['author'] ?? ''));
+    if ($metaAuthor !== '') {
+        return $metaAuthor;
+    }
+
+    return null;
+}
+
 function handlePostRoutes(string $method, string $path): bool {
     if ($method === 'GET' && $path === '/posts') {
         checkGlobalRateLimit('/posts', false);
 
         $manifest = loadManifest();
         $pageTypes = loadPageTypes();
+        $settings = loadSettings();
+        $fallbackAuthor = trim((string) ($settings['blog']['author'] ?? ''));
+        if ($fallbackAuthor === '') {
+            $fallbackAuthor = trim((string) ($settings['meta']['author'] ?? ''));
+        }
 
         $posts = [];
         foreach ($manifest['entries'] ?? [] as $entry) {
+            $entryAuthor = trim((string) ($entry['author'] ?? ''));
             $posts[] = [
                 'slug' => $entry['slug'],
                 'title' => $entry['title'],
                 'publishedAt' => $entry['publishedAt'],
+                'modifiedAt' => $entry['modifiedAt'] ?? null,
+                'author' => $entryAuthor !== '' ? $entryAuthor : ($fallbackAuthor !== '' ? $fallbackAuthor : null),
                 'status' => $entry['status'],
                 'pageType' => $pageTypes['types'][$entry['slug']] ?? 'post',
             ];
@@ -110,11 +140,19 @@ function handlePostRoutes(string $method, string $path): bool {
             }
 
             $manifest = loadManifest();
+            $existingEntry = null;
             foreach ($manifest['entries'] ?? [] as $entry) {
                 if ($entry['slug'] === $baseSlug && $entry['status'] === 'tombstone') {
                     sendJson(409, ['error' => "Slug '{$baseSlug}' was previously used and tombstoned"]);
                 }
+                if ($entry['slug'] === $baseSlug && $entry['status'] !== 'tombstone') {
+                    $existingEntry = $entry;
+                }
             }
+
+            $publishedAt = $existingEntry['publishedAt'] ?? $timestamp;
+            $modifiedAt = $existingEntry !== null ? $timestamp : null;
+            $resolvedAuthor = resolvePostAuthor($sourceData, $settings);
 
             $savedSlugs = [];
             foreach ($minifiedPages as $page) {
@@ -129,9 +167,15 @@ function handlePostRoutes(string $method, string $path): bool {
                 'status' => 'published',
                 'hash' => $hashes[0],
                 'title' => $title,
-                'publishedAt' => $timestamp,
+                'publishedAt' => $publishedAt,
                 'pageCount' => count($pages),
             ];
+            if ($modifiedAt !== null) {
+                $manifestEntry['modifiedAt'] = $modifiedAt;
+            }
+            if ($resolvedAuthor !== null) {
+                $manifestEntry['author'] = $resolvedAuthor;
+            }
             $newEntries[] = $manifestEntry;
 
             if ($sourceData !== null) {
@@ -183,11 +227,19 @@ function handlePostRoutes(string $method, string $path): bool {
         }
 
         $manifest = loadManifest();
+        $existingEntry = null;
         foreach ($manifest['entries'] ?? [] as $entry) {
             if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
                 sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned"]);
             }
+            if ($entry['slug'] === $slug && $entry['status'] !== 'tombstone') {
+                $existingEntry = $entry;
+            }
         }
+
+        $publishedAt = $existingEntry['publishedAt'] ?? $timestamp;
+        $modifiedAt = $existingEntry !== null ? $timestamp : null;
+        $resolvedAuthor = resolvePostAuthor($sourceData, $settings);
 
         $htmlPath = POSTS_DIR . "/{$slug}.html";
         file_put_contents($htmlPath, $html, LOCK_EX);
@@ -198,8 +250,14 @@ function handlePostRoutes(string $method, string $path): bool {
             'status' => 'published',
             'hash' => $hash,
             'title' => $title,
-            'publishedAt' => $timestamp,
+            'publishedAt' => $publishedAt,
         ];
+        if ($modifiedAt !== null) {
+            $manifestEntry['modifiedAt'] = $modifiedAt;
+        }
+        if ($resolvedAuthor !== null) {
+            $manifestEntry['author'] = $resolvedAuthor;
+        }
         $newEntries[] = $manifestEntry;
         $manifest['entries'] = array_values($newEntries);
         saveManifest($manifest);

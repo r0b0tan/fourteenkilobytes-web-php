@@ -51,6 +51,7 @@ export function initEditorCore({ doc = document, App, t, i18n, debounce, formatB
     rssSettingsSection: doc.getElementById('rss-settings-section'),
     rssCopyBtn: doc.getElementById('rss-copy-btn'),
     rssPreviewLink: doc.getElementById('rss-preview-link'),
+    blogAuthor: doc.getElementById('blog-author'),
     bloglistLimit: doc.getElementById('bloglist-limit'),
     archiveEnabled: doc.getElementById('archive-enabled'),
     archiveUrlSection: doc.getElementById('archive-url-section'),

@@ -60,6 +60,7 @@ export function initEditorInteractions({
     rssSettingsSection,
     rssCopyBtn,
     rssPreviewLink,
+    blogAuthor,
     bloglistLimit,
     archiveEnabled,
     archiveUrlSection,
@@ -374,6 +375,10 @@ export function initEditorInteractions({
       Toast.error(t('settings.rssCopyError'));
     }
   });
+
+  if (blogAuthor) {
+    blogAuthor.addEventListener('input', markAsChanged);
+  }
 
   bloglistLimit.addEventListener('input', markAsChanged);
 

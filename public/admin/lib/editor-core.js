@@ -258,6 +258,23 @@ export function serializeBlock(block) {
   if (type === 'bloglist') {
     return withSelector({ type: 'bloglist' });
   }
+  if (type === 'author') {
+    const tags = (block.dataset.tags || '')
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean)
+      .filter((tag, index, arr) => arr.indexOf(tag) === index)
+      .slice(0, 8)
+      .map(tag => tag.slice(0, 32));
+
+    return withSelector({
+      type: 'author',
+      showPublished: block.dataset.showPublished !== 'false',
+      showModified: block.dataset.showModified !== 'false',
+      showAuthor: block.dataset.showAuthor !== 'false',
+      tags
+    });
+  }
   if (type === 'divider') {
     return withSelector({ type: 'divider' });
   }

@@ -20,6 +20,9 @@ function loadSettings(): array {
                 'archiveSlug' => 'archive',
                 'archiveLinkText' => 'View all posts →',
             ],
+            'blog' => [
+                'author' => '',
+            ],
         ];
     }
     $content = file_get_contents(SETTINGS_FILE);
@@ -38,6 +41,12 @@ function loadSettings(): array {
             'archiveSlug' => 'archive',
             'archiveLinkText' => 'View all posts →',
         ];
+    }
+    if (!isset($settings['blog']) || !is_array($settings['blog'])) {
+        $settings['blog'] = [];
+    }
+    if (!isset($settings['blog']['author']) || !is_string($settings['blog']['author'])) {
+        $settings['blog']['author'] = '';
     }
     if (!isset($settings['optimizations']) || !is_array($settings['optimizations'])) {
         $settings['optimizations'] = [];

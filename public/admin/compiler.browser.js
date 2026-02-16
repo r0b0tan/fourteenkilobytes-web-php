@@ -246,7 +246,7 @@ function validateContent(blocks) {
 }
 function validateContentBlock(block, path, disallowNesting = false) {
   const blockType = block.type;
-  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer", "section", "layout"];
+  const allowedBlockTypes = ["heading", "paragraph", "bloglist", "author", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer", "section", "layout"];
   if (!allowedBlockTypes.includes(blockType)) {
     return {
       valid: false,
@@ -275,7 +275,7 @@ function validateContentBlock(block, path, disallowNesting = false) {
       error: {
         code: "CONTENT_INVALID_ELEMENT",
         element: blockType,
-        allowed: ["heading", "paragraph", "bloglist", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer"],
+        allowed: ["heading", "paragraph", "bloglist", "author", "unordered-list", "ordered-list", "blockquote", "codeblock", "divider", "spacer"],
         path
       }
     };
@@ -362,6 +362,12 @@ function validateContentBlock(block, path, disallowNesting = false) {
     const bloglistResult = validateBloglistBlock(block, path);
     if (!bloglistResult.valid)
       return bloglistResult;
+    return { valid: true };
+  }
+  if (blockType === "author") {
+    const authorResult = validateAuthorBlock(block, path);
+    if (!authorResult.valid)
+      return authorResult;
     return { valid: true };
   }
   if (blockType === "layout") {
@@ -640,6 +646,73 @@ function validateBloglistBlock(block, path) {
   }
   return { valid: true };
 }
+function validateAuthorBlock(block, path) {
+  const boolFields = ["showPublished", "showModified", "showAuthor"];
+  for (const field of boolFields) {
+    const value = block[field];
+    if (value !== void 0 && typeof value !== "boolean") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `author with non-boolean ${String(field)}`,
+          allowed: [`author with boolean ${String(field)} or no ${String(field)}`],
+          path
+        }
+      };
+    }
+  }
+  if (block.tags !== void 0) {
+    if (!Array.isArray(block.tags)) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: "author with non-array tags",
+          allowed: ["author with tags string array"],
+          path
+        }
+      };
+    }
+    if (block.tags.length > 8) {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `author with ${block.tags.length} tags`,
+          allowed: ["author with up to 8 tags"],
+          path
+        }
+      };
+    }
+    for (let index = 0; index < block.tags.length; index++) {
+      const tag = block.tags[index];
+      if (typeof tag !== "string") {
+        return {
+          valid: false,
+          error: {
+            code: "CONTENT_INVALID_ELEMENT",
+            element: "author with non-string tag",
+            allowed: ["author tags with string values"],
+            path: `${path}.tags[${index}]`
+          }
+        };
+      }
+      if (tag.length > 32) {
+        return {
+          valid: false,
+          error: {
+            code: "CONTENT_INVALID_ELEMENT",
+            element: `author tag with ${tag.length} characters`,
+            allowed: ["author tags with max 32 characters"],
+            path: `${path}.tags[${index}]`
+          }
+        };
+      }
+    }
+  }
+  return { valid: true };
+}
 function validateIcons(icons) {
   const available = getAvailableIconIds();
   for (let i = 0; i < icons.length; i++) {
@@ -885,7 +958,7 @@ ${navItems}
       );
       contentBlocks.push(...bloglistBlocks);
     } else {
-      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled, classManglingMode);
+      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled, classManglingMode, input.slug, input.meta?.author || null);
       contentBlocks.push({
         html,
         bytes: measureBytes(html),
@@ -933,12 +1006,15 @@ ${navItems}
     iconBytes
   };
 }
-function flattenContentBlock(block, icons, posts, classManglingEnabled = false, classManglingMode = "safe") {
+function flattenContentBlock(block, icons, posts, classManglingEnabled = false, classManglingMode = "safe", slug, fallbackAuthor) {
   if (block.type === "bloglist") {
     const bloglistHtml = renderBloglist(posts || [], block, classManglingEnabled, classManglingMode);
     if (!block.selector)
       return bloglistHtml;
     return `<div${selectorAttrs(block.selector)}>${bloglistHtml}</div>`;
+  }
+  if (block.type === "author") {
+    return renderAuthorBlock(posts || [], slug || "", block, fallbackAuthor || null);
   }
   if (block.type === "divider") {
     return `<hr${selectorAttrs(block.selector)}>`;
@@ -962,7 +1038,7 @@ ${items}
   }
   if (block.type === "layout") {
     const cellsHtml = block.cells.map((cell) => {
-      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode)).join("\n");
+      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
       const cellStyles = [];
       const textAlign = normalizeAlignment(cell.textAlign);
       const padding = normalizeCssLength(cell.padding);
@@ -1003,7 +1079,7 @@ ${items}
     return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${cellsHtml}</div>`;
   }
   if (block.type === "section") {
-    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode)).join("\n");
+    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
     const sectionAlign = normalizeAlignment(block.align);
     const sectionPadding = normalizeCssLength(block.padding);
     const styles = [];
@@ -1052,6 +1128,50 @@ ${items}
   return `<p${selectorAttrs(block.selector)}>${inlineHtml}</p>`;
 }
 var DEFAULT_BLOGLIST_LIMIT = 20;
+function formatDisplayDate(iso) {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime()))
+    return iso;
+  return parsed.toLocaleDateString("de-DE", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+function parseDateMs(iso) {
+  if (!iso)
+    return null;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime()))
+    return null;
+  return parsed.getTime();
+}
+function renderAuthorBlock(posts, slug, block, fallbackAuthor) {
+  const current = posts.find((post) => post.slug === slug) || null;
+  const showPublished = block.showPublished !== false;
+  const showModified = block.showModified !== false;
+  const showAuthor = block.showAuthor !== false;
+  const publishedAt = current?.publishedAt || "";
+  const modifiedAt = current?.modifiedAt || "";
+  const publishedMs = parseDateMs(publishedAt);
+  const modifiedMs = parseDateMs(modifiedAt);
+  const author = String(current?.author || fallbackAuthor || "").trim();
+  const parts = [];
+  if (showPublished && publishedAt) {
+    parts.push(`Ver\xF6ffentlicht: <time datetime="${escapeHtml(publishedAt)}">${escapeHtml(formatDisplayDate(publishedAt))}</time>`);
+  }
+  if (showModified && modifiedAt && (publishedMs === null || modifiedMs !== null && modifiedMs > publishedMs)) {
+    parts.push(`Aktualisiert: <time datetime="${escapeHtml(modifiedAt)}">${escapeHtml(formatDisplayDate(modifiedAt))}</time>`);
+  }
+  if (showAuthor && author) {
+    parts.push(`Von ${escapeHtml(author)}`);
+  }
+  const tags = Array.isArray(block.tags) ? block.tags.map((tag) => String(tag).trim()).filter(Boolean).filter((tag, index, arr) => arr.indexOf(tag) === index).slice(0, 8).map((tag) => tag.slice(0, 32)) : [];
+  if (tags.length > 0) {
+    parts.push(`Tags: ${tags.map((tag) => escapeHtml(tag)).join(", ")}`);
+  }
+  return `<p${selectorAttrs(block.selector)}>${parts.join(" \xB7 ")}</p>`;
+}
 function renderBloglist(posts, block, classManglingEnabled = false, classManglingMode = "safe") {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {

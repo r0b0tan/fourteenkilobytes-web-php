@@ -226,9 +226,10 @@ describe('createInnerAddBlock', () => {
     const dropdown = row.querySelector('.add-block-dropdown');
     const buttons = dropdown.querySelectorAll('button');
 
-    expect(buttons.length).toBe(7); // paragraph, heading, list, divider, spacer, bloglist, layout
+    expect(buttons.length).toBe(8); // paragraph, heading, list, divider, spacer, author, bloglist, layout
     expect(buttons[0].textContent).toBe('Paragraph');
     expect(buttons[1].textContent).toBe('Heading');
+    expect(dropdown.querySelector('[data-type="author"]')).toBeTruthy();
     expect(dropdown.querySelector('[data-type="bloglist"]')).toBeTruthy();
   });
 

@@ -248,6 +248,7 @@
             <button type="button" data-type="list" data-list-type="unordered" data-i18n="editor.blockList">List</button>
             <button type="button" data-type="divider" data-i18n="editor.blockDivider">Divider</button>
             <button type="button" data-type="spacer" data-i18n="editor.blockSpacer">Spacer</button>
+            <button type="button" data-type="author" data-i18n="editor.blockAuthor">Author</button>
             <button type="button" data-type="bloglist" data-i18n="editor.blockBloglist">Bloglist</button>
             <button type="button" data-type="section" data-i18n="editor.blockSection">Section</button>
           </div>
@@ -448,7 +449,7 @@
     import { createModalManager } from './lib/modal-utils.js';
     import { updateBlockStyling, insertBlockBelow, moveBlock as moveBlockUtil, toggleSelectionWrap } from './lib/block-operations.js';
     import { createTextBlockTypeSelector, createHeadingLevelSelector, createListTypeSelector, createBlockTypeLabel, createFormatButtons } from './lib/block-type-selectors.js';
-    import { createBloglistContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
+    import { createBloglistContent, createAuthorContent, createListContent, createDividerContent, createSpacerContent, createCodeblockContent, createBlockquoteContent, createParagraphContent, createHeadingContent } from './lib/block-content-builders.js';
     import { createEditorStateManager } from './lib/editor/state.js';
     import { createEditorMetricsManager } from './lib/editor/metrics.js';
     import { createEditorOverridesManager } from './lib/editor/overrides.js';
@@ -738,6 +739,7 @@
           createBlockSelectorControl,
           createByteIndicator,
           createBloglistContent,
+          createAuthorContent,
           createListContent,
           createDividerContent,
           createSpacerContent,

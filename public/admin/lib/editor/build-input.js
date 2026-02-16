@@ -56,11 +56,12 @@ export function createEditorBuildInputManager(deps) {
       : [{ type: 'paragraph', children: [{ type: 'text', text: '' }] }];
 
     const hasBloglist = contentHasBlockType(finalContent, 'bloglist');
-    if (hasBloglist) {
+    const hasAuthorBlock = contentHasBlockType(finalContent, 'author');
+    if (hasBloglist || hasAuthorBlock) {
       try {
         posts = await deps.getPosts();
       } catch (err) {
-        console.warn('Failed to load posts for bloglist:', err);
+        console.warn('Failed to load posts for block metadata:', err);
       }
     }
 

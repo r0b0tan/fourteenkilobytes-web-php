@@ -82,6 +82,16 @@ export function renderBlockHtml(blockData) {
     const attrs = selectorToAttributes(blockData.selector);
     return `<div${attrs}><!-- bloglist --></div>`;
   }
+  if (blockData.type === 'author') {
+    const attrs = selectorToAttributes(blockData.selector);
+    const parts = [];
+    if (blockData.showPublished !== false) parts.push('Published: 2026-02-16');
+    if (blockData.showModified !== false) parts.push('Modified: 2026-02-16');
+    if (blockData.showAuthor !== false) parts.push('By Author');
+    const tags = Array.isArray(blockData.tags) ? blockData.tags.filter(Boolean) : [];
+    if (tags.length > 0) parts.push(`Tags: ${tags.map(tag => escapeHtml(tag)).join(', ')}`);
+    return `<p${attrs}>${parts.join(' · ')}</p>`;
+  }
   if (blockData.type === 'divider') {
     const attrs = selectorToAttributes(blockData.selector);
     return `<hr${attrs}>`;

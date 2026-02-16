@@ -56,6 +56,7 @@ export function createEditorRuntime({
     discardBtn,
     overheadPieChart,
     overheadPercent,
+      blogAuthor,
   } = elements;
 
   const {
@@ -107,6 +108,9 @@ export function createEditorRuntime({
         archiveEnabled: archiveEnabled.checked,
         archiveSlug: archiveSlug.value.trim() || 'archive',
         archiveLinkText: archiveLinkText.value.trim() || 'View all posts →',
+      },
+      blog: {
+        author: blogAuthor?.value?.trim() || '',
       },
       optimizations: {
         compression: {
@@ -271,6 +275,10 @@ export function createEditorRuntime({
       updateRssFeedUrlPreview();
 
       const bloglist = settings.bloglist || {};
+      const blog = settings.blog || {};
+      if (blogAuthor) {
+        blogAuthor.value = blog.author || '';
+      }
       bloglistLimit.value = bloglist.limit || 10;
       archiveEnabled.checked = bloglist.archiveEnabled !== false;
       const isArchiveEnabled = bloglist.archiveEnabled !== false;

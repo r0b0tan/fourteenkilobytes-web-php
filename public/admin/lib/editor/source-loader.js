@@ -34,6 +34,22 @@ export function createEditorSourceLoader(deps) {
       if (block.type === 'bloglist') {
         return applySelectorToBlockElement(deps.createBlockElement('bloglist', null, '', null, null, isNested), block);
       }
+      if (block.type === 'author') {
+        const el = deps.createBlockElement('author', null, '', null, null, isNested);
+        el.dataset.showPublished = block.showPublished === false ? 'false' : 'true';
+        el.dataset.showModified = block.showModified === false ? 'false' : 'true';
+        el.dataset.showAuthor = block.showAuthor === false ? 'false' : 'true';
+        el.dataset.tags = Array.isArray(block.tags) ? block.tags.join(', ') : '';
+
+        const toggles = el.querySelectorAll('input[type="checkbox"]');
+        if (toggles[0]) toggles[0].checked = el.dataset.showPublished !== 'false';
+        if (toggles[1]) toggles[1].checked = el.dataset.showModified !== 'false';
+        if (toggles[2]) toggles[2].checked = el.dataset.showAuthor !== 'false';
+        const tagsInput = el.querySelector('input[type="text"]');
+        if (tagsInput) tagsInput.value = el.dataset.tags || '';
+
+        return applySelectorToBlockElement(el, block);
+      }
       if (block.type === 'divider') {
         return applySelectorToBlockElement(deps.createBlockElement('divider', null, '', null, null, isNested), block);
       }

@@ -34,7 +34,7 @@ export function updateBlockStyling(block) {
     content.dataset.placeholder = 'Quote...';
   } else if (type === 'codeblock') {
     content.dataset.placeholder = 'Code...';
-  } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list' && type !== 'spacer') {
+  } else if (type !== 'bloglist' && type !== 'divider' && type !== 'list' && type !== 'spacer' && type !== 'author') {
     content.dataset.placeholder = 'Enter text...';
   }
 }

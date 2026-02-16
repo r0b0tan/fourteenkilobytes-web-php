@@ -139,7 +139,8 @@ export function createCompileStyleService(deps) {
     mergedInput.classManglingMode = getClassManglingModeForSettings(settings);
 
     const hasBloglist = contentHasBlockType(mergedInput.content, 'bloglist');
-    if (hasBloglist && !mergedInput.posts) {
+    const hasAuthorBlock = contentHasBlockType(mergedInput.content, 'author');
+    if ((hasBloglist || hasAuthorBlock) && !mergedInput.posts) {
       mergedInput.posts = await getPosts();
     }
 

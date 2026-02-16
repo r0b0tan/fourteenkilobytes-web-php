@@ -18,10 +18,108 @@ export function createBloglistContent() {
         <em style="color: #999;" data-i18n="editor.bloglistPlaceholder">Blog posts will be listed here automatically</em>
       </div>
       <div class="bloglist-settings-link">
-        <a href="settings.html#bloglist" style="color: var(--text-secondary); font-size: 12px;" data-i18n="editor.bloglistSettingsLink">Configure in Settings → Bloglist</a>
+        <a href="settings.html#bloglist" style="color: var(--text-secondary); font-size: 12px;" data-i18n="editor.bloglistSettingsLink">Configure in Settings → Blog</a>
       </div>
     </div>
   `;
+  return content;
+}
+
+/**
+ * Creates author metadata block content with simple controls
+ * @param {Object} config - Configuration
+ * @param {HTMLElement} config.block - Block element
+ * @param {Function} config.onChange - Called when values change
+ * @returns {HTMLElement} Author block content element
+ */
+export function createAuthorContent(config = {}) {
+  const { block, onChange } = config;
+
+  if (block) {
+    if (block.dataset.showPublished === undefined) block.dataset.showPublished = 'true';
+    if (block.dataset.showModified === undefined) block.dataset.showModified = 'true';
+    if (block.dataset.showAuthor === undefined) block.dataset.showAuthor = 'true';
+    if (block.dataset.tags === undefined) block.dataset.tags = '';
+  }
+
+  const content = document.createElement('div');
+  content.contentEditable = 'false';
+  content.className = 'block-content block-author';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'bloglist-config';
+
+  const hint = document.createElement('div');
+  hint.className = 'bloglist-info';
+  hint.innerHTML = '<em style="color: #999;" data-i18n="editor.authorPlaceholder">Shows published/modified/author metadata</em>';
+  wrap.appendChild(hint);
+
+  const settings = document.createElement('div');
+  settings.className = 'bloglist-settings-link';
+
+  function addToggle(key, i18nKey, fallbackText, checked) {
+    const label = document.createElement('label');
+    label.style.display = 'inline-flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '6px';
+    label.style.marginRight = '12px';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = checked;
+    input.addEventListener('change', () => {
+      if (block) block.dataset[key] = input.checked ? 'true' : 'false';
+      if (onChange) onChange();
+    });
+
+    const span = document.createElement('span');
+    span.setAttribute('data-i18n', i18nKey);
+    span.textContent = fallbackText;
+
+    label.appendChild(input);
+    label.appendChild(span);
+    settings.appendChild(label);
+  }
+
+  const showPublished = block ? block.dataset.showPublished !== 'false' : true;
+  const showModified = block ? block.dataset.showModified !== 'false' : true;
+  const showAuthor = block ? block.dataset.showAuthor !== 'false' : true;
+  const tags = block?.dataset.tags || '';
+
+  addToggle('showPublished', 'editor.authorShowPublished', 'Published', showPublished);
+  addToggle('showModified', 'editor.authorShowModified', 'Modified', showModified);
+  addToggle('showAuthor', 'editor.authorShowAuthor', 'Author', showAuthor);
+
+  const tagsWrap = document.createElement('div');
+  tagsWrap.style.marginTop = '8px';
+
+  const tagsLabel = document.createElement('label');
+  tagsLabel.style.display = 'block';
+  tagsLabel.style.marginBottom = '0';
+
+  const tagsTitle = document.createElement('span');
+  tagsTitle.setAttribute('data-i18n', 'editor.authorTags');
+  tagsTitle.textContent = 'Tags';
+
+  const tagsInput = document.createElement('input');
+  tagsInput.type = 'text';
+  tagsInput.value = tags;
+  tagsInput.placeholder = 'design, cms, release';
+  tagsInput.style.marginLeft = '8px';
+  tagsInput.style.maxWidth = '280px';
+  tagsInput.addEventListener('input', () => {
+    if (block) block.dataset.tags = tagsInput.value;
+    if (onChange) onChange();
+  });
+
+  tagsLabel.appendChild(tagsTitle);
+  tagsLabel.appendChild(tagsInput);
+  tagsWrap.appendChild(tagsLabel);
+
+  settings.appendChild(tagsWrap);
+  wrap.appendChild(settings);
+  content.appendChild(wrap);
+
   return content;
 }
 

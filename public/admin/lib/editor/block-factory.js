@@ -190,7 +190,7 @@ export function createEditorBlockFactory(deps) {
       header.appendChild(deps.createBlockTypeLabel(type));
     }
 
-    if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock' && type !== 'spacer') {
+    if (type !== 'bloglist' && type !== 'divider' && type !== 'codeblock' && type !== 'spacer' && type !== 'author') {
       header.appendChild(deps.createFormatButtons(deps.onFormatClick, block));
     }
 
@@ -251,6 +251,14 @@ export function createEditorBlockFactory(deps) {
     let content;
     if (type === 'bloglist') {
       content = deps.createBloglistContent();
+    } else if (type === 'author') {
+      content = deps.createAuthorContent({
+        block,
+        onChange: () => {
+          deps.onCostRailChanged();
+          deps.onPreviewRequested();
+        }
+      });
     } else if (type === 'list' || type === 'unordered-list' || type === 'ordered-list') {
       const effectiveListType = block.dataset.listType || (type === 'ordered-list' ? 'ordered' : 'unordered');
       content = deps.createListContent({
