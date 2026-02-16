@@ -90,6 +90,22 @@ describe('createSectionBlock', () => {
     expect(bgInput.value).toBe('#ffffff');
   });
 
+  test('uses consistent default dataset colors', () => {
+    const callbacks = {
+      onChange: vi.fn(),
+      createInnerAddBlock: vi.fn().mockReturnValue(document.createElement('div'))
+    };
+
+    const block = createSectionBlock({
+      isNested: false,
+      callbacks,
+      Compiler: mockCompiler
+    });
+
+    expect(block.dataset.background).toBe('#ffffff');
+    expect(block.dataset.color).toBe('#000000');
+  });
+
   test('calls onChange when background color changes', () => {
     const onChange = vi.fn();
     const callbacks = {

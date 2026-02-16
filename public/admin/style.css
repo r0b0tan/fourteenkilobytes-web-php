@@ -2004,14 +2004,14 @@ input.block-selector-input {
 }
 
 .section-blocks .block-layout .layout-cells-grid {
-  display: inline-grid;
-  width: fit-content;
+  display: grid;
+  width: 100%;
   max-width: 100%;
-  min-height: 0;
+  min-height: 120px;
 }
 
 .section-blocks .block-layout .layout-cell {
-  min-height: 0;
+  min-height: 120px;
 }
 
 .layout-cell:hover {

@@ -61,8 +61,8 @@ export function createEditorSourceLoader(deps) {
       }
       if (block.type === 'section') {
         const el = deps.createBlockElement('section', null, '', null, null, isNested);
-        el.dataset.background = block.background || '#1a1a1a';
-        el.dataset.color = block.color || '#ffffff';
+        el.dataset.background = block.background || '#ffffff';
+        el.dataset.color = block.color || '#000000';
         el.dataset.pattern = block.pattern || '';
         el.dataset.patternColor = block.patternColor || '#ffffff';
         el.dataset.patternOpacity = block.patternOpacity || '0.1';
@@ -71,10 +71,10 @@ export function createEditorSourceLoader(deps) {
         el.dataset.align = block.align || '';
 
         const bgInput = el.querySelector('.section-controls input[type="color"]');
-        if (bgInput) bgInput.value = block.background || '#1a1a1a';
+        if (bgInput) bgInput.value = block.background || '#ffffff';
 
         const colorInputs = el.querySelectorAll('.section-inner-wrapper input[type="color"]');
-        if (colorInputs[1]) colorInputs[1].value = block.color || '#ffffff';
+        if (colorInputs[1]) colorInputs[1].value = block.color || '#000000';
         if (colorInputs[2]) colorInputs[2].value = block.patternColor || '#ffffff';
 
         const patternSelect = el.querySelector('.section-pattern-select');

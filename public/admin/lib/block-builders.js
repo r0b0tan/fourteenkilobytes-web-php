@@ -36,8 +36,8 @@ export function createSectionBlock(config) {
   block.className = 'block-item block-section';
   block.dataset.type = 'section';
   block.dataset.selector = '';
-  block.dataset.background = '#1a1a1a';
-  block.dataset.color = '#ffffff';
+  block.dataset.background = '#ffffff';
+  block.dataset.color = '#000000';
   block.dataset.pattern = '';
   block.dataset.width = '';
   block.dataset.padding = '';
