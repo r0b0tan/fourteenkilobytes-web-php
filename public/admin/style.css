@@ -1734,6 +1734,7 @@ input.block-selector-input {
 
 .section-blocks .block-item .block-header {
   border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
 }
 
 /* Force standard appearance for controls inside sections for readability */
@@ -1745,10 +1746,16 @@ input.block-selector-input {
 }
 
 .section-blocks .block-type-label {
-  color: inherit;
-  opacity: 0.9;
+  color: var(--text-secondary);
+  opacity: 1;
   font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: none;
+}
+
+.section-blocks .block-selector-input {
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border-color: var(--border);
 }
 
 .section-blocks .block-format-buttons button {
@@ -1997,10 +2004,26 @@ input.block-selector-input {
   font-size: 13px;
 }
 
-/* Hide block header and byte indicator inside layout cells */
-.layout-cell-blocks .block-header,
+/* Keep inline formatting available in layout cells, hide non-essential controls */
 .layout-cell-blocks .block-byte-indicator {
   display: none;
+}
+
+.layout-cell-blocks .block-header {
+  display: flex;
+  margin-bottom: 6px;
+}
+
+.layout-cell-blocks .block-type-select,
+.layout-cell-blocks .block-type-label,
+.layout-cell-blocks .block-item-actions,
+.layout-cell-blocks .block-selector-input {
+  display: none;
+}
+
+.layout-cell-blocks .block-format-buttons {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Hide nested byte indicators inside sections (section shows aggregate only) */
