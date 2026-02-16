@@ -20,6 +20,8 @@ describe('editor/richtext-tools', () => {
         <button class="link-prefix-btn" data-prefix="https://"></button>
         <button class="link-prefix-btn" data-prefix="mailto:"></button>
         <button class="link-prefix-btn" data-prefix="tel:"></button>
+        <button class="link-target-btn" data-link-target="internal"></button>
+        <button class="link-target-btn" data-link-target="external"></button>
       </div>
       <input id="link-href" />
       <button id="link-apply"></button>
@@ -222,7 +224,8 @@ describe('editor/richtext-tools', () => {
     expect(deps.linkPopup.classList.contains('hidden')).toBe(true);
   });
 
-  it('shows specific invalid-link hints for domain and telephone-like input', () => {
+  it('normalizes www links and keeps tel hint for phone-like input', () => {
+    const execSpy = vi.spyOn(document, 'execCommand');
     const deps = {
       toggleSelectionWrap: vi.fn(),
       onPreviewRequested: vi.fn(),
@@ -238,18 +241,96 @@ describe('editor/richtext-tools', () => {
     const content = document.createElement('div');
     content.className = 'block-content';
     content.contentEditable = 'true';
-    content.textContent = 'Link';
+    content.innerHTML = '<a href="/internal">Link</a>';
     block.appendChild(content);
     document.body.appendChild(content);
 
-    setSelectionOnTextNode(content.firstChild, 0, 4);
+    const linkTextNode = content.querySelector('a').firstChild;
+    setSelectionOnTextNode(linkTextNode, 0, 4);
     tools.handleFormatClick('link', block);
+
+    deps.linkPopup.querySelector('[data-link-target="external"]').click();
+    deps.linkPopup.querySelector('[data-link-target="internal"]').click();
+
     deps.linkHrefInput.value = 'www.example.com';
     deps.linkApplyBtn.click();
-    expect(deps.modalInfo).toHaveBeenCalledWith(expect.stringContaining('https://'));
+
+    expect(execSpy).toHaveBeenCalledWith('createLink', false, 'https://www.example.com');
+    expect(deps.linkHrefInput.value).toBe('https://www.example.com');
+    expect(content.querySelector('a')?.getAttribute('target')).toBe('_blank');
+    expect(content.querySelector('a')?.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(deps.modalInfo).not.toHaveBeenCalled();
+
+    tools.handleFormatClick('link', block);
 
     deps.linkHrefInput.value = '+49 123 456789';
     deps.linkApplyBtn.click();
     expect(deps.modalInfo).toHaveBeenCalledWith(expect.stringContaining('tel:'));
+  });
+
+  it('applies target blank attributes when external mode is selected', () => {
+    const deps = {
+      toggleSelectionWrap: vi.fn(),
+      onPreviewRequested: vi.fn(),
+      linkPopup: document.getElementById('link-popup'),
+      linkHrefInput: document.getElementById('link-href'),
+      linkApplyBtn: document.getElementById('link-apply'),
+      linkCancelBtn: document.getElementById('link-cancel'),
+      modalInfo: vi.fn(),
+    };
+
+    const tools = createEditorRichtextTools(deps);
+    const block = document.createElement('div');
+    const content = document.createElement('div');
+    content.className = 'block-content';
+    content.contentEditable = 'true';
+    content.innerHTML = '<a href="/philosophy.html">Philosophy</a>';
+    block.appendChild(content);
+    document.body.appendChild(content);
+
+    const linkTextNode = content.querySelector('a').firstChild;
+    setSelectionOnTextNode(linkTextNode, 0, 5);
+    tools.handleFormatClick('link', block);
+
+    deps.linkPopup.querySelector('[data-link-target="external"]').click();
+    deps.linkHrefInput.value = '/philosophy.html';
+    deps.linkApplyBtn.click();
+
+    const link = content.querySelector('a');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('removes target attributes when internal mode is selected', () => {
+    const deps = {
+      toggleSelectionWrap: vi.fn(),
+      onPreviewRequested: vi.fn(),
+      linkPopup: document.getElementById('link-popup'),
+      linkHrefInput: document.getElementById('link-href'),
+      linkApplyBtn: document.getElementById('link-apply'),
+      linkCancelBtn: document.getElementById('link-cancel'),
+      modalInfo: vi.fn(),
+    };
+
+    const tools = createEditorRichtextTools(deps);
+    const block = document.createElement('div');
+    const content = document.createElement('div');
+    content.className = 'block-content';
+    content.contentEditable = 'true';
+    content.innerHTML = '<a href="/example" target="_blank" rel="noopener noreferrer">Example</a>';
+    block.appendChild(content);
+    document.body.appendChild(content);
+
+    const linkTextNode = content.querySelector('a').firstChild;
+    setSelectionOnTextNode(linkTextNode, 0, 4);
+    tools.handleFormatClick('link', block);
+
+    deps.linkPopup.querySelector('[data-link-target="internal"]').click();
+    deps.linkHrefInput.value = 'https://example.com';
+    deps.linkApplyBtn.click();
+
+    const link = content.querySelector('a');
+    expect(link.hasAttribute('target')).toBe(false);
+    expect(link.hasAttribute('rel')).toBe(false);
   });
 });

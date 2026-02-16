@@ -465,6 +465,17 @@ function validateInlineNode(node, path) {
     const hrefResult = validateHref(node.href, path);
     if (!hrefResult.valid)
       return hrefResult;
+    if (typeof node.target !== "undefined" && node.target !== "_blank") {
+      return {
+        valid: false,
+        error: {
+          code: "CONTENT_INVALID_ELEMENT",
+          element: `invalid link target: ${String(node.target)}`,
+          allowed: ["undefined", "_blank"],
+          path: `${path}.target`
+        }
+      };
+    }
   }
   if ("children" in node && node.children) {
     for (let i = 0; i < node.children.length; i++) {
@@ -1291,7 +1302,8 @@ function flattenInlineNode(node, icons, placement, index) {
         (i) => i.placement === placement && i.index === index
       );
       const iconHtml = icon ? getIconSvg(icon.id) : "";
-      return `<a href="${escapeHtml(node.href)}">${childHtml}${iconHtml}</a>`;
+      const targetAttrs = node.target === "_blank" ? ' target="_blank" rel="noopener noreferrer"' : "";
+      return `<a href="${escapeHtml(node.href)}"${targetAttrs}>${childHtml}${iconHtml}</a>`;
     }
   }
 }

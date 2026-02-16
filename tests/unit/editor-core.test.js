@@ -92,6 +92,16 @@ describe('Editor Core Module', () => {
       expect(inlineNodesToHtml(nodes)).toBe('<a href="https://example.com">Click here</a>');
     });
 
+    it('should convert external link nodes with target blank attributes', () => {
+      const nodes = [{
+        type: 'link',
+        href: 'https://example.com',
+        target: '_blank',
+        children: [{ type: 'text', text: 'Click here' }]
+      }];
+      expect(inlineNodesToHtml(nodes)).toBe('<a href="https://example.com" target="_blank" rel="noopener noreferrer">Click here</a>');
+    });
+
     it('should handle nested formatting', () => {
       const nodes = [{
         type: 'bold',
@@ -218,6 +228,14 @@ describe('Editor Core Module', () => {
       const nodes = parseInlineNodes(container);
       expect(nodes).toEqual([
         { type: 'link', href: 'https://example.com', children: [{ type: 'text', text: 'Link' }] },
+      ]);
+    });
+
+    it('should parse external links with target blank', () => {
+      container.innerHTML = '<a href="https://example.com" target="_blank" rel="noopener noreferrer">Link</a>';
+      const nodes = parseInlineNodes(container);
+      expect(nodes).toEqual([
+        { type: 'link', href: 'https://example.com', target: '_blank', children: [{ type: 'text', text: 'Link' }] },
       ]);
     });
 

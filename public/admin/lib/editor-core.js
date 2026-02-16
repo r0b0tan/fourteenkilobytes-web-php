@@ -30,7 +30,7 @@ export function inlineNodesToHtml(nodes) {
       case 'code':
         return `<code>${inlineNodesToHtml(node.children)}</code>`;
       case 'link':
-        return `<a href="${node.href}">${inlineNodesToHtml(node.children)}</a>`;
+        return `<a href="${node.href}"${node.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : ''}>${inlineNodesToHtml(node.children)}</a>`;
       default:
         return inlineNodesToHtml(node.children);
     }
@@ -73,10 +73,15 @@ export function parseInlineNodes(element) {
         targetArray.push({ type: 'code', children });
       } else if (tag === 'a') {
         const href = node.getAttribute('href') || '';
+        const target = node.getAttribute('target') || '';
         // Only include link if href is valid (same pattern as compiler)
         const hrefPattern = /^(\/[a-z0-9._/-]*|#[a-z0-9-]*|[a-z0-9-]+\.html|https?:\/\/[^\s]+|mailto:[^\s]+|tel:[^\s]+)$/i;
         if (href && hrefPattern.test(href)) {
-          targetArray.push({ type: 'link', href, children });
+          const linkNode = { type: 'link', href, children };
+          if (target === '_blank') {
+            linkNode.target = '_blank';
+          }
+          targetArray.push(linkNode);
         } else {
           // Invalid or empty href - just include children without link
           targetArray.push(...children);

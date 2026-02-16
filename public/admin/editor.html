@@ -350,6 +350,21 @@
         </svg>
       </button>
     </div>
+    <div class="link-target-buttons">
+      <button type="button" class="link-target-btn active" data-link-target="internal" title="Internal link" aria-label="Internal link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l2.92-2.92a5 5 0 0 0-7.07-7.07L11.72 5.2" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-2.92 2.92a5 5 0 0 0 7.07 7.07l1.67-1.67" />
+        </svg>
+      </button>
+      <button type="button" class="link-target-btn" data-link-target="external" title="External link (new tab)" aria-label="External link (new tab)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+      </button>
+    </div>
     <input type="text" id="link-href" placeholder="/path or #anchor">
     <button type="button" id="link-apply" class="btn btn-primary">OK</button>
     <button type="button" id="link-cancel" class="btn btn-secondary">×</button>

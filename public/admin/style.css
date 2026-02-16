@@ -1387,6 +1387,12 @@ input.block-selector-input {
   text-decoration: underline;
 }
 
+.block-content[contenteditable="true"] a,
+.editable-list li[contenteditable="true"] a {
+  pointer-events: none;
+  cursor: text;
+}
+
 .block-content u {
   text-decoration: underline;
 }
@@ -1787,6 +1793,51 @@ input.block-selector-input {
   background: #fef2f2;
 }
 
+/* In section preview, keep all editor control icons/text hardcoded dark gray */
+.section-preview .block-item-actions button,
+.section-preview .block-format-buttons button,
+.section-preview .layout-control-label,
+.section-preview .layout-control-btn,
+.section-preview .layout-align-btn,
+.section-preview .layout-toolbar-delete,
+.section-preview .layout-cell-add-btn,
+.section-preview .layout-cell .layout-cell-dropdown button,
+.section-preview .add-block-dropdown button {
+  color: #4b5563;
+}
+
+.section-preview .block-item-actions button:hover,
+.section-preview .block-format-buttons button:hover,
+.section-preview .layout-control-btn:hover,
+.section-preview .layout-align-btn:hover,
+.section-preview .layout-toolbar-delete:hover,
+.section-preview .layout-cell-add-btn:hover,
+.section-preview .layout-cell .layout-cell-dropdown button:hover,
+.section-preview .add-block-dropdown button:hover {
+  color: #374151;
+}
+
+.section-preview .block-item-actions button:last-child:hover,
+.section-preview .layout-toolbar-delete:hover {
+  color: #374151;
+}
+
+.section-preview .layout-cell-add-btn {
+  margin-bottom: 48px;
+}
+
+.section-preview .section-add-block {
+  color: #4b5563;
+  border-color: #9ca3af;
+  background: #ffffff;
+}
+
+.section-preview .section-add-block:hover {
+  color: #374151;
+  border-color: #6b7280;
+  background: #f3f4f6;
+}
+
 .section-add-row {
   position: relative;
   display: flex;
@@ -1868,11 +1919,16 @@ input.block-selector-input {
   opacity: 1;
 }
 
+/* In sections, keep layout headers fully readable regardless of section text color */
+.section-blocks .block-layout > .block-header {
+  opacity: 1;
+}
+
 .block-layout > .block-header .block-type-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .layout-grid {
@@ -1890,8 +1946,8 @@ input.block-selector-input {
   pointer-events: none;
   transition: opacity 0.15s;
   z-index: 5;
-  background: #fff;
-  border: 1px solid rgba(128, 128, 128, 0.25);
+  background: var(--white);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 3px 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
@@ -1920,7 +1976,7 @@ input.block-selector-input {
 .layout-control-label {
   font-size: 10px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 0 2px;
@@ -1930,7 +1986,7 @@ input.block-selector-input {
 .layout-control-btn {
   background: transparent;
   border: 1px solid transparent;
-  color: #6b7280;
+  color: var(--text-secondary);
   padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
@@ -1956,8 +2012,8 @@ input.block-selector-input {
   display: grid;
   gap: 0;
   background: transparent;
-  border-top: 1px dashed rgba(128, 128, 128, 0.5);
-  border-left: 1px dashed rgba(128, 128, 128, 0.5);
+  border-top: 1px dashed var(--gray-400);
+  border-left: 1px dashed var(--gray-400);
   border-radius: 4px;
   overflow: visible;
   min-height: 80px;
@@ -1967,8 +2023,8 @@ input.block-selector-input {
 .layout-cell {
   position: relative;
   border: none;
-  border-right: 1px dashed rgba(128, 128, 128, 0.5);
-  border-bottom: 1px dashed rgba(128, 128, 128, 0.5);
+  border-right: 1px dashed var(--gray-400);
+  border-bottom: 1px dashed var(--gray-400);
   padding: 0;
   min-height: 80px;
   display: flex;
@@ -1986,16 +2042,23 @@ input.block-selector-input {
 
 .section-blocks .block-layout .layout-cell {
   min-height: 120px;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .layout-cell:hover {
-  background: rgba(128, 128, 128, 0.06);
+  background: var(--gray-100);
+}
+
+/* In section previews, avoid hover fill that can reduce text contrast */
+.section-blocks .layout-cell:hover {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--accent-alpha-40);
 }
 
 .layout-cell-blocks {
   flex: 1;
   box-sizing: border-box;
-  padding: 12px;
+  padding: 36px 12px 12px;
   margin: 0;
 }
 
@@ -2011,7 +2074,11 @@ input.block-selector-input {
 
 .layout-cell-blocks .block-header {
   display: flex;
-  margin-bottom: 6px;
+  margin: 0 0 8px;
+  padding: 3px 6px;
+  background: var(--gray-200);
+  border: 1px solid var(--gray-300);
+  border-radius: 3px;
 }
 
 .layout-cell-blocks .block-type-select,
@@ -2022,8 +2089,13 @@ input.block-selector-input {
 }
 
 .layout-cell-blocks .block-format-buttons {
+  gap: 4px;
   opacity: 1;
   pointer-events: auto;
+}
+
+.layout-cell-blocks .block-format-buttons button {
+  background: var(--white);
 }
 
 /* Hide nested byte indicators inside sections (section shows aggregate only) */
@@ -2048,7 +2120,7 @@ input.block-selector-input {
   transition: opacity 0.15s;
   z-index: 3;
   background: var(--white);
-  border: 1px solid rgba(128, 128, 128, 0.25);
+  border: 1px solid var(--border);
   border-radius: 3px;
   padding: 2px 4px;
   overflow: visible;
@@ -2068,7 +2140,7 @@ input.block-selector-input {
 .layout-align-btn {
   background: var(--white);
   border: 1px solid transparent;
-  color: #9ca3af;
+  color: var(--text-muted);
   padding: 1px 4px;
   border-radius: 2px;
   cursor: pointer;
@@ -2082,14 +2154,14 @@ input.block-selector-input {
 }
 
 .layout-align-btn:hover {
-  color: #374151;
-  background: rgba(128, 128, 128, 0.1);
+  color: var(--text-primary);
+  background: var(--gray-100);
 }
 
 .layout-align-btn.active {
   color: var(--accent);
-  background: rgba(var(--accent-rgb, 139, 92, 246), 0.1);
-  border-color: rgba(var(--accent-rgb, 139, 92, 246), 0.2);
+  background: var(--accent-alpha-15);
+  border-color: var(--accent-alpha-40);
 }
 
 .layout-toolbar-input {
@@ -2097,7 +2169,7 @@ input.block-selector-input {
   align-items: center;
   gap: 2px;
   font-size: 10px;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -2107,11 +2179,11 @@ input.block-selector-input {
 
 .layout-toolbar-input input {
   width: 40px;
-  border: 1px solid rgba(128, 128, 128, 0.2);
+  border: 1px solid var(--border);
   border-radius: 2px;
   padding: 1px 3px;
   font-size: 10px;
-  color: #374151;
+  color: var(--text-primary);
   background: var(--white);
   outline: none;
 }
@@ -2124,7 +2196,7 @@ input.block-selector-input {
   margin-left: auto;
   background: var(--white);
   border: 1px solid transparent;
-  color: #9ca3af;
+  color: var(--text-muted);
   width: 18px;
   height: 18px;
   border-radius: 2px;
@@ -2146,8 +2218,8 @@ input.block-selector-input {
 /* Add block button - hover only, hidden when cell has content */
 .layout-cell-add-btn {
   background: transparent;
-  border: 1px dashed rgba(128, 128, 128, 0.3);
-  color: #6b7280;
+  border: 1px dashed var(--gray-400);
+  color: var(--text-secondary);
   padding: 4px 10px;
   border-radius: 3px;
   cursor: pointer;
@@ -2161,7 +2233,7 @@ input.block-selector-input {
 .layout-cell:hover .layout-cell-add-btn {
   opacity: 1;
   pointer-events: auto;
-  background: rgba(255, 255, 255, 0.75);
+  background: var(--white);
   border-style: dashed;
   border-color: var(--accent);
   color: var(--accent);
@@ -2299,6 +2371,35 @@ input.block-selector-input {
 .link-prefix-buttons {
   display: flex;
   gap: 2px;
+}
+
+.link-target-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.link-target-btn {
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.link-target-btn:hover {
+  border-color: var(--accent);
+}
+
+.link-target-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
 }
 
 .link-prefix-btn {
