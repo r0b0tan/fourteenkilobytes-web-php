@@ -39,6 +39,7 @@ data/sources/
 data/sessions.json
 data/rate-limits.json
 data/global-rate-limits.json
+data/update-check-cache.json
 data/audit.log
 data/.setup-complete
 

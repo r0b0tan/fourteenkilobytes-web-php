@@ -720,7 +720,6 @@ button:disabled {
   border-radius: 6px;
   padding: 16px 20px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
   animation: slideDown 0.3s ease-out;
 }
 
@@ -737,7 +736,8 @@ button:disabled {
 
 .update-banner-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -765,9 +765,26 @@ button:disabled {
 
 .update-banner-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: flex-end;
   flex-shrink: 0;
+}
+
+.update-banner-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  box-sizing: border-box;
+}
+
+.update-banner-actions .btn svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 0;
 }
 
 .update-banner .btn-primary {
@@ -781,13 +798,21 @@ button:disabled {
 }
 
 .update-banner .btn-text {
-  color: white;
-  opacity: 0.9;
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .update-banner .btn-text:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.update-banner .btn-text:focus-visible,
+.update-banner .btn-primary:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 1px;
 }
 
 /* ============ EDITOR LAYOUT ============ */

@@ -787,6 +787,44 @@ export function showUpdateBanner(updateInfo) {
     }
     return '#';
   }
+
+  function createButtonIcon(pathData) {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const icon = document.createElementNS(svgNs, 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '14');
+    icon.setAttribute('height', '14');
+    icon.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS(svgNs, 'path');
+    path.setAttribute('d', pathData);
+    path.setAttribute('fill', 'currentColor');
+    icon.appendChild(path);
+    return icon;
+  }
+
+  function createRecompileIcon() {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const icon = document.createElementNS(svgNs, 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '14');
+    icon.setAttribute('height', '14');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '2');
+    icon.setAttribute('aria-hidden', 'true');
+
+    const polylineTop = document.createElementNS(svgNs, 'polyline');
+    polylineTop.setAttribute('points', '23 4 23 10 17 10');
+
+    const polylineBottom = document.createElementNS(svgNs, 'polyline');
+    polylineBottom.setAttribute('points', '1 20 1 14 7 14');
+
+    const path = document.createElementNS(svgNs, 'path');
+    path.setAttribute('d', 'M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15');
+
+    icon.append(polylineTop, polylineBottom, path);
+    return icon;
+  }
   
   const dashboardView = document.getElementById('dashboard-view');
   const banner = document.createElement('div');
@@ -815,19 +853,28 @@ export function showUpdateBanner(updateInfo) {
   releaseLink.href = safeReleaseUrl;
   releaseLink.target = '_blank';
   releaseLink.rel = 'noopener noreferrer';
-  releaseLink.textContent = t('dashboard.viewRelease');
+  releaseLink.append(
+    createButtonIcon('M14 3h7v7h-2V6.414l-9.293 9.293-1.414-1.414L17.586 5H14V3zM5 5h7v2H7v10h10v-5h2v7H5V5z'),
+    document.createTextNode(t('dashboard.viewRelease'))
+  );
 
   const snoozeBtn = document.createElement('button');
   snoozeBtn.type = 'button';
   snoozeBtn.className = 'btn btn-small btn-text snooze-update';
   snoozeBtn.dataset.version = latestVersion;
-  snoozeBtn.textContent = t('dashboard.remindLater');
+  snoozeBtn.append(
+    createRecompileIcon(),
+    document.createTextNode(t('dashboard.remindLater'))
+  );
 
   const dismissBtn = document.createElement('button');
   dismissBtn.type = 'button';
   dismissBtn.className = 'btn btn-small btn-text dismiss-update';
   dismissBtn.dataset.version = latestVersion;
-  dismissBtn.textContent = t('modal.dismiss');
+  dismissBtn.append(
+    createButtonIcon('M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.3 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.29-6.3z'),
+    document.createTextNode(t('modal.dismiss'))
+  );
 
   actions.append(releaseLink, snoozeBtn, dismissBtn);
   content.append(textWrap, actions);
@@ -838,7 +885,7 @@ export function showUpdateBanner(updateInfo) {
   
   // Snooze handler (7 days)
   banner.querySelector('.snooze-update').addEventListener('click', (e) => {
-    const version = e.target.dataset.version;
+    const version = e.currentTarget.dataset.version;
     const snoozeUntil = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
     localStorage.setItem('snoozedUpdate', JSON.stringify({
       version: version,
@@ -849,7 +896,7 @@ export function showUpdateBanner(updateInfo) {
   
   // Dismiss handler (permanent for this version)
   banner.querySelector('.dismiss-update').addEventListener('click', (e) => {
-    const version = e.target.dataset.version;
+    const version = e.currentTarget.dataset.version;
     localStorage.setItem('dismissedUpdateVersion', version);
     localStorage.removeItem('snoozedUpdate'); // Clear any snooze
     banner.remove();
