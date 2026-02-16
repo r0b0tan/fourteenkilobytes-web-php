@@ -2014,17 +2014,21 @@ input.block-selector-input {
   top: 3px;
   left: 3px;
   right: 3px;
+  min-width: max-content;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s;
   z-index: 3;
-  background: #fff;
+  background: var(--white);
   border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 3px;
   padding: 2px 4px;
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -2039,7 +2043,7 @@ input.block-selector-input {
 }
 
 .layout-align-btn {
-  background: transparent;
+  background: var(--white);
   border: 1px solid transparent;
   color: #9ca3af;
   padding: 1px 4px;
@@ -2085,7 +2089,7 @@ input.block-selector-input {
   padding: 1px 3px;
   font-size: 10px;
   color: #374151;
-  background: transparent;
+  background: var(--white);
   outline: none;
 }
 
@@ -2095,7 +2099,7 @@ input.block-selector-input {
 
 .layout-toolbar-delete {
   margin-left: auto;
-  background: transparent;
+  background: var(--white);
   border: 1px solid transparent;
   color: #9ca3af;
   width: 18px;

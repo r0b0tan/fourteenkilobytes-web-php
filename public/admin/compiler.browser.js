@@ -1041,10 +1041,13 @@ ${items}
       const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
       const cellStyles = [];
       const textAlign = normalizeAlignment(cell.textAlign);
+      const width = normalizeCssLength(cell.width);
       const padding = normalizeCssLength(cell.padding);
       const margin = normalizeCssLength(cell.margin);
       if (textAlign && !isLayoutCellDefaultTextAlign(textAlign))
         cellStyles.push(`text-align:${textAlign}`);
+      if (width)
+        cellStyles.push(`width:${width}`);
       if (padding && padding !== DEFAULTS.layoutCell.padding)
         cellStyles.push(`padding:${padding}`);
       if (margin && margin !== DEFAULTS.layoutCell.margin)
