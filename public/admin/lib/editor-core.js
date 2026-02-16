@@ -245,7 +245,8 @@ export function serializeBlock(block) {
         children,
         textAlign: cell.dataset.textAlign || null,
         padding: cell.dataset.padding || null,
-        margin: cell.dataset.margin || null
+        margin: cell.dataset.margin || null,
+        width: cell.dataset.width || null
       });
     }
     return withSelector({

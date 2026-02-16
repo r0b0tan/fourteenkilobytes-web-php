@@ -120,6 +120,7 @@ export function renderBlockHtml(blockData) {
       if (cell.textAlign && cell.textAlign !== 'left') cellStyles.push(`text-align:${cell.textAlign}`);
       if (cell.padding && cell.padding !== '10px') cellStyles.push(`padding:${cell.padding}`);
       if (cell.margin && cell.margin !== '10px') cellStyles.push(`margin:${cell.margin}`);
+      if (cell.width && cell.width !== 'auto') cellStyles.push(`width:${cell.width}`);
       const cellStyle = cellStyles.length ? ` style="${cellStyles.join(';')}"` : '';
       return `<div class="cell"${cellStyle}>${cellContent}</div>`;
     }).join('\n');

@@ -222,6 +222,27 @@ export function createEditorSourceLoader(deps) {
             marGroup.appendChild(marInput);
             toolbar.appendChild(marGroup);
 
+            const widthGroup = document.createElement('label');
+            widthGroup.className = 'layout-toolbar-input';
+            widthGroup.innerHTML = '<span>W</span>';
+            const widthInput = document.createElement('input');
+            widthInput.type = 'text';
+            widthInput.placeholder = '50%';
+            widthInput.title = 'Width (z.B. auto, 50%, 320px, 20rem)';
+            if (cellData.width) {
+              widthInput.value = cellData.width;
+              cellEl.dataset.width = cellData.width;
+              cellBlocks.style.width = cellData.width;
+            }
+            widthInput.addEventListener('input', () => {
+              const value = widthInput.value.trim();
+              cellEl.dataset.width = value;
+              cellBlocks.style.width = value || '';
+              deps.onPreviewRequested();
+            });
+            widthGroup.appendChild(widthInput);
+            toolbar.appendChild(widthGroup);
+
             const delBtn = document.createElement('button');
             delBtn.type = 'button';
             delBtn.className = 'layout-toolbar-delete';
@@ -241,6 +262,11 @@ export function createEditorSourceLoader(deps) {
             if (cellData.textAlign) {
               cellEl.dataset.textAlign = cellData.textAlign;
               cellEl.style.textAlign = cellData.textAlign;
+            }
+
+            if (cellData.width) {
+              cellEl.dataset.width = cellData.width;
+              cellBlocks.style.width = cellData.width;
             }
 
             if (cellData.children && cellData.children.length > 0) {

@@ -814,6 +814,7 @@ describe('Editor Core Module', () => {
       cell1.dataset.textAlign = 'left';
       cell1.dataset.padding = 'small';
       cell1.dataset.margin = 'none';
+      cell1.dataset.width = '50%';
       const cell1Blocks = document.createElement('div');
       cell1Blocks.classList.add('layout-cell-blocks');
       const para1 = document.createElement('div');
@@ -833,6 +834,7 @@ describe('Editor Core Module', () => {
       cell2.dataset.textAlign = 'right';
       cell2.dataset.padding = 'medium';
       cell2.dataset.margin = 'small';
+      cell2.dataset.width = '320px';
       const cell2Blocks = document.createElement('div');
       cell2Blocks.classList.add('layout-cell-blocks');
       const para2 = document.createElement('div');
@@ -862,6 +864,7 @@ describe('Editor Core Module', () => {
             textAlign: 'left',
             padding: 'small',
             margin: 'none',
+            width: '50%',
           },
           {
             children: [{
@@ -871,6 +874,7 @@ describe('Editor Core Module', () => {
             textAlign: 'right',
             padding: 'medium',
             margin: 'small',
+            width: '320px',
           },
         ],
       });
@@ -930,7 +934,7 @@ describe('Editor Core Module', () => {
 
       const cell = document.createElement('div');
       cell.classList.add('layout-cell');
-      // No textAlign, padding, margin
+      // No textAlign, padding, margin, width
       const cellBlocks = document.createElement('div');
       cellBlocks.classList.add('layout-cell-blocks');
       cell.appendChild(cellBlocks);
@@ -943,6 +947,7 @@ describe('Editor Core Module', () => {
       expect(serialized.cells[0].textAlign).toBeNull();
       expect(serialized.cells[0].padding).toBeNull();
       expect(serialized.cells[0].margin).toBeNull();
+      expect(serialized.cells[0].width).toBeNull();
     });
 
     it('should serialize layout with multiple blocks in cells', () => {

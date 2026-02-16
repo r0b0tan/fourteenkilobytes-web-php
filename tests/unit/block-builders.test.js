@@ -655,7 +655,7 @@ describe('createLayoutBlock', () => {
     expect(alignButtons.length).toBe(3); // left, center, right
   });
 
-  test('cell includes padding and margin inputs', () => {
+  test('cell includes padding, margin and width inputs', () => {
     const callbacks = {
       createBlockElement: vi.fn().mockReturnValue(document.createElement('div'))
     };
@@ -668,7 +668,7 @@ describe('createLayoutBlock', () => {
     const cell = block.querySelector('.layout-cell');
     const inputs = cell.querySelectorAll('.layout-toolbar-input input');
 
-    expect(inputs.length).toBe(2); // padding and margin
+    expect(inputs.length).toBe(3); // padding, margin, width
   });
 
   test('includes byte indicator', () => {
@@ -781,7 +781,7 @@ describe('createLayoutBlock', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
-  test('padding and margin inputs apply and clear styles', () => {
+  test('padding, margin and width inputs apply and clear styles', () => {
     const callbacks = {
       onChange: vi.fn(),
       createBlockElement: vi.fn().mockReturnValue(document.createElement('div'))
@@ -794,24 +794,31 @@ describe('createLayoutBlock', () => {
 
     const cell = block.querySelector('.layout-cell');
     const cellBlocks = cell.querySelector('.layout-cell-blocks');
-    const [padInput, marInput] = cell.querySelectorAll('.layout-toolbar-input input');
+    const [padInput, marInput, widthInput] = cell.querySelectorAll('.layout-toolbar-input input');
 
     padInput.value = ' 1rem ';
     padInput.dispatchEvent(new Event('input'));
     marInput.value = ' 8px ';
     marInput.dispatchEvent(new Event('input'));
+    widthInput.value = ' 320px ';
+    widthInput.dispatchEvent(new Event('input'));
 
     expect(cell.dataset.padding).toBe('1rem');
     expect(cellBlocks.style.padding).toBe('1rem');
     expect(cell.dataset.margin).toBe('8px');
     expect(cellBlocks.style.margin).toBe('8px');
+    expect(cell.dataset.width).toBe('320px');
+    expect(cellBlocks.style.width).toBe('320px');
 
     padInput.value = '   ';
     padInput.dispatchEvent(new Event('input'));
     marInput.value = '   ';
     marInput.dispatchEvent(new Event('input'));
+    widthInput.value = '   ';
+    widthInput.dispatchEvent(new Event('input'));
     expect(cellBlocks.style.padding).toBe('');
     expect(cellBlocks.style.margin).toBe('');
+    expect(cellBlocks.style.width).toBe('');
   });
 
   test('delete button clears nested cell blocks', () => {
@@ -957,7 +964,7 @@ describe('createLayoutBlock', () => {
 
     const cell = block.querySelector('.layout-cell');
     const [leftBtn] = cell.querySelectorAll('.layout-align-btn');
-    const [padInput, marInput] = cell.querySelectorAll('.layout-toolbar-input input');
+    const [padInput, marInput, widthInput] = cell.querySelectorAll('.layout-toolbar-input input');
     const deleteBtn = cell.querySelector('.layout-toolbar-delete');
     const addBtn = cell.querySelector('.layout-cell-add-btn');
     const dropdown = cell.querySelector('.layout-cell-dropdown');
@@ -969,6 +976,8 @@ describe('createLayoutBlock', () => {
       padInput.dispatchEvent(new Event('input'));
       marInput.value = ' 6px ';
       marInput.dispatchEvent(new Event('input'));
+      widthInput.value = ' 60% ';
+      widthInput.dispatchEvent(new Event('input'));
       deleteBtn.click();
       addBtn.click();
       firstTypeBtn.click();
@@ -977,6 +986,7 @@ describe('createLayoutBlock', () => {
     expect(cell.dataset.textAlign).toBe('left');
     expect(cell.dataset.padding).toBe('12px');
     expect(cell.dataset.margin).toBe('6px');
+    expect(cell.dataset.width).toBe('60%');
     expect(cell.querySelector('.layout-cell-blocks').children.length).toBe(1);
   });
 

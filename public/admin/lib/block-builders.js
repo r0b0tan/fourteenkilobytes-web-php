@@ -430,6 +430,23 @@ export function createLayoutBlock(config) {
     marGroup.appendChild(marInput);
     toolbar.appendChild(marGroup);
 
+    // Width input
+    const widthGroup = document.createElement('label');
+    widthGroup.className = 'layout-toolbar-input';
+    widthGroup.innerHTML = '<span>W</span>';
+    const widthInput = document.createElement('input');
+    widthInput.type = 'text';
+    widthInput.placeholder = '50%';
+    widthInput.title = 'Width (z.B. auto, 50%, 320px, 20rem)';
+    widthInput.addEventListener('input', () => {
+      const value = widthInput.value.trim();
+      cell.dataset.width = value;
+      cellBlocks.style.width = value || '';
+      if (callbacks.onChange) callbacks.onChange();
+    });
+    widthGroup.appendChild(widthInput);
+    toolbar.appendChild(widthGroup);
+
     // Delete button
     const delBtn = document.createElement('button');
     delBtn.type = 'button';

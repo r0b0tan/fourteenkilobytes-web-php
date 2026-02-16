@@ -322,10 +322,14 @@ describe('editor/source-loader', () => {
     const cell = layout.querySelector('.layout-cell');
     expect(cell.dataset.textAlign).toBe('center');
 
-    const padInput = layout.querySelector('.layout-toolbar-input input');
+    const [padInput, , widthInput] = layout.querySelectorAll('.layout-toolbar-input input');
     padInput.value = '8px';
     padInput.dispatchEvent(new Event('input'));
     expect(cell.dataset.padding).toBe('8px');
+
+    widthInput.value = '70%';
+    widthInput.dispatchEvent(new Event('input'));
+    expect(cell.dataset.width).toBe('70%');
 
     const addBtn = layout.querySelector('.layout-cell-add-btn');
     addBtn.click();
