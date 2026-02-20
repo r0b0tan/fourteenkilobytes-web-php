@@ -12,6 +12,7 @@ Thumbs.db
 # PHP
 vendor/
 composer.phar
+.phpunit.result.cache
 *.log
 
 # Environment

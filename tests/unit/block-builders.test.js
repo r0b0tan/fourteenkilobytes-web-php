@@ -668,7 +668,7 @@ describe('createLayoutBlock', () => {
     const cell = block.querySelector('.layout-cell');
     const inputs = cell.querySelectorAll('.layout-toolbar-input input');
 
-    expect(inputs.length).toBe(3); // padding, margin, width
+    expect(inputs.length).toBe(4); // padding, margin, width, class
   });
 
   test('includes byte indicator', () => {
