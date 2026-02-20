@@ -1,0 +1,9 @@
+{
+    "name": "fourteenkilobytes/web-php",
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}

@@ -37,8 +37,10 @@ function checkAuth(): bool {
     return true;
 }
 
-function requireAuth(): void {
-    if (!checkAuth()) {
-        sendJson(401, ['error' => 'Unauthorized']);
+if (!function_exists('requireAuth')) {
+    function requireAuth(): void {
+        if (!checkAuth()) {
+            sendJson(401, ['error' => 'Unauthorized']);
+        }
     }
 }

@@ -39,9 +39,11 @@ function validateCsrfToken(): bool {
     return hash_equals($cookieToken, $headerToken);
 }
 
-function requireCsrfToken(): void {
-    if (!validateCsrfToken()) {
-        auditLog('csrf_failure', ['ip' => getClientIp()]);
-        sendJson(403, ['error' => 'Invalid or missing CSRF token']);
+if (!function_exists('requireCsrfToken')) {
+    function requireCsrfToken(): void {
+        if (!validateCsrfToken()) {
+            auditLog('csrf_failure', ['ip' => getClientIp()]);
+            sendJson(403, ['error' => 'Invalid or missing CSRF token']);
+        }
     }
 }

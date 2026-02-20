@@ -2,32 +2,36 @@
 
 declare(strict_types=1);
 
-function sendJson(int $status, mixed $data): never {
-    http_response_code($status);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+if (!function_exists('sendJson')) {
+    function sendJson(int $status, mixed $data): never {
+        http_response_code($status);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
 }
 
-function readJsonBody(): array {
-    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
-    if ($contentLength > MAX_REQUEST_SIZE) {
-        sendJson(413, ['error' => 'Request body too large']);
-    }
+if (!function_exists('readJsonBody')) {
+    function readJsonBody(): array {
+        $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
+        if ($contentLength > MAX_REQUEST_SIZE) {
+            sendJson(413, ['error' => 'Request body too large']);
+        }
 
-    $body = file_get_contents('php://input');
-    if (empty($body)) {
-        return [];
-    }
+        $body = file_get_contents('php://input');
+        if (empty($body)) {
+            return [];
+        }
 
-    if (strlen($body) > MAX_REQUEST_SIZE) {
-        sendJson(413, ['error' => 'Request body too large']);
-    }
+        if (strlen($body) > MAX_REQUEST_SIZE) {
+            sendJson(413, ['error' => 'Request body too large']);
+        }
 
-    $data = json_decode($body, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        sendJson(400, ['error' => 'Invalid JSON body']);
+        $data = json_decode($body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            sendJson(400, ['error' => 'Invalid JSON body']);
+        }
+        return $data ?? [];
     }
-    return $data ?? [];
 }
 
 function minifyCss(string $css): string {
