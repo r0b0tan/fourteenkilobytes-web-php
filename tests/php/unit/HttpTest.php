@@ -115,4 +115,41 @@ class HttpTest extends TestCase
         $settings = ['optimizations' => ['compression' => ['enabled' => true]]];
         $this->assertTrue(isCompressionEnabled($settings));
     }
+
+    // -------------------------------------------------------------------------
+    // minifyCss — additional branches
+    // -------------------------------------------------------------------------
+
+    public function testMinifyCssConvertsRgbaWhiteTransparentToKeyword(): void
+    {
+        $this->assertSame('a{background:transparent}', minifyCss('a{background:rgba(255,255,255,0)}'));
+    }
+
+    public function testMinifyCssShortensMixedCaseRepeatableHex(): void
+    {
+        // #AABBCC → #ABC (preserves case of the first digit in each pair)
+        $result = minifyCss('a{color:#AABBCC}');
+        $this->assertSame('a{color:#ABC}', $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // minifyHtmlDocument — additional branches
+    // -------------------------------------------------------------------------
+
+    public function testMinifyHtmlStripsStyleAttributeWhenCssBecomesEmpty(): void
+    {
+        // A style with only whitespace/comments becomes empty after minification → attribute removed
+        $html = '<p style="/* comment */">Hello</p>';
+        $result = minifyHtmlDocument($html);
+        $this->assertStringNotContainsString('style=', $result);
+        $this->assertStringContainsString('<p>', $result);
+    }
+
+    public function testMinifyHtmlSimplifiesAttributeQuotes(): void
+    {
+        // class="foo" → class=foo (only alphanumeric/dash/underscore values)
+        $result = minifyHtmlDocument('<div class="container"><p id="main">Hi</p></div>');
+        $this->assertStringContainsString('class=container', $result);
+        $this->assertStringContainsString('id=main', $result);
+    }
 }
