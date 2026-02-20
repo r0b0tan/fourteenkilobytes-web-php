@@ -1,6 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import {
   createBloglistContent,
+  createAuthorContent,
   createListContent,
   createDividerContent,
   createSpacerContent,
@@ -17,6 +18,90 @@ describe('createBloglistContent', () => {
     expect(content.className).toContain('block-bloglist');
     expect(content.contentEditable).toBe('false');
     expect(content.querySelector('.bloglist-config')).toBeTruthy();
+  });
+});
+
+describe('createAuthorContent', () => {
+  test('creates author block without block element', () => {
+    const content = createAuthorContent();
+
+    expect(content.className).toContain('block-author');
+    expect(content.contentEditable).toBe('false');
+    expect(content.querySelector('.bloglist-config')).toBeTruthy();
+    const checkboxes = content.querySelectorAll('input[type="checkbox"]');
+    expect(checkboxes.length).toBe(3);
+    checkboxes.forEach(cb => expect(cb.checked).toBe(true));
+  });
+
+  test('creates author block with block element and sets defaults', () => {
+    const block = { dataset: {} };
+    createAuthorContent({ block });
+
+    expect(block.dataset.showPublished).toBe('true');
+    expect(block.dataset.showModified).toBe('true');
+    expect(block.dataset.showAuthor).toBe('true');
+    expect(block.dataset.tags).toBe('');
+  });
+
+  test('does not override existing dataset values', () => {
+    const block = { dataset: { showPublished: 'false', showModified: 'true', showAuthor: 'false', tags: 'a, b' } };
+    const content = createAuthorContent({ block });
+
+    expect(block.dataset.showPublished).toBe('false');
+    const checkboxes = content.querySelectorAll('input[type="checkbox"]');
+    expect(checkboxes[0].checked).toBe(false);
+    expect(checkboxes[1].checked).toBe(true);
+    expect(checkboxes[2].checked).toBe(false);
+  });
+
+  test('shows existing tags in text input', () => {
+    const block = { dataset: { showPublished: 'true', showModified: 'true', showAuthor: 'true', tags: 'css, design' } };
+    const content = createAuthorContent({ block });
+
+    const tagsInput = content.querySelector('input[type="text"]');
+    expect(tagsInput.value).toBe('css, design');
+  });
+
+  test('toggle change updates block dataset and calls onChange', () => {
+    const block = { dataset: {} };
+    const onChange = vi.fn();
+    const content = createAuthorContent({ block, onChange });
+
+    const checkbox = content.querySelectorAll('input[type="checkbox"]')[0];
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+
+    expect(block.dataset.showPublished).toBe('false');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  test('toggle change without block or onChange does not throw', () => {
+    const content = createAuthorContent();
+    const checkbox = content.querySelectorAll('input[type="checkbox"]')[0];
+    checkbox.checked = false;
+
+    expect(() => checkbox.dispatchEvent(new Event('change'))).not.toThrow();
+  });
+
+  test('tags input updates block dataset and calls onChange', () => {
+    const block = { dataset: {} };
+    const onChange = vi.fn();
+    const content = createAuthorContent({ block, onChange });
+
+    const tagsInput = content.querySelector('input[type="text"]');
+    tagsInput.value = 'foo, bar';
+    tagsInput.dispatchEvent(new Event('input'));
+
+    expect(block.dataset.tags).toBe('foo, bar');
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  test('tags input without block or onChange does not throw', () => {
+    const content = createAuthorContent();
+    const tagsInput = content.querySelector('input[type="text"]');
+    tagsInput.value = 'test';
+
+    expect(() => tagsInput.dispatchEvent(new Event('input'))).not.toThrow();
   });
 });
 
@@ -48,6 +133,25 @@ describe('createListContent', () => {
     expect(items.length).toBe(2);
     expect(items[0].textContent).toBe('Item 1');
     expect(items[1].textContent).toBe('Item 2');
+  });
+
+  test('restores list items from HTML wrapped in ul/ol', () => {
+    const initialHtml = '<ul><li>First</li><li>Second</li></ul>';
+    const content = createListContent({ listType: 'unordered', initialHtml });
+
+    const items = content.querySelectorAll('li');
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toBe('First');
+    expect(items[1].textContent).toBe('Second');
+  });
+
+  test('restores list item with attributes via <li class="..."> pattern', () => {
+    const initialHtml = '<li class="active">Styled item</li>';
+    const content = createListContent({ listType: 'unordered', initialHtml });
+
+    const items = content.querySelectorAll('li');
+    expect(items.length).toBe(1);
+    expect(items[0].textContent).toBe('Styled item');
   });
 
   test('calls setupListKeyHandlers', () => {
@@ -100,6 +204,26 @@ describe('createSpacerContent', () => {
 
     expect(block.dataset.height).toBe('3rem');
     expect(onChange).toHaveBeenCalled();
+  });
+
+  test('falls back to 1rem when input is cleared', () => {
+    const block = { dataset: {} };
+    const content = createSpacerContent({ block, height: '2rem' });
+
+    const input = content.querySelector('.spacer-height-input');
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+
+    expect(block.dataset.height).toBe('1rem');
+    expect(content.querySelector('.spacer-preview').style.height).toBe('1rem');
+  });
+
+  test('input change without block or onChange does not throw', () => {
+    const content = createSpacerContent({ height: '2rem' });
+    const input = content.querySelector('.spacer-height-input');
+    input.value = '4rem';
+
+    expect(() => input.dispatchEvent(new Event('input'))).not.toThrow();
   });
 });
 
