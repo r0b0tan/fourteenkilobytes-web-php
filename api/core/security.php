@@ -21,19 +21,6 @@ function auditLog(string $action, array $details = []): void {
 }
 
 function getClientIp(): string {
-    $trustProxy = false;
-
-    if ($trustProxy) {
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
-        if ($forwarded) {
-            $ips = explode(',', $forwarded);
-            $ip = trim($ips[0]);
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                return $ip;
-            }
-        }
-    }
-
     return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 }
 

@@ -553,23 +553,17 @@
       } = editorElements;
 
       // ============ MANAGER INSTANCES ============
-      let editorStateManager = null;
-      let editorSourceLoader = null;
-      let editorOverridesManager = null;
-      let editorBlockFactory = null;
-      let editorRichtextTools = null;
-      let editorBuildInputManager = null;
-      let editorMetricsManager = null;
-      let editorBootstrap = null;
+      const managers = {};
+
+      function lazyGet(key, creator) {
+        if (!managers[key]) managers[key] = creator();
+        return managers[key];
+      }
 
       // ============ AUTO-SAVE ============
 
       function getEditorStateManager() {
-        if (editorStateManager) {
-          return editorStateManager;
-        }
-
-        editorStateManager = createEditorStateManager({
+        return lazyGet('state', () => createEditorStateManager({
           titleInput,
           slugInput,
           pageTypeSelect,
@@ -591,9 +585,7 @@
           updatePageTitleSlug,
           createBlockElement,
           createNavChip
-        });
-
-        return editorStateManager;
+        }));
       }
 
       // ---- STATE WRAPPERS ----
@@ -627,11 +619,7 @@
       let blockElFromSource = null;
 
       function getEditorSourceLoader() {
-        if (editorSourceLoader) {
-          return editorSourceLoader;
-        }
-
-        editorSourceLoader = createEditorSourceLoader({
+        return lazyGet('sourceLoader', () => createEditorSourceLoader({
           Compiler,
           titleInput,
           slugInput,
@@ -657,9 +645,7 @@
           loadGlobalCSS,
           inlineNodesToHtml,
           onPreviewRequested: () => debouncedPreview()
-        });
-
-        return editorSourceLoader;
+        }));
       }
 
       function loadFromSource(sourceData) {
@@ -670,11 +656,7 @@
       // ============ NAVIGATION ============
 
       function getEditorOverridesManager() {
-        if (editorOverridesManager) {
-          return editorOverridesManager;
-        }
-
-        editorOverridesManager = createEditorOverridesManager({
+        return lazyGet('overrides', () => createEditorOverridesManager({
           navEnabled,
           navGlobalHint,
           navLinks,
@@ -704,9 +686,7 @@
           updateTitleBytes,
           onPreviewRequested: () => debouncedPreview(),
           getGlobalConfig: () => window.globalConfig
-        });
-
-        return editorOverridesManager;
+        }));
       }
 
       // ---- OVERRIDES WRAPPERS ----
@@ -737,11 +717,7 @@
       // ============ BLOCK EDITOR ============
 
       function getEditorBlockFactory() {
-        if (editorBlockFactory) {
-          return editorBlockFactory;
-        }
-
-        editorBlockFactory = createEditorBlockFactory({
+        return lazyGet('blockFactory', () => createEditorBlockFactory({
           Compiler,
           createInnerAddBlock,
           createSectionBlock,
@@ -770,9 +746,7 @@
           onCostRailChanged: () => updateCostRail(),
           onPreviewRequested: () => debouncedPreview(),
           onFormatClick: (cmd, block) => getEditorRichtextTools().handleFormatClick(cmd, block)
-        });
-
-        return editorBlockFactory;
+        }));
       }
 
       // ---- BLOCK FACTORY WRAPPERS ----
@@ -781,11 +755,7 @@
       }
 
       function getEditorRichtextTools() {
-        if (editorRichtextTools) {
-          return editorRichtextTools;
-        }
-
-        editorRichtextTools = createEditorRichtextTools({
+        return lazyGet('richtextTools', () => createEditorRichtextTools({
           linkPopup,
           linkHrefInput,
           linkApplyBtn,
@@ -793,9 +763,7 @@
           toggleSelectionWrap,
           modalInfo: (message) => Modal.info(message),
           onPreviewRequested: () => debouncedPreview()
-        });
-
-        return editorRichtextTools;
+        }));
       }
 
       function moveBlock(block, direction) {
@@ -814,11 +782,7 @@
       // ============ BUILD INPUT ============
 
       function getEditorBuildInputManager() {
-        if (editorBuildInputManager) {
-          return editorBuildInputManager;
-        }
-
-        editorBuildInputManager = createEditorBuildInputManager({
+        return lazyGet('buildInput', () => createEditorBuildInputManager({
           blockEditor,
           navLinks,
           slugInput,
@@ -837,9 +801,7 @@
           serializeBlock,
           getPosts: () => App.getPosts(),
           getGlobalConfig: () => window.globalConfig
-        });
-
-        return editorBuildInputManager;
+        }));
       }
 
       // ---- BUILD INPUT WRAPPERS ----
@@ -858,11 +820,7 @@
       // ============ METRICS ============
 
       function getEditorMetricsManager() {
-        if (editorMetricsManager) {
-          return editorMetricsManager;
-        }
-
-        editorMetricsManager = createEditorMetricsManager({
+        return lazyGet('metrics', () => createEditorMetricsManager({
           formatBytes,
           serializeBlock,
           estimateBlockSize,
@@ -890,9 +848,7 @@
           piePercent,
           pieContentDot,
           getGlobalConfig: () => window.globalConfig
-        });
-
-        return editorMetricsManager;
+        }));
       }
 
       // ---- METRICS WRAPPERS ----
@@ -909,11 +865,7 @@
       }
 
       function getEditorBootstrap() {
-        if (editorBootstrap) {
-          return editorBootstrap;
-        }
-
-        editorBootstrap = createEditorBootstrap({
+        return lazyGet('bootstrap', () => createEditorBootstrap({
           t,
           publishBtn,
           navEditor,
@@ -945,9 +897,7 @@
             isEditMode = true;
             editingSlug = slug;
           }
-        });
-
-        return editorBootstrap;
+        }));
       }
 
       // ============ MODAL ============
@@ -1014,6 +964,7 @@
             }
           }
         } catch (e) {
+          console.error('Preview failed:', e);
         }
       }, 500);
 

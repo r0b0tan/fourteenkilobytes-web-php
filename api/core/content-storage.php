@@ -23,7 +23,12 @@ function loadSourceData(string $slug): ?array {
     $path = SOURCES_DIR . "/{$slug}.json";
     if (file_exists($path)) {
         $content = file_get_contents($path);
-        return json_decode($content, true);
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("Corrupted JSON in {$path}: " . json_last_error_msg());
+            return null;
+        }
+        return $data;
     }
 
     $manifest = loadManifest();

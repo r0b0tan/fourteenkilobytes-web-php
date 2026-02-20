@@ -104,12 +104,12 @@ function handlePostRoutes(string $method, string $path): bool {
             $sourceData = $body['sourceData'] ?? null;
 
             if (empty($pages)) {
-                sendJson(400, ['error' => 'Pages array cannot be empty']);
+                sendJson(400, ['error' => 'Pages array cannot be empty', 'code' => 'EMPTY_PAGES']);
             }
 
             $baseSlug = $pages[0]['slug'] ?? '';
             if (!preg_match('/^[a-z0-9-]+$/', $baseSlug)) {
-                sendJson(400, ['error' => 'Invalid slug format']);
+                sendJson(400, ['error' => 'Invalid slug format', 'code' => 'INVALID_SLUG']);
             }
 
             $totalBytes = 0;
@@ -117,7 +117,7 @@ function handlePostRoutes(string $method, string $path): bool {
             $minifiedPages = [];
             foreach ($pages as $index => $page) {
                 if (empty($page['slug']) || empty($page['html'])) {
-                    sendJson(400, ['error' => "Page {$index} missing slug or html"]);
+                    sendJson(400, ['error' => "Page {$index} missing slug or html", 'code' => 'MISSING_FIELDS']);
                 }
 
                 $minifiedHtml = $compressionEnabled ? minifyHtmlDocument($page['html']) : $page['html'];
@@ -125,11 +125,11 @@ function handlePostRoutes(string $method, string $path): bool {
 
                 $pageBytes = strlen($minifiedHtml);
                 if ($pageBytes > 14336) {
-                    sendJson(400, ['error' => "Page {$index} exceeds 14KB limit ({$pageBytes} bytes, max 14336)"]);
+                    sendJson(400, ['error' => "Page {$index} exceeds 14KB limit ({$pageBytes} bytes, max 14336)", 'code' => 'PAGE_TOO_LARGE']);
                 }
 
                 if ($pageBytes > 1048576) {
-                    sendJson(400, ['error' => "Page {$index} HTML too large (max 1MB)"]);
+                    sendJson(400, ['error' => "Page {$index} HTML too large (max 1MB)", 'code' => 'PAGE_TOO_LARGE']);
                 }
 
                 $minifiedPages[] = [
@@ -139,11 +139,12 @@ function handlePostRoutes(string $method, string $path): bool {
                 $totalBytes += $pageBytes;
             }
 
+            $lock = new ManifestLock();
             $manifest = loadManifest();
             $existingEntry = null;
             foreach ($manifest['entries'] ?? [] as $entry) {
                 if ($entry['slug'] === $baseSlug && $entry['status'] === 'tombstone') {
-                    sendJson(409, ['error' => "Slug '{$baseSlug}' was previously used and tombstoned"]);
+                    sendJson(409, ['error' => "Slug '{$baseSlug}' was previously used and tombstoned", 'code' => 'SLUG_TOMBSTONED']);
                 }
                 if ($entry['slug'] === $baseSlug && $entry['status'] !== 'tombstone') {
                     $existingEntry = $entry;
@@ -201,18 +202,18 @@ function handlePostRoutes(string $method, string $path): bool {
         }
 
         if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
-            sendJson(400, ['error' => 'Missing required fields: slug, html, bytes']);
+            sendJson(400, ['error' => 'Missing required fields: slug, html, bytes', 'code' => 'MISSING_FIELDS']);
         }
 
         $html = $compressionEnabled ? minifyHtmlDocument($body['html']) : $body['html'];
 
         $htmlBytes = strlen($html);
         if ($htmlBytes > 14336) {
-            sendJson(400, ['error' => "Page exceeds 14KB limit ({$htmlBytes} bytes, max 14336)"]);
+            sendJson(400, ['error' => "Page exceeds 14KB limit ({$htmlBytes} bytes, max 14336)", 'code' => 'PAGE_TOO_LARGE']);
         }
 
         if ($htmlBytes > 1048576) {
-            sendJson(400, ['error' => 'HTML content too large (max 1MB)']);
+            sendJson(400, ['error' => 'HTML content too large (max 1MB)', 'code' => 'PAGE_TOO_LARGE']);
         }
 
         $slug = $body['slug'];
@@ -223,14 +224,15 @@ function handlePostRoutes(string $method, string $path): bool {
         $sourceData = $body['sourceData'] ?? null;
 
         if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
-            sendJson(400, ['error' => 'Invalid slug format']);
+            sendJson(400, ['error' => 'Invalid slug format', 'code' => 'INVALID_SLUG']);
         }
 
+        $lock = new ManifestLock();
         $manifest = loadManifest();
         $existingEntry = null;
         foreach ($manifest['entries'] ?? [] as $entry) {
             if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
-                sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned"]);
+                sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned", 'code' => 'SLUG_TOMBSTONED']);
             }
             if ($entry['slug'] === $slug && $entry['status'] !== 'tombstone') {
                 $existingEntry = $entry;
@@ -318,13 +320,14 @@ function handlePostRoutes(string $method, string $path): bool {
         checkGlobalRateLimit('/posts:delete', true);
 
         $slug = $matches[1];
+        $lock = new ManifestLock();
         $manifest = loadManifest();
 
         $found = false;
         foreach ($manifest['entries'] as &$entry) {
             if ($entry['slug'] === $slug) {
                 if ($entry['status'] === 'tombstone') {
-                    sendJson(400, ['error' => "Post '{$slug}' already tombstoned"]);
+                    sendJson(400, ['error' => "Post '{$slug}' already tombstoned", 'code' => 'ALREADY_TOMBSTONED']);
                 }
                 $entry['status'] = 'tombstone';
                 $entry['tombstonedAt'] = date('c');
@@ -352,6 +355,7 @@ function handlePostRoutes(string $method, string $path): bool {
         requireCsrfToken();
         checkGlobalRateLimit('/posts:delete-all', true);
 
+        $lock = new ManifestLock();
         $manifest = loadManifest();
         $deletedCount = 0;
 

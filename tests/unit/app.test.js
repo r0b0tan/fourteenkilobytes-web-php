@@ -59,25 +59,24 @@ describe('App Utility Functions', () => {
       await expect(App.getPosts()).rejects.toThrow('Database down');
     });
 
-    it('login adds CSRF header for POST requests', async () => {
-      Object.defineProperty(document, 'cookie', {
-        configurable: true,
-        get: () => 'fkb_csrf=test-token',
-      });
-
-      global.fetch = vi.fn(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ success: true }),
-      }));
+    it('login caches csrfToken from response and uses it in subsequent requests', async () => {
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true, csrfToken: 'server-token' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true }),
+        });
 
       await App.login('secret');
+      await App.deletePost('my-post');
 
-      expect(fetch).toHaveBeenCalledWith('/api/login', expect.objectContaining({
-        method: 'POST',
-        credentials: 'same-origin',
+      expect(fetch).toHaveBeenNthCalledWith(2, '/api/posts/my-post', expect.objectContaining({
+        method: 'DELETE',
         headers: expect.objectContaining({
-          'X-CSRF-Token': 'test-token',
-          'Content-Type': 'application/json',
+          'X-CSRF-Token': 'server-token',
         }),
       }));
     });

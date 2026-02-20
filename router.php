@@ -117,6 +117,16 @@ if (preg_match('/^\/admin\/(.+)$/', $uri, $matches)) {
         }
         // Prevent search engine indexing of admin area
         header('X-Robots-Tag: noindex, nofollow');
+        // Conditional caching for static assets (ETag-based revalidation)
+        if (in_array($ext, ['js', 'css'])) {
+            $etag = '"' . md5_file($realFile) . '"';
+            header('Cache-Control: no-cache');
+            header('ETag: ' . $etag);
+            if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] === $etag) {
+                http_response_code(304);
+                return true;
+            }
+        }
         readfile($realFile);
         return true;
     }

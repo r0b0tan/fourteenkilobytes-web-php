@@ -4,6 +4,14 @@
 
 export function createAppApi() {
   let settingsCache = null;
+  let settingsCacheTime = 0;
+  const SETTINGS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  let csrfTokenCache = null;
+
+  function getCsrfToken() {
+    return csrfTokenCache;
+  }
 
   async function apiFetch(path, options = {}) {
     const headers = {
@@ -13,7 +21,7 @@ export function createAppApi() {
 
     const method = (options.method || 'GET').toUpperCase();
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-      const csrfToken = document.cookie.match(/fkb_csrf=([^;]+)/)?.[1];
+      const csrfToken = getCsrfToken();
       if (csrfToken) {
         headers['X-CSRF-Token'] = csrfToken;
       }
@@ -43,37 +51,35 @@ export function createAppApi() {
   }
 
   async function setup(password) {
-    return apiFetch('/api/setup', {
+    const result = await apiFetch('/api/setup', {
       method: 'POST',
       body: JSON.stringify({ password }),
     });
+    if (result.csrfToken) csrfTokenCache = result.csrfToken;
+    return result;
   }
 
   async function login(password) {
-    return apiFetch('/api/login', {
+    const result = await apiFetch('/api/login', {
       method: 'POST',
       body: JSON.stringify({ password }),
     });
+    if (result.csrfToken) csrfTokenCache = result.csrfToken;
+    return result;
   }
 
   async function logout() {
     const result = await apiFetch('/api/logout', { method: 'POST' });
-
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const name = cookie.split('=')[0].trim();
-      if (name.startsWith('fkb_')) {
-        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict`;
-        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure`;
-      }
-    }
-
+    csrfTokenCache = null;
+    settingsCache = null;
+    settingsCacheTime = 0;
     return result;
   }
 
   async function isLoggedIn() {
     try {
-      await apiFetch('/api/auth-check');
+      const data = await apiFetch('/api/auth-check');
+      if (data.csrfToken) csrfTokenCache = data.csrfToken;
       return true;
     } catch {
       return false;
@@ -86,10 +92,12 @@ export function createAppApi() {
   }
 
   async function getSettings(force = false) {
-    if (settingsCache && !force) {
+    const now = Date.now();
+    if (settingsCache && !force && (now - settingsCacheTime) < SETTINGS_CACHE_TTL) {
       return settingsCache;
     }
     settingsCache = await apiFetch('/api/settings');
+    settingsCacheTime = Date.now();
     return settingsCache;
   }
 
@@ -99,6 +107,7 @@ export function createAppApi() {
       body: JSON.stringify(settings),
     });
     settingsCache = null;
+    settingsCacheTime = 0;
     return result;
   }
 
@@ -186,6 +195,7 @@ export function createAppApi() {
 
   return {
     apiFetch,
+    getCsrfToken,
     getConfig,
     getSetupStatus,
     setup,

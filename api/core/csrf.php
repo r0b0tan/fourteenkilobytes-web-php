@@ -11,7 +11,7 @@ function setCsrfCookie(string $token): void {
     setcookie(CSRF_COOKIE_NAME, $token, [
         'expires' => time() + COOKIE_LIFETIME,
         'path' => '/',
-        'httponly' => false,
+        'httponly' => true,
         'secure' => $secure,
         'samesite' => 'Strict',
     ]);
@@ -22,7 +22,7 @@ function clearCsrfCookie(): void {
     setcookie(CSRF_COOKIE_NAME, '', [
         'expires' => time() - 3600,
         'path' => '/',
-        'httponly' => false,
+        'httponly' => true,
         'secure' => $secure,
         'samesite' => 'Strict',
     ]);

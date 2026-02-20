@@ -52,19 +52,19 @@ function handleAuthRoutes(string $method, string $path): bool {
 
     if ($method === 'POST' && $path === '/login') {
         if (!isSetupComplete()) {
-            sendJson(400, ['error' => 'Setup not complete']);
+            sendJson(400, ['error' => 'Setup not complete', 'code' => 'SETUP_REQUIRED']);
         }
 
         $clientIp = getClientIp();
         if (!checkRateLimit($clientIp)) {
-            sendJson(429, ['error' => 'Too many login attempts. Please try again later.']);
+            sendJson(429, ['error' => 'Too many login attempts. Please try again later.', 'code' => 'RATE_LIMITED']);
         }
 
         $body = readJsonBody();
         $password = $body['password'] ?? '';
 
         if (empty($password)) {
-            sendJson(400, ['error' => 'Password required']);
+            sendJson(400, ['error' => 'Password required', 'code' => 'MISSING_FIELDS']);
         }
 
         $salt = getInstanceSalt();
@@ -74,7 +74,7 @@ function handleAuthRoutes(string $method, string $path): bool {
         if (!hash_equals($storedToken, $token)) {
             recordFailedAttempt($clientIp);
             auditLog('login_failed', ['ip' => $clientIp, 'attempts' => loadRateLimits()[$clientIp]['attempts'] ?? 1]);
-            sendJson(401, ['error' => 'Invalid password']);
+            sendJson(401, ['error' => 'Invalid password', 'code' => 'INVALID_CREDENTIALS']);
         }
 
         clearRateLimit($clientIp);
@@ -124,7 +124,17 @@ function handleAuthRoutes(string $method, string $path): bool {
 
     if ($method === 'GET' && $path === '/auth-check') {
         requireAuth();
-        sendJson(200, ['authenticated' => true]);
+        sendJson(200, ['authenticated' => true, 'csrfToken' => $_COOKIE[CSRF_COOKIE_NAME] ?? null]);
+    }
+
+    if ($method === 'GET' && $path === '/csrf') {
+        requireAuth();
+        $csrfToken = $_COOKIE[CSRF_COOKIE_NAME] ?? null;
+        if ($csrfToken === null) {
+            $csrfToken = generateCsrfToken();
+            setCsrfCookie($csrfToken);
+        }
+        sendJson(200, ['csrfToken' => $csrfToken]);
     }
 
     return false;
