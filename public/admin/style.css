@@ -954,6 +954,13 @@ button:disabled {
   margin-bottom: 0;
 }
 
+#update-check-editor {
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 6px;
+  width: fit-content;
+}
+
 #rss-url-editor .form-group,
 #rss-settings-editor .form-group {
   margin-bottom: 0;
