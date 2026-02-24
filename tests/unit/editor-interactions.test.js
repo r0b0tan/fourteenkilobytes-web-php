@@ -78,6 +78,7 @@ function createElements() {
     compressionEnabled: make('input'),
     classManglingEnabled: make('input'),
     classManglingMode: make('select'),
+    updateCheckEnabled: make('input'),
     tabBtns: [tabBtn, cssTabBtn],
     tabContents: [tabContent, cssTabContent],
   };
