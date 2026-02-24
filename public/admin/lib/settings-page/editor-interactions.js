@@ -71,6 +71,7 @@ export function initEditorInteractions({
     compressionEnabled,
     classManglingEnabled,
     classManglingMode,
+    updateCheckEnabled,
     tabBtns,
     tabContents,
   } = elements;
@@ -406,6 +407,10 @@ export function initEditorInteractions({
   classManglingMode.addEventListener('change', () => {
     markAsChanged();
     updateOverhead();
+  });
+
+  updateCheckEnabled.addEventListener('change', () => {
+    markAsChanged();
   });
 
   function isCssTabActive() {
