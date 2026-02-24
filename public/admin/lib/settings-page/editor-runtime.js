@@ -52,6 +52,7 @@ export function createEditorRuntime({
     compressionEnabled,
     classManglingEnabled,
     classManglingMode,
+    updateCheckEnabled,
     saveBtn,
     discardBtn,
     overheadPieChart,
@@ -120,6 +121,9 @@ export function createEditorRuntime({
           enabled: classManglingEnabled.checked,
           mode: classManglingMode.value === 'aggressive' ? 'aggressive' : 'safe',
         },
+      },
+      updateCheck: {
+        enabled: updateCheckEnabled.checked,
       },
     };
   }
@@ -297,6 +301,8 @@ export function createEditorRuntime({
       classManglingEnabled.checked = classMangling.enabled === true;
       classManglingMode.value = classMangling.mode === 'aggressive' ? 'aggressive' : 'safe';
       classManglingMode.disabled = !classManglingEnabled.checked;
+
+      updateCheckEnabled.checked = settings.updateCheck?.enabled === true;
 
       state.initialSettings = JSON.stringify(buildSettings());
       state.hasUnsavedChanges = false;

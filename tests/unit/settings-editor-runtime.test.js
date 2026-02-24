@@ -112,6 +112,8 @@ function setupEnv() {
   const optAggressive = el('option');
   optAggressive.value = 'aggressive';
   classManglingMode.append(optSafe, optAggressive);
+  const updateCheckEnabled = el('input');
+  updateCheckEnabled.type = 'checkbox';
   const saveBtn = el('button');
   saveBtn.innerHTML = 'Save';
   const discardBtn = el('button');
@@ -158,6 +160,7 @@ function setupEnv() {
     compressionEnabled,
     classManglingEnabled,
     classManglingMode,
+    updateCheckEnabled,
     saveBtn,
     discardBtn,
     overheadPieChart,
@@ -220,6 +223,7 @@ function setupEnv() {
     compressionEnabled,
     classManglingEnabled,
     classManglingMode,
+    updateCheckEnabled,
     saveBtn,
     discardBtn,
     overheadPieChart,

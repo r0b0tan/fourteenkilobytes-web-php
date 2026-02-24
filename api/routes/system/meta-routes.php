@@ -36,6 +36,11 @@ function handleSystemMetaRoutes(string $method, string $path): bool {
     }
 
     if ($method === 'GET' && $path === '/check-updates') {
+        $updateSettings = loadSettings()['updateCheck'] ?? [];
+        if (empty($updateSettings['enabled'])) {
+            sendJson(200, ['disabled' => true, 'updateAvailable' => false]);
+        }
+
         $versionFile = dirname(__DIR__, 3) . '/version.json';
         if (!file_exists($versionFile)) {
             sendJson(500, ['error' => 'Version file not found']);
