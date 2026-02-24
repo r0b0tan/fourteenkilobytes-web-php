@@ -23,6 +23,9 @@ function loadSettings(): array {
             'blog' => [
                 'author' => '',
             ],
+            'updateCheck' => [
+                'enabled' => false,
+            ],
         ];
     }
     $content = file_get_contents(SETTINGS_FILE);
@@ -66,6 +69,12 @@ function loadSettings(): array {
     $mode = $settings['optimizations']['classMangling']['mode'] ?? 'safe';
     $settings['optimizations']['classMangling']['mode'] = ($mode === 'aggressive') ? 'aggressive' : 'safe';
     unset($settings['optimizations']['casing']);
+    if (!isset($settings['updateCheck']) || !is_array($settings['updateCheck'])) {
+        $settings['updateCheck'] = ['enabled' => false];
+    }
+    if (!array_key_exists('enabled', $settings['updateCheck'])) {
+        $settings['updateCheck']['enabled'] = false;
+    }
     return $settings;
 }
 

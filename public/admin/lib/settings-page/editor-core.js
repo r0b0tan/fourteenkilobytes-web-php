@@ -62,6 +62,7 @@ export function initEditorCore({ doc = document, App, t, i18n, debounce, formatB
     compressionEnabled: doc.getElementById('compression-enabled'),
     classManglingEnabled: doc.getElementById('class-mangling-enabled'),
     classManglingMode: doc.getElementById('class-mangling-mode'),
+    updateCheckEnabled: doc.getElementById('update-check-enabled'),
     saveBtn: doc.getElementById('save-btn'),
     discardBtn: doc.getElementById('discard-btn'),
     overheadPieChart: doc.getElementById('overhead-pie-chart'),
