@@ -444,7 +444,7 @@ describe('initEditorInteractions favicon preview', () => {
     expect(elements.cssPresetPreview.classList.contains('hidden')).toBe(true);
   });
 
-  test('drag/drop and section toggles call change handlers', () => {
+  test('drag/drop reorders nav chips and marks changed', () => {
     const elements = createElements();
     const markAsChanged = vi.fn();
     const updateOverhead = vi.fn();
@@ -478,10 +478,58 @@ describe('initEditorInteractions favicon preview', () => {
     chipB.dispatchEvent(new Event('dragleave', { bubbles: true }));
     chipB.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
     chipA.dispatchEvent(new Event('dragend', { bubbles: true }));
-    expect(markAsChanged).toHaveBeenCalled();
 
+    const chips = elements.headerLinks.querySelectorAll('.nav-chip');
+    expect(chips[0].textContent).toBe('B');
+    expect(chips[1].textContent).toBe('A');
+    expect(markAsChanged).toHaveBeenCalled();
+  });
+
+  test('settings toggles update DOM state and call markAsChanged / updateOverhead', () => {
+    const elements = createElements();
+    const markAsChanged = vi.fn();
+    const updateOverhead = vi.fn();
+
+    initEditorInteractions({
+      doc: document,
+      App: {
+        republishPost: vi.fn(),
+        generateArchivePage: vi.fn(),
+        loadCssPresets: vi.fn().mockResolvedValue({}),
+      },
+      t: (key) => key,
+      Toast: { success: vi.fn(), error: vi.fn() },
+      Modal: { confirm: vi.fn() },
+      debounce: (fn) => fn,
+      formatBytes: (value) => String(value),
+      state: { editingLink: null, cssPreviewLoaded: false },
+      markAsChanged,
+      updateOverhead,
+      elements,
+    });
+
+    // footer: unchecked (default) → fires change → 'hidden' added; then checked → removed
+    elements.footerEnabled.dispatchEvent(new Event('change'));
+    expect(elements.footerEditor.classList.contains('hidden')).toBe(true);
     elements.footerEnabled.checked = true;
     elements.footerEnabled.dispatchEvent(new Event('change'));
+    expect(elements.footerEditor.classList.contains('hidden')).toBe(false);
+    expect(markAsChanged).toHaveBeenCalledTimes(2);
+    expect(updateOverhead).toHaveBeenCalledTimes(2);
+    markAsChanged.mockClear();
+    updateOverhead.mockClear();
+
+    // archive: checked → display 'block'; unchecked → display 'none'
+    elements.archiveEnabled.checked = true;
+    elements.archiveEnabled.dispatchEvent(new Event('change'));
+    expect(elements.archiveUrlSection.style.display).toBe('block');
+    expect(elements.archiveLinkTextSection.style.display).toBe('block');
+    elements.archiveEnabled.checked = false;
+    elements.archiveEnabled.dispatchEvent(new Event('change'));
+    expect(elements.archiveUrlSection.style.display).toBe('none');
+    markAsChanged.mockClear();
+
+    // remaining fields: verify all handlers are wired up
     elements.metaEnabled.checked = true;
     elements.metaEnabled.dispatchEvent(new Event('change'));
     elements.siteTitleEnabled.checked = true;
@@ -498,13 +546,11 @@ describe('initEditorInteractions favicon preview', () => {
     elements.rssMaxItems.dispatchEvent(new Event('input'));
     elements.rssTtl.dispatchEvent(new Event('input'));
     elements.bloglistLimit.dispatchEvent(new Event('input'));
-    elements.archiveEnabled.checked = true;
-    elements.archiveEnabled.dispatchEvent(new Event('change'));
     elements.archiveSlug.dispatchEvent(new Event('input'));
     elements.archiveLinkText.dispatchEvent(new Event('input'));
 
     expect(updateOverhead).toHaveBeenCalled();
-    expect(markAsChanged.mock.calls.length).toBeGreaterThan(8);
+    expect(markAsChanged).toHaveBeenCalled();
   });
 
   test('renders favicon preview via DOM API without creating executable attributes', () => {

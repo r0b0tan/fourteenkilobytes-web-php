@@ -81,6 +81,11 @@ describe('App Utility Functions', () => {
       }));
     });
 
+    it('getPosts rejects when fetch throws a network error', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+      await expect(App.getPosts()).rejects.toThrow('Failed to fetch');
+    });
+
     it('getConfig throws HTTP status fallback when response has no json body', async () => {
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
@@ -324,6 +329,27 @@ describe('App Utility Functions', () => {
         title: 't',
         useGlobalSettings: false,
       })).rejects.toThrow('SOME_OTHER_ERROR');
+    });
+
+    it('publish throws when compiler returns success but no pages', async () => {
+      compilerMocks.compile.mockResolvedValue({
+        success: true,
+        pages: [],
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ optimizations: { compression: { enabled: false } } }),
+      });
+
+      await expect(App.publish({
+        slug: 's',
+        title: 't',
+        content: [],
+        icons: [],
+        allowPagination: false,
+        useGlobalSettings: false,
+      })).rejects.toThrow();
     });
 
     it('publish throws when compiler compile fails', async () => {
@@ -822,46 +848,41 @@ describe('App Utility Functions', () => {
   });
 
   describe('formatDate()', () => {
+    let toLocaleDateStringSpy;
+
     beforeEach(() => {
-      // Mock i18n
-      window.i18n = {
-        getFullLocale: vi.fn(() => 'en-US'),
-      };
+      window.i18n = { getFullLocale: vi.fn(() => 'en-US') };
+      toLocaleDateStringSpy = vi.spyOn(Date.prototype, 'toLocaleDateString')
+        .mockImplementation(function(locale) { return `mocked:${locale}`; });
     });
 
-    it('should format date with default locale', () => {
-      const date = '2024-01-15T12:00:00Z';
-      const result = App.formatDate(date);
-      expect(result).toMatch(/Jan/); // Month abbreviation
-      expect(result).toMatch(/15/); // Day
-      expect(result).toMatch(/2024/); // Year
+    it('passes locale from window.i18n and correct options to toLocaleDateString', () => {
+      const result = App.formatDate('2024-01-15T12:00:00Z');
+      expect(toLocaleDateStringSpy).toHaveBeenCalledWith('en-US', expect.objectContaining({
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }));
+      expect(result).toBe('mocked:en-US');
     });
 
-    it('should use German locale when set', () => {
-      window.i18n.getFullLocale = vi.fn(() => 'de-DE');
-      const date = '2024-01-15T12:00:00Z';
-      const result = App.formatDate(date);
-      // German date format
-      expect(result).toMatch(/Jan|Jän/); // German month abbreviation
-      expect(result).toMatch(/15/);
-      expect(result).toMatch(/2024/);
+    it('passes de-DE locale when window.i18n returns de-DE', () => {
+      window.i18n.getFullLocale.mockReturnValue('de-DE');
+      App.formatDate('2024-01-15T12:00:00Z');
+      expect(toLocaleDateStringSpy).toHaveBeenCalledWith('de-DE', expect.any(Object));
     });
 
-    it('should handle different date formats', () => {
-      const date = new Date('2024-12-25').toISOString();
-      const result = App.formatDate(date);
-      expect(result).toMatch(/Dec/);
-      expect(result).toMatch(/25/);
-      expect(result).toMatch(/2024/);
-    });
-
-    it('should work without i18n (fallback to en-US)', () => {
+    it('falls back to en-US when window.i18n is unavailable', () => {
       delete window.i18n;
-      const date = '2024-06-01T00:00:00Z';
-      const result = App.formatDate(date);
-      expect(result).toMatch(/Jun/);
-      expect(result).toMatch(/1|01/);
-      expect(result).toMatch(/2024/);
+      App.formatDate('2024-06-01T00:00:00Z');
+      expect(toLocaleDateStringSpy).toHaveBeenCalledWith('en-US', expect.any(Object));
+    });
+
+    it('passes a Date constructed from the ISO string', () => {
+      App.formatDate('2024-12-25T00:00:00Z');
+      const dateArg = toLocaleDateStringSpy.mock.instances[0];
+      expect(dateArg).toBeInstanceOf(Date);
+      expect(dateArg.toISOString()).toContain('2024-12-25');
     });
   });
 });
