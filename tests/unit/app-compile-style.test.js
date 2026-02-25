@@ -2,32 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { createCompileStyleService } from '../../public/admin/lib/app-compile-style.js';
 
-function collectBloglists(blocks) {
-  const found = [];
-
-  const walk = (block) => {
-    if (!block || typeof block !== 'object') return;
-    if (block.type === 'bloglist') {
-      found.push(block);
-    }
-
-    if (Array.isArray(block.children)) {
-      block.children.forEach(walk);
-    }
-
-    if (Array.isArray(block.cells)) {
-      block.cells.forEach(cell => {
-        if (Array.isArray(cell?.children)) {
-          cell.children.forEach(walk);
-        }
-      });
-    }
-  };
-
-  (blocks || []).forEach(walk);
-  return found;
-}
-
 describe('createCompileStyleService', () => {
   it('reuses one in-flight preset load for parallel requests', async () => {
     const fetchMock = vi.fn(async (url) => ({
@@ -116,10 +90,12 @@ describe('createCompileStyleService', () => {
     expect(Array.isArray(merged.posts)).toBe(true);
     expect(merged.posts).toHaveLength(1);
 
-    const bloglists = collectBloglists(merged.content);
-    expect(bloglists).toHaveLength(2);
+    // Direct structural access — confirms the production traversal reaches both locations
+    const sectionBloglist = merged.content[0].children[0]; // section → bloglist
+    const layoutBloglist = merged.content[1].cells[0].children[0]; // layout → cell → bloglist
 
-    for (const block of bloglists) {
+    for (const block of [sectionBloglist, layoutBloglist]) {
+      expect(block.type).toBe('bloglist');
       expect(block.limit).toBe(7);
       expect(block.archiveLink).toEqual({
         href: '/archiv',

@@ -70,7 +70,7 @@ describe('createSectionBlock', () => {
     expect(actions).toBeTruthy();
 
     const buttons = actions.querySelectorAll('button');
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(buttons.length).toBe(4); // up, down, duplicate, delete
   });
 
   test('includes background color input', () => {
