@@ -54,5 +54,8 @@ RewriteRule ^feed\.xml$ feed.php [L]
 # Root -> public/index.html or index.php router
 RewriteRule ^$ index.php [L]
 
+# Redirect .html slug URLs to clean URLs
+RewriteRule ^([a-z0-9-]+)\.html$ /$1 [R=301,L]
+
 # Blog posts (slug format) -> index.php router
 RewriteRule ^([a-z0-9-]+)/?$ index.php?slug=$1 [L,QSA]
