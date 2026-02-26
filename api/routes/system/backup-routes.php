@@ -80,14 +80,62 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
         }
 
         if ($importArticles === 'true' && isset($body['articles'])) {
+            $lock = new ManifestLock();
+            $manifest = loadManifest();
+            $pageTypes = loadPageTypes();
             $imported = [];
+
             foreach ($body['articles'] as $article) {
-                if (empty($article['slug']) || empty($article['sourceData'])) {
+                $slug = $article['slug'] ?? '';
+                if (empty($slug) || empty($article['sourceData'])) {
                     continue;
                 }
-                saveSourceData($article['slug'], $article['sourceData']);
-                $imported[] = $article['slug'];
+
+                // Find existing manifest entry, skip tombstoned slugs
+                $existingEntryKey = null;
+                $isTombstoned = false;
+                foreach ($manifest['entries'] as $i => $entry) {
+                    if ($entry['slug'] === $slug) {
+                        if ($entry['status'] === 'tombstone') {
+                            $isTombstoned = true;
+                        } else {
+                            $existingEntryKey = $i;
+                        }
+                        break;
+                    }
+                }
+
+                if ($isTombstoned) {
+                    continue;
+                }
+
+                saveSourceData($slug, $article['sourceData']);
+
+                $manifestEntry = [
+                    'slug' => $slug,
+                    'status' => 'published',
+                    'title' => $article['title'] ?? $slug,
+                    'publishedAt' => $article['publishedAt'] ?? date('c'),
+                ];
+                if (!empty($article['pageCount']) && (int) $article['pageCount'] > 1) {
+                    $manifestEntry['pageCount'] = (int) $article['pageCount'];
+                }
+
+                if ($existingEntryKey !== null) {
+                    // Preserve original publishedAt when updating existing entry
+                    $manifestEntry['publishedAt'] = $manifest['entries'][$existingEntryKey]['publishedAt'];
+                    $manifest['entries'][$existingEntryKey] = $manifestEntry;
+                } else {
+                    $manifest['entries'][] = $manifestEntry;
+                }
+
+                $pageTypes['types'][$slug] = $article['pageType'] ?? 'post';
+                $imported[] = $slug;
             }
+
+            saveManifest($manifest);
+            savePageTypes($pageTypes);
+
             $result['imported'][] = 'articles';
             $result['articleSlugs'] = $imported;
         }
