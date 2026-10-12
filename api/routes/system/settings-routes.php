@@ -16,8 +16,9 @@ function handleSystemSettingsRoutes(string $method, string $path): bool {
 
         $settings = readJsonBody();
 
-        if (($settings['version'] ?? 0) !== 1) {
-            sendJson(400, ['error' => 'Invalid settings version']);
+        $errors = validateSettings($settings);
+        if ($errors !== []) {
+            sendJson(400, ['error' => 'Invalid settings: ' . implode('; ', $errors), 'code' => 'INVALID_SETTINGS', 'details' => $errors]);
         }
 
         saveSettings($settings);

@@ -172,6 +172,49 @@ export function createCompilePublishService(deps) {
     return publish(input);
   }
 
+  /**
+   * Republishes the given pages one after another; a failing page does not stop the rest.
+   * @returns {Promise<{rebuilt: number, failed: string[]}>}
+   */
+  async function rebuildPages(slugs, onProgress) {
+    const failed = [];
+    for (let i = 0; i < slugs.length; i++) {
+      onProgress?.(i + 1, slugs.length, slugs[i]);
+      try {
+        await republishPost(slugs[i]);
+      } catch (err) {
+        console.error(`Failed to rebuild ${slugs[i]}:`, err);
+        failed.push(slugs[i]);
+      }
+    }
+    return { rebuilt: slugs.length - failed.length, failed };
+  }
+
+  /**
+   * Rebuilds pages that show a post list (homepage, archive, ...) after a post changed.
+   */
+  async function rebuildDependentPages({ exclude = null } = {}) {
+    const { slugs } = await apiFetch('/api/dependent-pages');
+    return rebuildPages(slugs.filter(slug => slug !== exclude));
+  }
+
+  /**
+   * Rebuilds every live page, e.g. after changing header, footer or CSS.
+   * Pages with post lists come last so they see all other pages' current state.
+   */
+  async function rebuildAllPages(onProgress) {
+    const [posts, { slugs: dependent }] = await Promise.all([
+      getPosts(),
+      apiFetch('/api/dependent-pages'),
+    ]);
+    const live = posts.filter(post => post.status !== 'tombstone').map(post => post.slug);
+    const ordered = [
+      ...live.filter(slug => !dependent.includes(slug)),
+      ...live.filter(slug => dependent.includes(slug)),
+    ];
+    return rebuildPages(ordered, onProgress);
+  }
+
   async function createDefaultHomepage() {
     const homepageInput = {
       slug: 'startseite',
@@ -236,6 +279,8 @@ export function createCompilePublishService(deps) {
     preview,
     publish,
     republishPost,
+    rebuildDependentPages,
+    rebuildAllPages,
     createDefaultHomepage,
     generateArchivePage,
   };

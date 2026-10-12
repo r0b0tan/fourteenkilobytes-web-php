@@ -114,12 +114,23 @@ export async function executePublish(config) {
 
   const result = await App.publish(input);
 
+  // Pages with a post list (homepage, archive) would otherwise show stale entries.
+  let rebuildWarning = '';
+  try {
+    const { failed } = await App.rebuildDependentPages({ exclude: result.slug });
+    if (failed.length > 0) {
+      rebuildWarning = `<br><br>${t('editor.dependentRebuildFailed', { slugs: failed.join(', ') })}`;
+    }
+  } catch (err) {
+    rebuildWarning = `<br><br>${t('editor.dependentRebuildFailed', { slugs: err.message })}`;
+  }
+
   const sizeInfo = result.pageCount && result.pageCount > 1
     ? `${result.pageCount} pages, ${result.totalBytes} bytes`
     : `${result.bytes} bytes`;
 
   Modal.success(
-    `<strong>${t('editor.buildSuccess')}</strong><br>/${result.slug} (${sizeInfo})`,
+    `<strong>${t('editor.buildSuccess')}</strong><br>/${result.slug} (${sizeInfo})${rebuildWarning}`,
     [
       { text: t('modal.ok'), class: 'btn-secondary' },
       { text: t('dashboard.view'), class: 'btn-primary', action: () => window.open(`/${result.slug}`, '_blank') }

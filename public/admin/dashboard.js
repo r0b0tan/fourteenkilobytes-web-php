@@ -680,6 +680,10 @@ export async function init() {
 
         try {
           await App.deletePost(slug);
+          const { failed } = await App.rebuildDependentPages();
+          if (failed.length > 0) {
+            Modal.error(t('editor.dependentRebuildFailed', { slugs: failed.join(', ') }));
+          }
           loadAllContent();
         } catch (err) {
           Modal.error(t('dashboard.deleteError', { error: err.message }));

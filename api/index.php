@@ -23,13 +23,8 @@ if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 }
 
-define('DATA_DIR', dirname(__DIR__) . '/data');
-define('INSTANCE_FILE', DATA_DIR . '/instance.json');
-define('MANIFEST_FILE', DATA_DIR . '/manifest.json');
-define('SETTINGS_FILE', DATA_DIR . '/settings.json');
-define('PAGE_TYPES_FILE', DATA_DIR . '/page-types.json');
-define('POSTS_DIR', DATA_DIR . '/posts');
-define('SOURCES_DIR', DATA_DIR . '/sources');
+require_once __DIR__ . '/core/paths.php';
+
 define('RATE_LIMIT_FILE', DATA_DIR . '/rate-limits.json');
 
 define('ITERATIONS', 600000);
@@ -70,6 +65,7 @@ if (!is_dir(SOURCES_DIR)) {
 }
 
 require_once __DIR__ . '/core/http.php';
+require_once __DIR__ . '/core/json-storage.php';
 require_once __DIR__ . '/core/instance.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/cookies.php';

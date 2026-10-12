@@ -35,30 +35,44 @@ if (!function_exists('readJsonBody')) {
 }
 
 /**
+ * Minify CSS while preserving strings, calc() expressions and descendant combinators.
  * Must stay in sync with minifyCss() in public/admin/lib/css-utils.js: the client embeds the
  * final byte count, so the server pass has to produce the identical output.
  */
 function minifyCss(string $css): string {
+    // Protect quoted strings (content, attribute selectors, font names) from all rules below.
+    $strings = [];
+    $minified = preg_replace('~/\*[\s\S]*?\*/~', '', $css) ?? $css;
+    $minified = preg_replace_callback('/"(?:[^"\\\\]|\\\\[\s\S])*"|\'(?:[^\'\\\\]|\\\\[\s\S])*\'/', function (array $matches) use (&$strings): string {
+        $strings[] = $matches[0];
+        return '__STR' . (count($strings) - 1) . '__';
+    }, $minified) ?? $minified;
+
     // Protect calc() expressions; their + and - operators require surrounding whitespace.
     $calcs = [];
     $minified = preg_replace_callback('/calc\([^)]+\)/', function (array $matches) use (&$calcs): string {
         $calcs[] = $matches[0];
         return '__CALC' . (count($calcs) - 1) . '__';
-    }, $css) ?? $css;
+    }, $minified) ?? $minified;
 
-    $minified = preg_replace('~/\*[\s\S]*?\*/~', '', $minified) ?? $minified;
-
-    $minified = str_replace(["\r", "\n", "\t"], '', $minified);
-
+    $minified = str_replace(["\r", "\n", "\t"], ' ', $minified);
     $minified = preg_replace('/\s{2,}/', ' ', $minified) ?? $minified;
-    $minified = preg_replace('/\s*([{}:;,>+~])\s*/', '$1', $minified) ?? $minified;
+    $minified = preg_replace('/\s*([{};,>+~])\s*/', '$1', $minified) ?? $minified;
+    $minified = preg_replace('/:\s+/', ':', $minified) ?? $minified;
+
+    // Whitespace before ":" is a descendant combinator in selectors (".a :hover"),
+    // so it is only removed inside declaration blocks or a plain declaration list (style="").
+    $minified = str_contains($minified, '{')
+        ? (preg_replace_callback('/\{[^{}]*\}/', fn(array $m): string => preg_replace('/\s+:/', ':', $m[0]) ?? $m[0], $minified) ?? $minified)
+        : (preg_replace('/\s+:/', ':', $minified) ?? $minified);
+
     $minified = preg_replace('/(^|[:\s,(])0(?:px|rem|em|%|vh|vw|vmin|vmax)(?=([;,)\s}]|$))/i', '${1}0', $minified) ?? $minified;
     $minified = preg_replace('/#([\da-f])\1([\da-f])\2([\da-f])\3\b/i', '#$1$2$3', $minified) ?? $minified;
     $minified = str_ireplace('rgba(255,255,255,0)', 'transparent', $minified);
     $minified = preg_replace('/;}/', '}', $minified) ?? $minified;
     $minified = trim($minified);
 
-    return preg_replace_callback('/__CALC(\d+)__/', function (array $matches) use ($calcs): string {
+    $minified = preg_replace_callback('/__CALC(\d+)__/', function (array $matches) use ($calcs): string {
         $calc = $calcs[(int) $matches[1]] ?? '';
         $calc = preg_replace('/\s+/', ' ', $calc) ?? $calc;
         $calc = preg_replace('/\s*([(),])\s*/', '$1', $calc) ?? $calc;
@@ -67,6 +81,8 @@ function minifyCss(string $css): string {
         $calc = preg_replace('/\s+/', ' ', $calc) ?? $calc;
         return trim($calc);
     }, $minified) ?? $minified;
+
+    return preg_replace_callback('/__STR(\d+)__/', fn(array $matches): string => $strings[(int) $matches[1]] ?? '', $minified) ?? $minified;
 }
 
 /**

@@ -4,50 +4,59 @@
  */
 declare(strict_types=1);
 
-define('DATA_DIR', __DIR__ . '/data');
-define('MANIFEST_FILE', DATA_DIR . '/manifest.json');
-define('SETTINGS_FILE', DATA_DIR . '/settings.json');
-define('SOURCES_DIR', DATA_DIR . '/sources');
-
-function loadSettings(): array {
-    if (!file_exists(SETTINGS_FILE)) {
-        return [];
-    }
-    return json_decode(file_get_contents(SETTINGS_FILE), true) ?? [];
-}
-
-function loadManifest(): array {
-    if (!file_exists(MANIFEST_FILE)) {
-        return ['entries' => []];
-    }
-    return json_decode(file_get_contents(MANIFEST_FILE), true) ?? ['entries' => []];
-}
+require_once __DIR__ . '/api/core/paths.php';
+require_once __DIR__ . '/api/core/json-storage.php';
+require_once __DIR__ . '/api/core/manifest-storage.php';
+require_once __DIR__ . '/api/core/settings-storage.php';
+require_once __DIR__ . '/api/core/content-storage.php';
 
 function extractTextFromChildren(array $children): string {
     $text = '';
     foreach ($children as $child) {
-        if ($child['type'] === 'text') {
+        if (!is_array($child)) {
+            continue;
+        }
+        if (($child['type'] ?? '') === 'text') {
             $text .= $child['text'] ?? '';
-        } elseif (isset($child['children'])) {
+        } elseif (isset($child['children']) && is_array($child['children'])) {
             $text .= extractTextFromChildren($child['children']);
         }
     }
     return $text;
 }
 
-function extractDescription(array $content, int $maxLength = 200): string {
-    $text = '';
-    foreach ($content as $block) {
-        if ($block['type'] === 'paragraph') {
-            $text .= extractTextFromChildren($block['children'] ?? []) . ' ';
+/**
+ * Collects paragraph text in document order, including paragraphs nested in sections and layout cells.
+ */
+function collectParagraphText(array $blocks, string &$text, int $maxLength): void {
+    foreach ($blocks as $block) {
+        if (!is_array($block) || mb_strlen($text) > $maxLength) {
+            return;
         }
-        if (strlen($text) > $maxLength) {
-            break;
+        if (($block['type'] ?? '') === 'paragraph') {
+            $paragraph = is_array($block['children'] ?? null)
+                ? extractTextFromChildren($block['children'])
+                : (string) ($block['text'] ?? '');
+            $text .= $paragraph . ' ';
+            continue;
+        }
+        if (isset($block['children']) && is_array($block['children'])) {
+            collectParagraphText($block['children'], $text, $maxLength);
+        }
+        foreach (($block['cells'] ?? []) as $cell) {
+            if (is_array($cell) && is_array($cell['children'] ?? null)) {
+                collectParagraphText($cell['children'], $text, $maxLength);
+            }
         }
     }
-    $text = trim(preg_replace('/\s+/', ' ', $text));
-    if (strlen($text) > $maxLength) {
-        $text = substr($text, 0, $maxLength - 3) . '...';
+}
+
+function extractDescription(array $content, int $maxLength = 200): string {
+    $text = '';
+    collectParagraphText($content, $text, $maxLength);
+    $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    if (mb_strlen($text) > $maxLength) {
+        $text = rtrim(mb_substr($text, 0, $maxLength - 1)) . '…';
     }
     return $text;
 }
@@ -56,8 +65,20 @@ function xmlEscape(string $str): string {
     return htmlspecialchars($str, ENT_XML1 | ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * RSS requires absolute links. Without a configured site URL, fall back to the requesting host.
+ */
+function requestBaseUrl(): string {
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    if (!preg_match('/^[A-Za-z0-9.-]+(:\d+)?$/', $host)) {
+        $host = 'localhost';
+    }
+    return ($isHttps ? 'https' : 'http') . '://' . $host;
+}
+
 $settings = loadSettings();
-$rssSettings = $settings['rss'] ?? [];
+$rssSettings = is_array($settings['rss'] ?? null) ? $settings['rss'] : [];
 
 if (!($rssSettings['enabled'] ?? false)) {
     http_response_code(404);
@@ -66,29 +87,32 @@ if (!($rssSettings['enabled'] ?? false)) {
     exit;
 }
 
-$manifest = loadManifest();
-$entries = $manifest['entries'] ?? [];
-
-$posts = array_filter($entries, fn($e) => ($e['status'] ?? '') === 'published');
+$pageTypes = loadPageTypes()['types'];
+$posts = array_filter(
+    loadManifest()['entries'],
+    fn($e) => ($e['status'] ?? '') === 'published' && ($pageTypes[$e['slug'] ?? ''] ?? 'post') === 'post'
+);
 usort($posts, fn($a, $b) => strcmp($b['publishedAt'] ?? '', $a['publishedAt'] ?? ''));
 
-$maxItems = (int)($rssSettings['maxItems'] ?? 20);
+$maxItems = max(1, (int) ($rssSettings['maxItems'] ?? 20));
 $posts = array_slice($posts, 0, $maxItems);
 
-$feedTitle = xmlEscape($settings['siteTitle'] ?? 'Blog');
-$feedDescription = xmlEscape($settings['meta']['description'] ?? '');
-$siteUrl = rtrim($rssSettings['siteUrl'] ?? '', '/');
-$feedUrl = $siteUrl ? $siteUrl . '/feed.xml' : '';
-$language = $rssSettings['language'] ?? 'de-DE';
-$copyright = $rssSettings['copyright'] ?? '';
-$ttl = (int)($rssSettings['ttl'] ?? 60);
+$feedTitle = xmlEscape((string) ($settings['siteTitle'] ?? 'Blog'));
+$feedDescription = xmlEscape((string) ($settings['meta']['description'] ?? ''));
+$configuredSiteUrl = rtrim((string) ($rssSettings['siteUrl'] ?? ''), '/');
+$siteUrl = $configuredSiteUrl !== '' ? $configuredSiteUrl : requestBaseUrl();
+$feedUrl = $siteUrl . '/feed.xml';
+$language = (string) ($rssSettings['language'] ?? 'de-DE');
+$copyright = (string) ($rssSettings['copyright'] ?? '');
+$ttl = max(1, (int) ($rssSettings['ttl'] ?? 60));
 
 $lastBuildDate = !empty($posts)
     ? date(DATE_RSS, strtotime($posts[0]['publishedAt']))
     : date(DATE_RSS);
 
 header('Content-Type: application/rss+xml; charset=utf-8');
-header('Cache-Control: public, max-age=' . ($ttl * 60));
+// A URL derived from the Host header must not end up in shared caches.
+header($configuredSiteUrl !== '' ? 'Cache-Control: public, max-age=' . ($ttl * 60) : 'Cache-Control: private, no-cache');
 if (!empty($posts)) {
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s', strtotime($posts[0]['publishedAt'])) . ' GMT');
 }
@@ -103,9 +127,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     <language><?= xmlEscape($language) ?></language>
     <lastBuildDate><?= $lastBuildDate ?></lastBuildDate>
     <ttl><?= $ttl ?></ttl>
-<?php if ($feedUrl): ?>
     <atom:link href="<?= xmlEscape($feedUrl) ?>" rel="self" type="application/rss+xml"/>
-<?php endif; ?>
 <?php if ($copyright): ?>
     <copyright><?= xmlEscape($copyright) ?></copyright>
 <?php endif; ?>
@@ -115,16 +137,13 @@ foreach ($posts as $post):
     $pubDate = date(DATE_RSS, strtotime($post['publishedAt']));
 
     $description = '';
-    $sourcePath = SOURCES_DIR . '/' . $post['slug'] . '.json';
-    if (file_exists($sourcePath)) {
-        $source = json_decode(file_get_contents($sourcePath), true);
-        if ($source && isset($source['content'])) {
-            $description = extractDescription($source['content']);
-        }
+    $source = loadSourceData($post['slug']);
+    if (is_array($source['content'] ?? null)) {
+        $description = extractDescription($source['content']);
     }
 ?>
     <item>
-      <title><?= xmlEscape($post['title'] ?? '') ?></title>
+      <title><?= xmlEscape((string) ($post['title'] ?? '')) ?></title>
       <link><?= xmlEscape($postUrl) ?></link>
       <guid isPermaLink="true"><?= xmlEscape($postUrl) ?></guid>
       <pubDate><?= $pubDate ?></pubDate>

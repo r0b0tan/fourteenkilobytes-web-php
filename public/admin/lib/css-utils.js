@@ -14,25 +14,42 @@ export function stripCssComments(css) {
 }
 
 /**
- * Minify CSS while preserving calc() expressions.
+ * Minify CSS while preserving strings, calc() expressions and descendant combinators.
  * Must stay in sync with minifyCss() in api/core/http.php.
  * @param {string} css - CSS code to minify
  * @returns {string} Minified CSS
  */
 export function minifyCss(css) {
+  // Protect quoted strings (content, attribute selectors, font names) from all rules below
+  const strings = [];
+  let result = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/"(?:[^"\\]|\\[\s\S])*"|'(?:[^'\\]|\\[\s\S])*'/g, (match) => {
+      strings.push(match);
+      return `__STR${strings.length - 1}__`;
+    });
+
   // Temporarily replace calc() functions to protect them
   const calcs = [];
-  let result = css.replace(/calc\([^)]+\)/g, (match) => {
+  result = result.replace(/calc\([^)]+\)/g, (match) => {
     calcs.push(match);
     return `__CALC${calcs.length - 1}__`;
   });
 
-  // Normal minification (without calc)
+  // Normal minification (without strings and calc)
   result = result
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/[\r\n\t]/g, '')
+    .replace(/[\r\n\t]/g, ' ')
     .replace(/\s{2,}/g, ' ')
-    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+    .replace(/\s*([{};,>+~])\s*/g, '$1')
+    .replace(/:\s+/g, ':');
+
+  // Whitespace before ":" is a descendant combinator in selectors (".a :hover"),
+  // so it is only removed inside declaration blocks or a plain declaration list (style="").
+  result = result.includes('{')
+    ? result.replace(/\{[^{}]*\}/g, (block) => block.replace(/\s+:/g, ':'))
+    : result.replace(/\s+:/g, ':');
+
+  result = result
     .replace(/(^|[:\s,(])0(?:px|rem|em|%|vh|vw|vmin|vmax)(?=([;,)\s}]|$))/gi, (_, prefix) => `${prefix}0`)
     .replace(/#([\da-f])\1([\da-f])\2([\da-f])\3\b/gi, '#$1$2$3')
     .replace(/rgba\(255,255,255,0\)/gi, 'transparent')
@@ -54,7 +71,7 @@ export function minifyCss(css) {
     return calc;
   });
 
-  return result;
+  return result.replace(/__STR(\d+)__/g, (_, index) => strings[parseInt(index)]);
 }
 
 /**

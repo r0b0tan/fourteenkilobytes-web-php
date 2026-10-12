@@ -623,4 +623,66 @@ class PostRoutesTest extends ApiTestCase
         file_put_contents(DATA_DIR . '/secret.json', '{"secret":true}');
         $this->assertNull(loadSourceData('../secret'));
     }
+
+    private function publishPaged(string $slug, int $pageCount, ?array $sourceData = null): void
+    {
+        $pages = [];
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $pages[] = ['slug' => $i === 1 ? $slug : "{$slug}-{$i}", 'html' => "<html><body>Page {$i}</body></html>"];
+        }
+        $body = ['title' => $slug, 'pages' => $pages];
+        if ($sourceData !== null) {
+            $body['sourceData'] = $sourceData;
+        }
+        $this->setRequestBody($body);
+        $this->assertApiResponse(201, fn() => handlePostRoutes('POST', '/posts'));
+    }
+
+    public function testDeleteTombstonesAllPaginationPages(): void
+    {
+        $this->publishPaged('long', 3);
+
+        $this->assertApiResponse(200, fn() => handlePostRoutes('DELETE', '/posts/long'));
+
+        foreach (['long', 'long-2', 'long-3'] as $slug) {
+            $this->assertStringContainsString('410 Gone', file_get_contents(POSTS_DIR . "/{$slug}.html"));
+        }
+    }
+
+    public function testRepublishWithFewerPagesRemovesStalePages(): void
+    {
+        $this->publishPaged('shrinking', 3);
+        $this->publishPaged('shrinking', 1);
+
+        $this->assertFileExists(POSTS_DIR . '/shrinking.html');
+        $this->assertFileDoesNotExist(POSTS_DIR . '/shrinking-2.html');
+        $this->assertFileDoesNotExist(POSTS_DIR . '/shrinking-3.html');
+    }
+
+    public function testDependentPagesListsLivePagesWithBloglist(): void
+    {
+        $this->publishPaged('startseite', 1, ['content' => [['type' => 'section', 'children' => [['type' => 'bloglist']]]]]);
+        $this->publishPaged('archive', 1, ['content' => [['type' => 'layout', 'cells' => [['children' => [['type' => 'bloglist']]]]]]]);
+        $this->publishPaged('plain', 1, ['content' => [['type' => 'paragraph', 'children' => []]]]);
+        $this->publishPaged('old-list', 1, ['content' => [['type' => 'bloglist']]]);
+        $this->assertApiResponse(200, fn() => handlePostRoutes('DELETE', '/posts/old-list'));
+
+        $body = $this->assertApiResponse(200, fn() => handlePostRoutes('GET', '/dependent-pages'));
+
+        $this->assertEqualsCanonicalizing(['startseite', 'archive'], $body['slugs']);
+    }
+
+    public function testImportRejectsInvalidSettingsBeforeWritingAnything(): void
+    {
+        $this->setRequestBody([
+            'version' => 1,
+            'settings' => ['version' => 1, 'pageWidth' => '1px}body{display:none'],
+            'articles' => [['slug' => 'imported', 'sourceData' => ['title' => 'x']]],
+        ]);
+
+        $body = $this->assertApiResponse(400, fn() => handleSystemBackupRoutes('POST', '/import'));
+
+        $this->assertSame('INVALID_SETTINGS', $body['code']);
+        $this->assertFileDoesNotExist(SOURCES_DIR . '/imported.json');
+    }
 }

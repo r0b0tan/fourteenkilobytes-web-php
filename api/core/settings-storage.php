@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 function loadSettings(): array {
-    if (!file_exists(SETTINGS_FILE)) {
+    $settings = readJsonFile(SETTINGS_FILE);
+    if ($settings === null) {
         return [
             'version' => 1,
             'cssMode' => 'default',
@@ -28,9 +29,6 @@ function loadSettings(): array {
             ],
         ];
     }
-    $content = file_get_contents(SETTINGS_FILE);
-    $settings = json_decode($content, true);
-
     if (!isset($settings['version'])) {
         $settings['version'] = 1;
     }
@@ -79,27 +77,81 @@ function loadSettings(): array {
 }
 
 function saveSettings(array $settings): void {
-    $tmpFile = SETTINGS_FILE . '.tmp.' . uniqid() . '.json';
+    writeJsonFileAtomic(SETTINGS_FILE, $settings);
+}
 
-    $jsonContent = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    if ($jsonContent === false) {
-        sendJson(500, ['error' => 'Failed to encode settings data']);
+/**
+ * Type and range checks for settings coming from the admin UI or a backup import.
+ * Unknown keys are allowed (older versions and the setup wizard write additional keys).
+ *
+ * @return string[] List of problems, empty if the settings are valid.
+ */
+function validateSettings(mixed $settings): array {
+    if (!is_array($settings) || array_is_list($settings) && $settings !== []) {
+        return ['settings must be an object'];
     }
 
-    if (file_put_contents($tmpFile, $jsonContent, LOCK_EX) === false) {
-        @unlink($tmpFile);
-        sendJson(500, ['error' => 'Failed to write settings']);
+    $errors = [];
+    $get = function (string $path) use ($settings): array {
+        $value = $settings;
+        foreach (explode('.', $path) as $key) {
+            if (!is_array($value) || !array_key_exists($key, $value)) {
+                return [false, null];
+            }
+            $value = $value[$key];
+        }
+        return [true, $value];
+    };
+    $check = function (string $path, callable $isValid, string $expected) use ($get, &$errors): void {
+        [$exists, $value] = $get($path);
+        if ($exists && !$isValid($value)) {
+            $errors[] = "{$path} must be {$expected}";
+        }
+    };
+
+    $isBool = fn($v) => is_bool($v);
+    $isObject = fn($v) => is_array($v) && (!array_is_list($v) || $v === []);
+    $isString = fn(int $max) => fn($v) => is_string($v) && strlen($v) <= $max;
+    $isNullableString = fn(int $max) => fn($v) => $v === null || (is_string($v) && strlen($v) <= $max);
+    $isIntBetween = fn(int $min, int $max) => fn($v) => is_int($v) && $v >= $min && $v <= $max;
+
+    if (($settings['version'] ?? null) !== 1) {
+        $errors[] = 'version must be 1';
     }
 
-    if (file_exists(SETTINGS_FILE)) {
-        $backup = SETTINGS_FILE . '.bak';
-        @copy(SETTINGS_FILE, $backup);
+    foreach (['header', 'footer', 'meta', 'rss', 'bloglist', 'blog', 'optimizations', 'optimizations.compression', 'optimizations.classMangling', 'updateCheck'] as $objectPath) {
+        $check($objectPath, $isObject, 'an object');
+    }
+    foreach (['siteTitleEnabled', 'cssEnabled', 'header.enabled', 'footer.enabled', 'meta.enabled', 'rss.enabled', 'bloglist.archiveEnabled', 'optimizations.compression.enabled', 'optimizations.classMangling.enabled', 'updateCheck.enabled'] as $boolPath) {
+        $check($boolPath, $isBool, 'a boolean');
     }
 
-    if (!@rename($tmpFile, SETTINGS_FILE)) {
-        @unlink($tmpFile);
-        sendJson(500, ['error' => 'Failed to finalize settings']);
-    }
+    $check('homepageSlug', fn($v) => $v === null || $v === '' || isValidSlug($v), 'a valid slug or null');
+    $check('bloglist.archiveSlug', fn($v) => isValidSlug($v), 'a valid slug');
+    $check('favicon', fn($v) => $v === null || (is_string($v) && strlen($v) <= 8192 && str_starts_with($v, 'data:image/')), 'a data:image URL (max 8 KB) or null');
+    $check('siteTitle', $isNullableString(200), 'a string (max 200 characters) or null');
+    $check('cssMode', $isString(50), 'a string');
+    $check('globalCss', $isString(14336), 'a string (max 14336 bytes)');
+    // Injected into a CSS rule, so only characters that cannot end the declaration are allowed.
+    $check('pageWidth', fn($v) => $v === null || (is_string($v) && preg_match('/^[A-Za-z0-9.%(),+\-*\/ ]{1,20}$/', $v) === 1), 'a CSS length or null');
+    $check('header.links', fn($v) => is_array($v) && array_is_list($v) && count($v) <= 50 && array_reduce(
+        $v,
+        fn($ok, $link) => $ok && is_array($link) && is_string($link['text'] ?? null) && is_string($link['href'] ?? null)
+            && strlen($link['text']) <= 200 && strlen($link['href']) <= 2048,
+        true
+    ), 'a list of {text, href} objects');
+    $check('footer.content', $isString(14336), 'a string (max 14336 bytes)');
+    $check('meta.description', $isString(1000), 'a string (max 1000 characters)');
+    $check('meta.author', $isString(200), 'a string (max 200 characters)');
+    $check('rss.siteUrl', fn($v) => $v === '' || (is_string($v) && filter_var($v, FILTER_VALIDATE_URL) !== false && preg_match('#^https?://#i', $v) === 1), 'an http(s) URL or empty');
+    $check('rss.language', $isString(35), 'a language tag');
+    $check('rss.copyright', $isString(500), 'a string (max 500 characters)');
+    $check('rss.maxItems', $isIntBetween(1, 500), 'an integer between 1 and 500');
+    $check('rss.ttl', $isIntBetween(1, 10080), 'an integer between 1 and 10080');
+    $check('bloglist.limit', $isIntBetween(1, 1000), 'an integer between 1 and 1000');
+    $check('bloglist.archiveLinkText', $isString(200), 'a string (max 200 characters)');
+    $check('blog.author', $isString(200), 'a string (max 200 characters)');
+    $check('optimizations.classMangling.mode', fn($v) => $v === 'safe' || $v === 'aggressive', "'safe' or 'aggressive'");
 
-    @chmod(SETTINGS_FILE, 0640);
+    return $errors;
 }

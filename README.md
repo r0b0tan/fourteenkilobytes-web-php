@@ -418,7 +418,7 @@ Most write endpoints require authentication and a valid CSRF token.
 | `/api/settings` | PUT | Update settings |
 | `/api/export` | GET | Export data |
 | `/api/import` | POST | Import backup |
-| `/api/reset` | POST | Full reset (including setup state) |
+| `/api/reset` | POST | Delete all content and settings (admin password is kept) |
 | `/api/seeds` | GET | List seed templates |
 | `/api/clone` | POST | Clone page or template |
 

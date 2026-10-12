@@ -9,32 +9,51 @@
 
 declare(strict_types=1);
 
-define('DATA_DIR', __DIR__ . '/data');
-define('MANIFEST_FILE', DATA_DIR . '/manifest.json');
-define('SETTINGS_FILE', DATA_DIR . '/settings.json');
-define('POSTS_DIR', DATA_DIR . '/posts');
-define('PUBLIC_DIR', __DIR__ . '/public');
+require_once __DIR__ . '/api/core/paths.php';
+require_once __DIR__ . '/api/core/json-storage.php';
+require_once __DIR__ . '/api/core/manifest-storage.php';
+require_once __DIR__ . '/api/core/settings-storage.php';
+require_once __DIR__ . '/api/core/content-storage.php';
+
+function sendNotFound(): never {
+    http_response_code(404);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>404</title></head><body><h1>404 Not Found</h1></body></html>';
+    exit;
+}
+
+/**
+ * Finds the manifest entry a URL slug belongs to: the post itself or one of its
+ * pagination pages (base-2, base-3, ...).
+ */
+function findOwningEntry(array $manifest, string $slug): ?array {
+    foreach ($manifest['entries'] as $entry) {
+        if (($entry['slug'] ?? '') === $slug) {
+            return $entry;
+        }
+    }
+    foreach ($manifest['entries'] as $entry) {
+        $entrySlug = $entry['slug'] ?? '';
+        if (preg_match('/^' . preg_quote($entrySlug, '/') . '-(\d+)$/', $slug, $matches)) {
+            $pageNumber = (int) $matches[1];
+            if ($pageNumber >= 2 && $pageNumber <= (int) ($entry['pageCount'] ?? 1)) {
+                return $entry;
+            }
+        }
+    }
+    return null;
+}
 
 // Get requested slug
 $slug = $_GET['slug'] ?? '';
 
 // Root request - show blog index
 if (empty($slug)) {
-    // Load settings
-    $settings = [];
-    if (file_exists(SETTINGS_FILE)) {
-        $settingsContent = @file_get_contents(SETTINGS_FILE);
-        $settings = $settingsContent ? json_decode($settingsContent, true) : [];
-        if (!is_array($settings)) {
-            $settings = [];
-        }
-    }
-
-    // Check if custom homepage is configured
-    $homepageSlug = $settings['homepageSlug'] ?? null;
+    $settings = loadSettings();
 
     // Serve custom homepage if configured
-    if (is_string($homepageSlug) && preg_match('/^[a-z0-9-]+$/', $homepageSlug)) {
+    $homepageSlug = $settings['homepageSlug'] ?? null;
+    if (isValidSlug($homepageSlug)) {
         $homepageFile = POSTS_DIR . "/{$homepageSlug}.html";
         if (file_exists($homepageFile)) {
             header('Content-Type: text/html; charset=utf-8');
@@ -54,35 +73,21 @@ if (empty($slug)) {
     exit;
 }
 
-// Validate slug format
-if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
-    http_response_code(404);
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>404</title></head><body><h1>404 Not Found</h1></body></html>';
-    exit;
+if (!isValidSlug($slug)) {
+    sendNotFound();
 }
 
-// Check if post exists
 $htmlFile = POSTS_DIR . "/{$slug}.html";
-
 if (!file_exists($htmlFile)) {
-    http_response_code(404);
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>404</title></head><body><h1>404 Not Found</h1></body></html>';
-    exit;
+    sendNotFound();
 }
 
-// Check manifest for tombstone status
-if (file_exists(MANIFEST_FILE)) {
-    $content = @file_get_contents(MANIFEST_FILE);
-    $manifest = $content ? json_decode($content, true) : null;
-    if (is_array($manifest)) {
-        foreach ($manifest['entries'] ?? [] as $entry) {
-            if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
-                http_response_code(410);
-                echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
-                exit;
-            }
-        }
-    }
+$entry = findOwningEntry(loadManifest(), $slug);
+if ($entry !== null && ($entry['status'] ?? '') === 'tombstone') {
+    http_response_code(410);
+    header('Content-Type: text/html; charset=utf-8');
+    echo TOMBSTONE_HTML;
+    exit;
 }
 
 // Serve the post

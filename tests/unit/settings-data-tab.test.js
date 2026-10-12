@@ -11,6 +11,7 @@ function setupDom() {
 
     <button id="delete-all-btn"></button>
     <button id="full-reset-btn"></button>
+    <button id="rebuild-all-btn"><span>Rebuild all pages</span></button>
 
     <div id="modal-backdrop" class="hidden"></div>
     <div id="import-modal" class="hidden"></div>
@@ -60,7 +61,12 @@ describe('settings-page/data-tab', () => {
       importData: vi.fn(async () => ({ imported: ['settings'], articleSlugs: ['a', 'b'] })),
       republishPost: vi.fn(async () => {}),
       deleteAllPosts: vi.fn(async () => ({ deleted: 3 })),
-      fullReset: vi.fn(async () => {})
+      fullReset: vi.fn(async () => {}),
+      rebuildAllPages: vi.fn(async (onProgress) => {
+        onProgress(1, 2, 'a');
+        onProgress(2, 2, 'b');
+        return { rebuilt: 2, failed: [] };
+      })
     };
 
     Toast = {
@@ -200,6 +206,29 @@ describe('settings-page/data-tab', () => {
     expect(Toast.success).toHaveBeenCalledWith('settings.fullResetSuccess');
 
     vi.advanceTimersByTime(1500);
-    expect(window.location.href.endsWith('/setup/')).toBe(true);
+    expect(window.location.href.endsWith('/admin/login.html')).toBe(true);
+  });
+
+  it('rebuilds all pages and reports the result', async () => {
+    initDataTab({ doc: document, App, t, Toast, Modal, loadSettings });
+
+    const rebuildBtn = document.getElementById('rebuild-all-btn');
+    rebuildBtn.click();
+    await flush();
+
+    expect(App.rebuildAllPages).toHaveBeenCalled();
+    expect(Toast.success).toHaveBeenCalledWith('settings.rebuildSuccess');
+    expect(rebuildBtn.disabled).toBe(false);
+    expect(rebuildBtn.querySelector('span').textContent).toBe('Rebuild all pages');
+  });
+
+  it('lists pages that failed to rebuild', async () => {
+    App.rebuildAllPages = vi.fn(async () => ({ rebuilt: 1, failed: ['broken'] }));
+    initDataTab({ doc: document, App, t, Toast, Modal, loadSettings });
+
+    document.getElementById('rebuild-all-btn').click();
+    await flush();
+
+    expect(Toast.error).toHaveBeenCalledWith('settings.rebuildFailed');
   });
 });

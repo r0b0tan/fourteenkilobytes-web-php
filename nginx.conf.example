@@ -24,7 +24,12 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
 
     # Sensitive files - block direct access
-    location ~* \.(bak|json|md|log)$ {
+    location ~* \.(bak|backup|json|md|log|sh|lock|dist|example)$ {
+        deny all;
+    }
+
+    # Hidden files (.htaccess, .git, ...)
+    location ~ /\.(?!well-known) {
         deny all;
     }
 
@@ -51,16 +56,21 @@ server {
         try_files $uri /setup/index.php;
     }
     
-    location ~ ^/setup/api\.php {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+    # Setup API uses PATH_INFO (/setup/api.php/status, /setup/api.php/install, ...)
+    location ~ ^/setup/api\.php(/|$) {
+        fastcgi_split_path_info ^(/setup/api\.php)(/.*)$;
+        include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param PATH_INFO $fastcgi_path_info;
-        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
     }
 
     # API requests -> api/index.php
-    location /api/ {
-        try_files $uri /api/index.php?$query_string;
+    # ^~ keeps the PHP regex location below from executing files in api/core/ or api/routes/ directly.
+    location ^~ /api/ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root/api/index.php;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
     }
 
     # Language files - allow public access to JSON

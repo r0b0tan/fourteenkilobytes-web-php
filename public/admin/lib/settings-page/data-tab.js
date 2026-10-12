@@ -4,6 +4,7 @@ export function initDataTab({ doc = document, App, t, Toast, Modal, loadSettings
   const importFile = doc.getElementById('import-file');
   const deleteAllBtn = doc.getElementById('delete-all-btn');
   const fullResetBtn = doc.getElementById('full-reset-btn');
+  const rebuildAllBtn = doc.getElementById('rebuild-all-btn');
 
   const backdrop = doc.getElementById('modal-backdrop');
   const importModal = doc.getElementById('import-modal');
@@ -247,6 +248,27 @@ export function initDataTab({ doc = document, App, t, Toast, Modal, loadSettings
     }
   });
 
+  rebuildAllBtn.addEventListener('click', async () => {
+    const label = rebuildAllBtn.querySelector('span');
+    const originalText = label.textContent;
+    rebuildAllBtn.disabled = true;
+    try {
+      const { rebuilt, failed } = await App.rebuildAllPages((current, total) => {
+        label.textContent = t('settings.rebuildProgress', { current, total });
+      });
+      if (failed.length > 0) {
+        Toast.error(t('settings.rebuildFailed', { count: rebuilt, slugs: failed.join(', ') }));
+      } else {
+        Toast.success(t('settings.rebuildSuccess', { count: rebuilt }));
+      }
+    } catch (err) {
+      Toast.error(t('errors.generic', { error: err.message }));
+    } finally {
+      label.textContent = originalText;
+      rebuildAllBtn.disabled = false;
+    }
+  });
+
   fullResetBtn.addEventListener('click', async () => {
     const confirmed = await Modal.confirm(t('settings.fullResetConfirm'));
     if (!confirmed) return;
@@ -258,7 +280,7 @@ export function initDataTab({ doc = document, App, t, Toast, Modal, loadSettings
     try {
       await App.fullReset();
       Toast.success(t('settings.fullResetSuccess'));
-      setTimeout(() => window.location.href = '/setup/', 1500);
+      setTimeout(() => window.location.href = '/admin/login.html', 1500);
     } catch (err) {
       Toast.error(t('errors.generic', { error: err.message }));
       fullResetBtn.disabled = false;

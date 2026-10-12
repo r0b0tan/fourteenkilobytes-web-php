@@ -190,4 +190,20 @@ class HttpTest extends TestCase
     {
         $this->assertSame('a{width:calc(100% - 2rem);margin:calc(1rem + 2px)}', minifyCss('a { width: calc(100% - 2rem); margin: calc(1rem + 2px); }'));
     }
+
+    public function testMinifyCssKeepsDescendantCombinatorBeforePseudoClass(): void
+    {
+        $this->assertSame('.b :first-child{color:red}', minifyCss('.b :first-child { color : red ; }'));
+    }
+
+    public function testMinifyCssLeavesQuotedStringsUntouched(): void
+    {
+        $this->assertSame('.c::before{content:"a : b  {x}"}', minifyCss('.c::before { content : "a : b  {x}" ; }'));
+        $this->assertSame("a[title='x + y']{color:red}", minifyCss("a[title='x + y'] { color: red }"));
+    }
+
+    public function testMinifyCssDoesNotMergeSelectorsAcrossLineBreaks(): void
+    {
+        $this->assertSame('.g .h{padding:0}', minifyCss(".g\n.h { padding: 0rem }"));
+    }
 }

@@ -4,8 +4,9 @@
 # Disable directory listing
 Options -Indexes
 
-# Deny access to sensitive files
-<FilesMatch "\.(bak|json|md|log)$">
+# Deny access to sensitive files. JSON is denied by name only: the admin's
+# translations (/lang/*.json -> public/lang/) must stay reachable.
+<FilesMatch "\.(bak|backup|md|log|sh|lock|dist|example)$|^(composer|package|package-lock|version)\.json$|^\.">
     Require all denied
 </FilesMatch>
 
@@ -36,8 +37,12 @@ RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^public/admin/.*$ - [L]
 
 # Admin routes - prevent indexing
-SetEnvIf Request_URI "^/admin" ADMIN_REQ
-Header set X-Robots-Tag "noindex, nofollow" env=ADMIN_REQ
+<IfModule mod_headers.c>
+    SetEnvIf Request_URI "^/admin" ADMIN_REQ
+    Header set X-Robots-Tag "noindex, nofollow" env=ADMIN_REQ
+    # After the internal rewrite to public/admin/ the variable carries a REDIRECT_ prefix
+    Header set X-Robots-Tag "noindex, nofollow" env=REDIRECT_ADMIN_REQ
+</IfModule>
 
 # Redirect /admin to /admin/index.html to fix relative path issues
 RewriteRule ^admin/?$ /admin/index.html [R=301,L]

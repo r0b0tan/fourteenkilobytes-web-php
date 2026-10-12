@@ -34,23 +34,7 @@ function getApiToken(): ?string {
 }
 
 function saveInstanceState(array $state): void {
-    $tmpFile = INSTANCE_FILE . '.tmp.' . bin2hex(random_bytes(8));
-
-    $jsonContent = json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    if ($jsonContent === false) {
-        sendJson(500, ['error' => 'Failed to encode instance data']);
-    }
-
-    if (file_put_contents($tmpFile, $jsonContent, LOCK_EX) === false) {
-        @unlink($tmpFile);
-        sendJson(500, ['error' => 'Failed to write instance file']);
-    }
-    @chmod($tmpFile, 0600);
-
-    if (!@rename($tmpFile, INSTANCE_FILE)) {
-        @unlink($tmpFile);
-        sendJson(500, ['error' => 'Failed to finalize instance file']);
-    }
+    writeJsonFileAtomic(INSTANCE_FILE, $state, 0600, false);
 }
 
 /**

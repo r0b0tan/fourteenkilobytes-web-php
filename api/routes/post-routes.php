@@ -72,8 +72,9 @@ function handlePostRoutes(string $method, string $path): bool {
         }
 
         if ($entry['status'] === 'tombstone') {
+            http_response_code(410);
             header('Content-Type: text/html; charset=utf-8');
-            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
+            echo TOMBSTONE_HTML;
             exit;
         }
 
@@ -88,9 +89,9 @@ function handlePostRoutes(string $method, string $path): bool {
     }
 
     if ($method === 'POST' && $path === '/posts') {
+        // No global rate limit here: authenticated bulk rebuilds and imports publish many pages in a row.
         requireAuth();
         requireCsrfToken();
-        checkGlobalRateLimit('/posts:create', true);
 
         $body = readJsonBody();
         $timestamp = date('c');
@@ -161,6 +162,8 @@ function handlePostRoutes(string $method, string $path): bool {
             $publishedAt = $existingEntry['publishedAt'] ?? $timestamp;
             $modifiedAt = $existingEntry !== null ? $timestamp : null;
             $resolvedAuthor = resolvePostAuthor($sourceData, $settings);
+
+            removeStalePaginationFiles($baseSlug, (int) ($existingEntry['pageCount'] ?? 1), count($minifiedPages));
 
             $savedSlugs = [];
             foreach ($minifiedPages as $page) {
@@ -250,6 +253,8 @@ function handlePostRoutes(string $method, string $path): bool {
         $modifiedAt = $existingEntry !== null ? $timestamp : null;
         $resolvedAuthor = resolvePostAuthor($sourceData, $settings);
 
+        removeStalePaginationFiles($slug, (int) ($existingEntry['pageCount'] ?? 1), 1);
+
         $htmlPath = POSTS_DIR . "/{$slug}.html";
         file_put_contents($htmlPath, $html, LOCK_EX);
 
@@ -338,17 +343,16 @@ function handlePostRoutes(string $method, string $path): bool {
                 }
                 $entry['status'] = 'tombstone';
                 $entry['tombstonedAt'] = date('c');
+                writeTombstoneFiles($entry);
                 $found = true;
                 break;
             }
         }
+        unset($entry);
 
         if (!$found) {
             sendJson(404, ['error' => "Post '{$slug}' not found"]);
         }
-
-        $tombstoneHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
-        file_put_contents(POSTS_DIR . "/{$slug}.html", $tombstoneHtml, LOCK_EX);
 
         saveManifest($manifest);
 
@@ -371,23 +375,10 @@ function handlePostRoutes(string $method, string $path): bool {
                 $entry['status'] = 'tombstone';
                 $entry['tombstonedAt'] = date('c');
                 $deletedCount++;
-
-                $tombstoneHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gone</title></head><body><h1>410 Gone</h1><p>This page has been removed.</p></body></html>';
-                $htmlPath = POSTS_DIR . "/{$entry['slug']}.html";
-                if (file_exists($htmlPath)) {
-                    file_put_contents($htmlPath, $tombstoneHtml, LOCK_EX);
-                }
-
-                if (isset($entry['pageCount']) && $entry['pageCount'] > 1) {
-                    for ($i = 2; $i <= $entry['pageCount']; $i++) {
-                        $pagePath = POSTS_DIR . "/{$entry['slug']}-{$i}.html";
-                        if (file_exists($pagePath)) {
-                            file_put_contents($pagePath, $tombstoneHtml, LOCK_EX);
-                        }
-                    }
-                }
+                writeTombstoneFiles($entry);
             }
         }
+        unset($entry);
 
         saveManifest($manifest);
 
@@ -440,6 +431,24 @@ function handlePostRoutes(string $method, string $path): bool {
             'clonedFrom' => $sourceSlug,
             'sourceType' => $sourceType,
         ]);
+    }
+
+    if ($method === 'GET' && $path === '/dependent-pages') {
+        requireAuth();
+
+        // Pages showing a post list must be rebuilt whenever a post is published or deleted.
+        $slugs = [];
+        foreach (loadManifest()['entries'] as $entry) {
+            if (($entry['status'] ?? '') === 'tombstone') {
+                continue;
+            }
+            $source = loadSourceData((string) ($entry['slug'] ?? ''));
+            if (is_array($source['content'] ?? null) && contentHasBlockType($source['content'], 'bloglist')) {
+                $slugs[] = $entry['slug'];
+            }
+        }
+
+        sendJson(200, ['slugs' => $slugs]);
     }
 
     if ($method === 'GET' && $path === '/seeds') {

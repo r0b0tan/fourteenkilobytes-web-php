@@ -75,6 +75,17 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
         $result = ['imported' => []];
 
         if ($importSettings === 'true' && isset($body['settings'])) {
+            $errors = validateSettings($body['settings']);
+            if ($errors !== []) {
+                sendJson(400, ['error' => 'Invalid settings in backup: ' . implode('; ', $errors), 'code' => 'INVALID_SETTINGS', 'details' => $errors]);
+            }
+        }
+
+        if ($importArticles === 'true' && isset($body['articles']) && !is_array($body['articles'])) {
+            sendJson(400, ['error' => 'articles must be a list']);
+        }
+
+        if ($importSettings === 'true' && isset($body['settings'])) {
             saveSettings($body['settings']);
             $result['imported'][] = 'settings';
         }
@@ -190,15 +201,8 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
             @unlink($file);
         }
 
-        if (file_exists(INSTANCE_FILE)) {
-            @unlink(INSTANCE_FILE);
-        }
-
-        $setupLockFile = DATA_DIR . '/.setup-complete';
-        if (file_exists($setupLockFile)) {
-            @unlink($setupLockFile);
-        }
-
+        // The admin password (instance.json, setup lock) survives the reset. Deleting it would
+        // reopen the setup wizard to whoever reaches it first.
         destroyAllSessions();
 
         auditLog('full_reset', ['ip' => getClientIp()]);

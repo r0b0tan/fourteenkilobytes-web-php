@@ -208,4 +208,51 @@ describe('createCompilePublishService', () => {
       buildId: 'build-id-1',
     }));
   });
+
+  function mockRepublishable() {
+    deps.getSourceData.mockImplementation(async (slug) => ({ slug, title: slug, content: [], pageType: 'page' }));
+    deps.getPosts.mockResolvedValue([
+      { slug: 'post-a', status: 'published' },
+      { slug: 'startseite', status: 'published' },
+      { slug: 'gone', status: 'tombstone' },
+    ]);
+    deps.Compiler.compile.mockImplementation(async (input) => ({
+      success: true,
+      pages: [{ slug: input.slug, html: '<p>x</p>', bytes: 10, hash: 'h' }],
+    }));
+  }
+
+  function compiledSlugs() {
+    return deps.Compiler.compile.mock.calls.map(([input]) => input.slug);
+  }
+
+  test('rebuildDependentPages republishes pages with post lists except the excluded one', async () => {
+    mockRepublishable();
+    deps.apiFetch.mockImplementation(async (path) => (
+      path === '/api/dependent-pages' ? { slugs: ['startseite', 'archive'] } : { slug: 'ok' }
+    ));
+
+    const service = createCompilePublishService(deps);
+    const result = await service.rebuildDependentPages({ exclude: 'archive' });
+
+    expect(compiledSlugs()).toEqual(['startseite']);
+    expect(result).toEqual({ rebuilt: 1, failed: [] });
+  });
+
+  test('rebuildAllPages skips tombstones, builds post-list pages last and collects failures', async () => {
+    mockRepublishable();
+    deps.apiFetch.mockImplementation(async (path, options) => {
+      if (path === '/api/dependent-pages') return { slugs: ['startseite'] };
+      if (JSON.parse(options.body).slug === 'post-a') throw new Error('boom');
+      return { slug: 'ok' };
+    });
+    const progress = vi.fn();
+
+    const service = createCompilePublishService(deps);
+    const result = await service.rebuildAllPages(progress);
+
+    expect(compiledSlugs()).toEqual(['post-a', 'startseite']);
+    expect(progress).toHaveBeenLastCalledWith(2, 2, 'startseite');
+    expect(result).toEqual({ rebuilt: 1, failed: ['post-a'] });
+  });
 });

@@ -419,137 +419,19 @@ if ($method === 'GET' && $path === '/webserver-config') {
         $webserver = 'apache';
     }
     
+    // Serve the configuration files shipped with the release, so the wizard never drifts from them.
     $configs = [
-        'apache' => [
-            'name' => 'Apache (.htaccess)',
-            'file' => '.htaccess',
-            'content' => <<<'HTACCESS'
-# fourteenkilobytes - Apache Configuration
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-
-    # Redirect to setup if not completed
-    RewriteCond %{REQUEST_URI} !^/setup
-    RewriteCond %{DOCUMENT_ROOT}/data/.setup-complete !-f
-    RewriteRule ^.*$ /setup/ [R=302,L]
-
-    # API routing
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_URI} ^/api/
-    RewriteRule ^api/(.*)$ /api/index.php/$1 [L,QSA]
-
-    # Admin routing
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_URI} ^/admin/
-    RewriteRule ^admin/$ /admin/index.html [L]
-
-    # Frontend routing
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_URI} !^/admin/
-    RewriteCond %{REQUEST_URI} !^/api/
-    RewriteCond %{REQUEST_URI} !^/setup/
-    RewriteRule ^(.*)$ /index.php [L,QSA]
-</IfModule>
-
-# Security headers
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "DENY"
-    Header set X-XSS-Protection "1; mode=block"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-# Protect sensitive files
-<FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-<Files "*.json">
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-    </IfModule>
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-</Files>
-HTACCESS
-        ],
-        'nginx' => [
-            'name' => 'Nginx',
-            'file' => '/etc/nginx/sites-available/yoursite',
-            'content' => <<<'NGINX'
-# nginx configuration for fourteenkilobytes
-
-server {
-    listen 80;
-    server_name example.com;
-    root /var/www/fourteenkilobytes;
-    index index.php index.html;
-
-    # Charset
-    charset utf-8;
-
-    # Security headers
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-Frame-Options "DENY" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-
-    # Redirect to setup if not completed
-    location / {
-        if (!-f $document_root/data/.setup-complete) {
-            return 302 /setup/;
-        }
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    # API routing
-    location /api {
-        try_files $uri /api/index.php$is_args$args;
-    }
-
-    # Admin routing
-    location /admin {
-        try_files $uri $uri/ /admin/index.html;
-    }
-
-    # Setup routing
-    location /setup {
-        try_files $uri $uri/ /setup/index.php;
-    }
-
-    # PHP handling
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    # Protect sensitive files
-    location ~ /\.(?!well-known) {
-        deny all;
-    }
-
-    location ~* \.json$ {
-        deny all;
-    }
-
-    location ~ ^/data/ {
-        deny all;
-    }
-}
-NGINX
-        ],
+        'apache' => ['name' => 'Apache (.htaccess)', 'file' => '.htaccess', 'source' => dirname(__DIR__) . '/.htaccess'],
+        'nginx' => ['name' => 'Nginx', 'file' => '/etc/nginx/sites-available/yoursite', 'source' => dirname(__DIR__) . '/nginx.conf.example'],
     ];
-    
-    if (!isset($configs[$webserver])) {
-        sendJson(404, ['error' => 'Unknown webserver type']);
+
+    $config = $configs[$webserver];
+    $content = @file_get_contents($config['source']);
+    if ($content === false) {
+        sendJson(500, ['error' => 'Configuration template not found']);
     }
-    
-    sendJson(200, $configs[$webserver]);
+
+    sendJson(200, ['name' => $config['name'], 'file' => $config['file'], 'content' => $content]);
 }
 
 // 404 for unknown routes

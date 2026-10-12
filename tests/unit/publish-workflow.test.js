@@ -231,6 +231,7 @@ describe('executePublish', () => {
 
   test('publishes and shows success modal for single page', async () => {
     const App = {
+      rebuildDependentPages: vi.fn().mockResolvedValue({ rebuilt: 0, failed: [] }),
       publish: vi.fn().mockResolvedValue({
         slug: 'test-post',
         bytes: 12000
@@ -263,6 +264,7 @@ describe('executePublish', () => {
 
   test('publishes and shows success modal for multi-page', async () => {
     const App = {
+      rebuildDependentPages: vi.fn().mockResolvedValue({ rebuilt: 0, failed: [] }),
       publish: vi.fn().mockResolvedValue({
         slug: 'test-post',
         pageCount: 3,
@@ -285,8 +287,35 @@ describe('executePublish', () => {
     expect(Modal.success.mock.calls[0][0]).toContain('35000 bytes');
   });
 
+  test('rebuilds dependent pages except the published one', async () => {
+    const App = {
+      rebuildDependentPages: vi.fn().mockResolvedValue({ rebuilt: 1, failed: [] }),
+      publish: vi.fn().mockResolvedValue({ slug: 'startseite', bytes: 9000 })
+    };
+    const Modal = { success: vi.fn() };
+
+    await executePublish({ input: { content: 'test' }, App, Modal, t });
+
+    expect(App.rebuildDependentPages).toHaveBeenCalledWith({ exclude: 'startseite' });
+    expect(Modal.success.mock.calls[0][0]).not.toContain('editor.dependentRebuildFailed');
+  });
+
+  test('reports dependent pages that could not be rebuilt', async () => {
+    const App = {
+      rebuildDependentPages: vi.fn().mockResolvedValue({ rebuilt: 0, failed: ['archive'] }),
+      publish: vi.fn().mockResolvedValue({ slug: 'new-post', bytes: 9000 })
+    };
+    const Modal = { success: vi.fn() };
+
+    const result = await executePublish({ input: { content: 'test' }, App, Modal, t });
+
+    expect(result.slug).toBe('new-post');
+    expect(Modal.success.mock.calls[0][0]).toContain('editor.dependentRebuildFailed');
+  });
+
   test('view button opens correct URL', async () => {
     const App = {
+      rebuildDependentPages: vi.fn().mockResolvedValue({ rebuilt: 0, failed: [] }),
       publish: vi.fn().mockResolvedValue({
         slug: 'my-post',
         bytes: 10000

@@ -87,6 +87,7 @@ $_COOKIE = [];
 // --- Include source files ---
 
 require_once __DIR__ . '/../../api/core/http.php';
+require_once __DIR__ . '/../../api/core/json-storage.php';
 require_once __DIR__ . '/../../api/core/instance.php';
 require_once __DIR__ . '/../../api/core/security.php';
 require_once __DIR__ . '/../../api/core/csrf.php';

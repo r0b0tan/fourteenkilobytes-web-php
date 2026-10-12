@@ -331,6 +331,7 @@ describe('dashboard.js update helpers', () => {
         ])),
         clonePage: vi.fn(() => Promise.resolve({ sourceData: { slug: 'copy' } })),
         deletePost: vi.fn(() => Promise.resolve({ success: true })),
+        rebuildDependentPages: vi.fn(() => Promise.resolve({ rebuilt: 1, failed: [] })),
       };
 
       await init();
@@ -357,6 +358,7 @@ describe('dashboard.js update helpers', () => {
       await flushPromises();
 
       expect(App.deletePost).toHaveBeenCalledWith('my post');
+      expect(App.rebuildDependentPages).toHaveBeenCalled();
     });
 
     it('applies date range filters and clear button resets them', async () => {

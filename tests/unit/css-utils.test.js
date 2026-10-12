@@ -124,6 +124,25 @@ describe('CSS Utils Module', () => {
     });
   });
 
+  describe('minifyCss() selectors and strings', () => {
+    it('should keep the descendant combinator before a pseudo-class', () => {
+      expect(minifyCss('.b :first-child { color : red ; }')).toBe('.b :first-child{color:red}');
+    });
+
+    it('should leave quoted strings untouched', () => {
+      expect(minifyCss('.c::before { content : "a : b  {x}" ; }')).toBe('.c::before{content:"a : b  {x}"}');
+      expect(minifyCss("a[title='x + y'] { color: red }")).toBe("a[title='x + y']{color:red}");
+    });
+
+    it('should not merge selectors separated by a line break', () => {
+      expect(minifyCss('.g\n.h { padding: 0rem }')).toBe('.g .h{padding:0}');
+    });
+
+    it('should remove whitespace before colons in a plain declaration list', () => {
+      expect(minifyCss('color : red; margin : 0px')).toBe('color:red;margin:0');
+    });
+  });
+
   describe('minifyHtmlDocument()', () => {
     it('should minify CSS in <style> tags', () => {
       const html = '<style>body { color: red; }</style>';
