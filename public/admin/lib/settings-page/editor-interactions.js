@@ -72,6 +72,7 @@ export function initEditorInteractions({
     classManglingEnabled,
     classManglingMode,
     updateCheckEnabled,
+    siteLanguage,
     tabBtns,
     tabContents,
   } = elements;
@@ -121,7 +122,7 @@ export function initEditorInteractions({
   recompileArchiveBtn.addEventListener('click', async () => {
     if (!archiveEnabled.checked) return;
 
-    const slug = archiveSlug.value.trim() || 'archiv';
+    const slug = archiveSlug.value.trim() || 'archive';
     const confirmed = await Modal.confirm(t('settings.archiveRecompileConfirm', { slug }));
     if (!confirmed) return;
 
@@ -410,6 +411,10 @@ export function initEditorInteractions({
   });
 
   updateCheckEnabled.addEventListener('change', () => {
+    markAsChanged();
+  });
+
+  siteLanguage.addEventListener('change', () => {
     markAsChanged();
   });
 

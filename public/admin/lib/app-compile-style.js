@@ -2,6 +2,8 @@
  * Style and global-settings helpers for compile service.
  */
 
+import { getSiteLanguageForSettings } from './settings-utils.js';
+
 function contentHasBlockType(content, blockType) {
   if (!Array.isArray(content) || content.length === 0) return false;
 
@@ -148,6 +150,7 @@ export function createCompileStyleService(deps) {
   async function applyGlobalSettings(input) {
     const settings = await getSettings();
     const mergedInput = { ...input };
+    mergedInput.language = getSiteLanguageForSettings(settings);
     mergedInput.classMangling = isClassManglingEnabledForSettings(settings);
     mergedInput.classManglingMode = getClassManglingModeForSettings(settings);
 

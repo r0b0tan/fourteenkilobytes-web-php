@@ -51,7 +51,7 @@ The wizard runs only once. It guides you through six steps:
 1. **First-Time Setup**: a short welcome.
 2. **System Requirements**: checks the PHP version, write access to `data/`, URL rewriting and HTTPS. Required checks must pass before you can continue. URL rewriting and HTTPS are only recommended; the wizard warns but lets you continue.
 3. **Create Admin Account**: choose the admin password (8 to 500 characters). There is only one admin account and no user name.
-4. **Site Configuration**: the site title (shown in browser tabs) and the language of the admin interface (English or German).
+4. **Site Configuration**: the site title (shown in browser tabs) and the language (English or German). It is used for the admin interface and as the language of your public pages; both can be changed later.
 5. **Webserver Configuration**: shows the matching `.htaccess` or nginx configuration. You only need it if your server is not configured yet.
 6. **Setup Complete**: links to the admin area at `/admin/`.
 
@@ -75,12 +75,13 @@ The admin area has three main areas in the top navigation:
 
 ### 1. Let the homepage be created
 
-Right after the setup, your public address shows "Homepage not configured". Open **Settings** once: if no homepage exists yet, fourteenkilobytes creates a page called *Startseite* (slug `startseite`) with a welcome text and a list of your latest posts, and selects it as the homepage. You can edit or replace it later (see [Homepage, archive and navigation](06-site-structure.md)).
+Right after the setup, your public address shows "Homepage not configured". Open **Settings** once: if no homepage exists yet, fourteenkilobytes creates a page called *Home* (`/home`), or *Startseite* (`/startseite`) for a German site, with a welcome text and a list of your latest posts, and selects it as the homepage. You can edit or replace it later (see [Homepage, archive and navigation](06-site-structure.md)).
 
 ### 2. Check the basics
 
 In **Settings**, have a look at:
 
+- **General → Site language**: the language of your public pages.
 - **Header → Site Title**: the name shown in browser tabs.
 - **Header → Navigation**: links that appear at the top of every page.
 - **Footer**: a short line at the bottom of every page, for example a copyright note.

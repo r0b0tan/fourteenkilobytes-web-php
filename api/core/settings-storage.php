@@ -126,6 +126,7 @@ function validateSettings(mixed $settings): array {
         $check($boolPath, $isBool, 'a boolean');
     }
 
+    $check('siteLanguage', fn($v) => $v === 'en' || $v === 'de', "'en' or 'de'");
     $check('homepageSlug', fn($v) => $v === null || $v === '' || isValidSlug($v), 'a valid slug or null');
     $check('bloglist.archiveSlug', fn($v) => isValidSlug($v), 'a valid slug');
     $check('favicon', fn($v) => $v === null || (is_string($v) && strlen($v) <= 8192 && str_starts_with($v, 'data:image/')), 'a data:image URL (max 8 KB) or null');

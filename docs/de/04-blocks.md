@@ -80,6 +80,8 @@ Zeigt Angaben zum Post. Wähle aus, was erscheinen soll:
 - **Autor**: der Name aus dem **Meta**-Override der Seite, sonst aus **Einstellungen → Blog → Autor**, sonst der globale **Meta**-Autor
 - **Tags**: bis zu 8 Schlagwörter mit je bis zu 32 Zeichen
 
+Die Beschriftungen („Veröffentlicht“, „Aktualisiert“, „Von“) und das Datumsformat richten sich nach **Einstellungen → Allgemein → Website-Sprache**.
+
 > Die Daten stammen aus der veröffentlichten Fassung des Posts. Wenn du einen neuen Post zum ersten Mal veröffentlichst, kennt der Autor-Block noch kein Datum. Klicke nach der ersten Veröffentlichung einmal auf **Recompile** am Post, dann erscheint es.
 
 ### Blogliste
@@ -88,7 +90,7 @@ Listet deine Posts mit Titel und Datum auf, neueste zuerst. Nur Inhalte vom Seit
 
 Seiten mit Blogliste werden automatisch neu gebaut, sobald du einen Post veröffentlichst, löschst oder wiederherstellst.
 
-> Hinweis: Das Datumsformat in Bloglisten und der Text „Noch keine Posts.“ (wenn es noch keine Posts gibt) sind derzeit immer deutsch.
+Das Datumsformat und der Text, wenn es noch keine Posts gibt („Noch keine Posts.“ bzw. „No posts yet.“), richten sich nach **Einstellungen → Allgemein → Website-Sprache**.
 
 ## Sektion
 

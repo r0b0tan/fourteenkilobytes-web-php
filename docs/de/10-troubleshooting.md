@@ -39,9 +39,9 @@ Beim ersten Veröffentlichen eines Posts ist das Datum beim Bauen der Seite noch
 
 Trage die vollständige Adresse deiner Website unter **Einstellungen → RSS → Website URL** ein, etwa `https://example.com`.
 
-### Das Datum in Beitragslisten ist immer deutsch
+### Datum oder Texte in Beitragslisten haben die falsche Sprache
 
-Das ist eine derzeitige Einschränkung: Bloglisten verwenden immer das deutsche Datumsformat und den Text „Noch keine Posts.“, wenn es noch keine Posts gibt.
+Stelle **Einstellungen → Allgemein → Website-Sprache** ein und klicke auf **Speichern**, dann **Einstellungen → Daten → Alle Seiten neu bauen**. Seiten behalten die Sprache, mit der sie gebaut wurden, bis sie neu gebaut werden.
 
 ## Bearbeiten und Veröffentlichen
 

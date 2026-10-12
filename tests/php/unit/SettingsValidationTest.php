@@ -10,6 +10,7 @@ class SettingsValidationTest extends TestCase
     {
         return [
             'version' => 1,
+            'siteLanguage' => 'de',
             'homepageSlug' => 'startseite',
             'favicon' => null,
             'siteTitle' => 'Blog',
@@ -58,5 +59,13 @@ class SettingsValidationTest extends TestCase
         $errors = validateSettings($settings);
 
         $this->assertCount(5, $errors);
+    }
+
+    public function testRejectsUnsupportedSiteLanguage(): void
+    {
+        $settings = $this->validSettings();
+        $settings['siteLanguage'] = 'fr';
+
+        $this->assertContains("siteLanguage must be 'en' or 'de'", validateSettings($settings));
     }
 }

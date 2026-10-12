@@ -51,7 +51,7 @@ Der Assistent läuft nur einmal und ist englisch beschriftet. Er führt durch se
 1. **First-Time Setup**: eine kurze Begrüßung.
 2. **System Requirements**: prüft die PHP-Version, die Schreibrechte für `data/`, die URL-Umschreibung und HTTPS. Pflichtprüfungen müssen bestanden sein, bevor es weitergeht. URL-Umschreibung und HTTPS sind nur empfohlen; der Assistent warnt, lässt dich aber fortfahren.
 3. **Create Admin Account**: Lege das Admin-Passwort fest (8 bis 500 Zeichen). Es gibt nur ein Admin-Konto und keinen Benutzernamen.
-4. **Site Configuration**: der Seitentitel (erscheint in Browser-Tabs) und die Sprache der Admin-Oberfläche (Englisch oder Deutsch).
+4. **Site Configuration**: der Seitentitel (erscheint in Browser-Tabs) und die Sprache (Englisch oder Deutsch). Sie gilt für die Admin-Oberfläche und als Sprache deiner öffentlichen Seiten; beides lässt sich später ändern.
 5. **Webserver Configuration**: zeigt die passende `.htaccess`- bzw. nginx-Konfiguration. Du brauchst sie nur, wenn dein Server noch nicht eingerichtet ist.
 6. **Setup Complete**: Link in den Admin-Bereich unter `/admin/`.
 
@@ -75,12 +75,13 @@ Die obere Navigation des Admin-Bereichs hat drei Hauptbereiche:
 
 ### 1. Startseite anlegen lassen
 
-Direkt nach der Einrichtung zeigt deine öffentliche Adresse „Homepage nicht konfiguriert“. Öffne einmal die **Einstellungen**: Gibt es noch keine Startseite, legt fourteenkilobytes eine Seite *Startseite* (Slug `startseite`) mit einem Begrüßungstext und einer Liste deiner neuesten Posts an und wählt sie als Startseite aus. Du kannst sie später ändern oder ersetzen (siehe [Startseite, Archiv und Navigation](06-site-structure.md)).
+Direkt nach der Einrichtung zeigt deine öffentliche Adresse „Homepage nicht konfiguriert“. Öffne einmal die **Einstellungen**: Gibt es noch keine Startseite, legt fourteenkilobytes eine Seite *Startseite* (`/startseite`), bei einer englischen Website *Home* (`/home`), mit einem Begrüßungstext und einer Liste deiner neuesten Posts an und wählt sie als Startseite aus. Du kannst sie später ändern oder ersetzen (siehe [Startseite, Archiv und Navigation](06-site-structure.md)).
 
 ### 2. Grundeinstellungen prüfen
 
 Sieh dir in den **Einstellungen** an:
 
+- **Allgemein → Website-Sprache**: die Sprache deiner öffentlichen Seiten.
 - **Header → Seitentitel**: der Name, der in Browser-Tabs erscheint.
 - **Header → Navigation**: Links, die oben auf jeder Seite stehen.
 - **Footer**: eine kurze Zeile am Ende jeder Seite, etwa ein Copyright-Hinweis.

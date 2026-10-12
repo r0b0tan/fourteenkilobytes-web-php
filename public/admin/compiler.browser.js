@@ -2,6 +2,39 @@
 var SIZE_LIMIT = 14336;
 var MAX_PAGINATION_ITERATIONS = 10;
 
+// src/i18n.ts
+var SITE_LANGUAGES = ["en", "de"];
+var DEFAULT_SITE_LANGUAGE = "en";
+var TEXTS = {
+  en: {
+    dateLocale: "en-US",
+    noPosts: "No posts yet.",
+    endOfList: "\u2014 End of list \u2014",
+    published: "Published",
+    modified: "Updated",
+    by: "By",
+    tags: "Tags"
+  },
+  de: {
+    dateLocale: "de-DE",
+    noPosts: "Noch keine Posts.",
+    endOfList: "\u2014 Ende der Liste \u2014",
+    published: "Ver\xF6ffentlicht",
+    modified: "Aktualisiert",
+    by: "Von",
+    tags: "Tags"
+  }
+};
+function isSiteLanguage(value) {
+  return typeof value === "string" && SITE_LANGUAGES.includes(value);
+}
+function resolveSiteLanguage(value) {
+  return isSiteLanguage(value) ? value : DEFAULT_SITE_LANGUAGE;
+}
+function getSiteTexts(language) {
+  return TEXTS[language];
+}
+
 // src/measure.browser.ts
 var encoder = new TextEncoder();
 function measureBytes(str) {
@@ -189,6 +222,17 @@ function validateInput(input) {
   const iconsResult = validateIcons(input.icons);
   if (!iconsResult.valid)
     return iconsResult;
+  if (input.language !== void 0 && !isSiteLanguage(input.language)) {
+    return {
+      valid: false,
+      error: {
+        code: "CONTENT_INVALID_ELEMENT",
+        element: `language "${String(input.language)}"`,
+        allowed: [...SITE_LANGUAGES],
+        path: "language"
+      }
+    };
+  }
   return { valid: true };
 }
 function validateSlug(slug) {
@@ -965,6 +1009,8 @@ ${navItems}
     footer = `<footer>${sanitizeHtml(input.footer.content)}</footer>`;
     breakdown.footer = measureBytes(footer);
   }
+  const language = resolveSiteLanguage(input.language);
+  const texts = getSiteTexts(language);
   const contentBlocks = [];
   input.content.forEach((block, index) => {
     if (block.type === "bloglist") {
@@ -973,11 +1019,12 @@ ${navItems}
         block,
         index,
         classManglingEnabled,
-        classManglingMode
+        classManglingMode,
+        texts
       );
       contentBlocks.push(...bloglistBlocks);
     } else {
-      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled, classManglingMode, input.slug, input.meta?.author || null);
+      const html = flattenContentBlock(block, input.icons, input.posts, classManglingEnabled, classManglingMode, input.slug, input.meta?.author || null, texts);
       contentBlocks.push({
         html,
         bytes: measureBytes(html),
@@ -988,7 +1035,7 @@ ${navItems}
   const contentHtml = contentBlocks.map((b) => b.html).join("\n");
   breakdown.content = measureBytes(contentHtml);
   const doctype = "<!DOCTYPE html>";
-  const htmlOpen = '<html lang="en">';
+  const htmlOpen = `<html lang="${language}">`;
   const bodyOpen = "<body>";
   const mainOpen = "<main>";
   const mainClose = "</main>";
@@ -1025,15 +1072,15 @@ ${navItems}
     iconBytes
   };
 }
-function flattenContentBlock(block, icons, posts, classManglingEnabled = false, classManglingMode = "safe", slug, fallbackAuthor) {
+function flattenContentBlock(block, icons, posts, classManglingEnabled = false, classManglingMode = "safe", slug, fallbackAuthor, texts = getSiteTexts(resolveSiteLanguage(void 0))) {
   if (block.type === "bloglist") {
-    const bloglistHtml = renderBloglist(posts || [], block, classManglingEnabled, classManglingMode);
+    const bloglistHtml = renderBloglist(posts || [], block, classManglingEnabled, classManglingMode, texts);
     if (!block.selector)
       return bloglistHtml;
     return `<div${selectorAttrs(block.selector)}>${bloglistHtml}</div>`;
   }
   if (block.type === "author") {
-    return renderAuthorBlock(posts || [], slug || "", block, fallbackAuthor || null);
+    return renderAuthorBlock(posts || [], slug || "", block, fallbackAuthor || null, texts);
   }
   if (block.type === "divider") {
     return `<hr${selectorAttrs(block.selector)}>`;
@@ -1059,7 +1106,7 @@ ${items}
     const normalizedCellWidths = block.cells.map((cell) => normalizeCssLength(cell.width));
     const hasExplicitCellWidths = normalizedCellWidths.some((value) => !!value);
     const cellsHtml = block.cells.map((cell, index) => {
-      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
+      const cellContent = cell.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor, texts)).join("\n");
       const cellStyles = [];
       const textAlign = normalizeAlignment(cell.textAlign);
       const width = normalizedCellWidths[index];
@@ -1112,7 +1159,7 @@ ${items}
     return `<div${selectorAttrs(block.selector, classes)}${styleAttr}>${cellsHtml}</div>`;
   }
   if (block.type === "section") {
-    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor)).join("\n");
+    const childrenHtml = block.children.map((child) => flattenContentBlock(child, icons, posts, classManglingEnabled, classManglingMode, slug, fallbackAuthor, texts)).join("\n");
     const sectionAlign = normalizeAlignment(block.align);
     const sectionPadding = normalizeCssLength(block.padding);
     const styles = [];
@@ -1161,11 +1208,11 @@ ${items}
   return `<p${selectorAttrs(block.selector)}>${inlineHtml}</p>`;
 }
 var DEFAULT_BLOGLIST_LIMIT = 20;
-function formatDisplayDate(iso) {
+function formatDisplayDate(iso, texts) {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime()))
     return iso;
-  return parsed.toLocaleDateString("de-DE", {
+  return parsed.toLocaleDateString(texts.dateLocale, {
     year: "numeric",
     month: "long",
     day: "numeric"
@@ -1179,7 +1226,7 @@ function parseDateMs(iso) {
     return null;
   return parsed.getTime();
 }
-function renderAuthorBlock(posts, slug, block, fallbackAuthor) {
+function renderAuthorBlock(posts, slug, block, fallbackAuthor, texts) {
   const current = posts.find((post) => post.slug === slug) || null;
   const showPublished = block.showPublished !== false;
   const showModified = block.showModified !== false;
@@ -1191,34 +1238,30 @@ function renderAuthorBlock(posts, slug, block, fallbackAuthor) {
   const author = String(current?.author || fallbackAuthor || "").trim();
   const parts = [];
   if (showPublished && publishedAt) {
-    parts.push(`Ver\xF6ffentlicht: <time datetime="${escapeHtml(publishedAt)}">${escapeHtml(formatDisplayDate(publishedAt))}</time>`);
+    parts.push(`${texts.published}: <time datetime="${escapeHtml(publishedAt)}">${escapeHtml(formatDisplayDate(publishedAt, texts))}</time>`);
   }
   if (showModified && modifiedAt && (publishedMs === null || modifiedMs !== null && modifiedMs > publishedMs)) {
-    parts.push(`Aktualisiert: <time datetime="${escapeHtml(modifiedAt)}">${escapeHtml(formatDisplayDate(modifiedAt))}</time>`);
+    parts.push(`${texts.modified}: <time datetime="${escapeHtml(modifiedAt)}">${escapeHtml(formatDisplayDate(modifiedAt, texts))}</time>`);
   }
   if (showAuthor && author) {
-    parts.push(`Von ${escapeHtml(author)}`);
+    parts.push(`${texts.by} ${escapeHtml(author)}`);
   }
   const tags = Array.isArray(block.tags) ? block.tags.map((tag) => String(tag).trim()).filter(Boolean).filter((tag, index, arr) => arr.indexOf(tag) === index).slice(0, 8).map((tag) => tag.slice(0, 32)) : [];
   if (tags.length > 0) {
-    parts.push(`Tags: ${tags.map((tag) => escapeHtml(tag)).join(", ")}`);
+    parts.push(`${texts.tags}: ${tags.map((tag) => escapeHtml(tag)).join(", ")}`);
   }
   return `<p${selectorAttrs(block.selector)}>${parts.join(" \xB7 ")}</p>`;
 }
-function renderBloglist(posts, block, classManglingEnabled = false, classManglingMode = "safe") {
+function renderBloglist(posts, block, classManglingEnabled = false, classManglingMode = "safe", texts = getSiteTexts(resolveSiteLanguage(void 0))) {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {
-    return `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">Noch keine Posts.</p>`;
+    return `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">${escapeHtml(texts.noPosts)}</p>`;
   }
   published.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   const limit = block?.limit === null ? published.length : block?.limit ?? DEFAULT_BLOGLIST_LIMIT;
   const limitedPosts = published.slice(0, limit);
   const items = limitedPosts.map((post) => {
-    const date = new Date(post.publishedAt).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    const date = escapeHtml(formatDisplayDate(post.publishedAt, texts));
     return `<li class="${mangleGeneratedClass("post", classManglingEnabled, classManglingMode)}"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
   }).join("\n");
   let html = `<ul class="${mangleGeneratedClass("posts", classManglingEnabled, classManglingMode)}">
@@ -1230,10 +1273,10 @@ ${items}
   }
   return html;
 }
-function flattenBloglistToItems(posts, block, sourceIndex, classManglingEnabled = false, classManglingMode = "safe") {
+function flattenBloglistToItems(posts, block, sourceIndex, classManglingEnabled = false, classManglingMode = "safe", texts = getSiteTexts(resolveSiteLanguage(void 0))) {
   const published = posts.filter((p) => p.status === "published" && p.pageType === "post");
   if (published.length === 0) {
-    const html = `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">Noch keine Posts.</p>`;
+    const html = `<p class="${mangleGeneratedClass("empty", classManglingEnabled, classManglingMode)}">${escapeHtml(texts.noPosts)}</p>`;
     return [{
       html,
       bytes: measureBytes(html),
@@ -1244,11 +1287,7 @@ function flattenBloglistToItems(posts, block, sourceIndex, classManglingEnabled 
   const limit = block?.limit === null ? published.length : block?.limit ?? DEFAULT_BLOGLIST_LIMIT;
   const limitedPosts = published.slice(0, limit);
   const blocks = limitedPosts.map((post) => {
-    const date = new Date(post.publishedAt).toLocaleDateString("de-DE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    const date = escapeHtml(formatDisplayDate(post.publishedAt, texts));
     const html = `<li class="${mangleGeneratedClass("post", classManglingEnabled, classManglingMode)}"><a href="/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a> - <time datetime="${escapeHtml(post.publishedAt)}">${date}</time></li>`;
     return {
       html,
@@ -1266,7 +1305,7 @@ function flattenBloglistToItems(posts, block, sourceIndex, classManglingEnabled 
       blockType: "bloglist-archive-link"
     });
   } else if (block?.limit === null) {
-    const endHtml = `<p class="${mangleGeneratedClass("end-of-list", classManglingEnabled, classManglingMode)}">\u2014 Ende der Liste \u2014</p>`;
+    const endHtml = `<p class="${mangleGeneratedClass("end-of-list", classManglingEnabled, classManglingMode)}">${escapeHtml(texts.endOfList)}</p>`;
     blocks.push({
       html: endHtml,
       bytes: measureBytes(endHtml),
@@ -1972,7 +2011,9 @@ function validateManifest(manifest) {
   return { valid: true };
 }
 export {
+  DEFAULT_SITE_LANGUAGE,
   MAX_PAGINATION_ITERATIONS,
+  SITE_LANGUAGES,
   SIZE_LIMIT,
   addEntry,
   buildIndexState,
@@ -1991,11 +2032,14 @@ export {
   getIconSvg,
   getPatternClass,
   getPublishedEntries,
+  getSiteTexts,
   getTombstonedEntries,
+  isSiteLanguage,
   isValidIconId,
   measureBytes,
   normalizeLineEndings,
   publishCheckToError,
+  resolveSiteLanguage,
   tombstoneEntry,
   validateInput,
   validateManifest,

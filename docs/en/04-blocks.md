@@ -80,6 +80,8 @@ Shows information about the post. Choose what to show:
 - **Author**: the author name, taken from the page's **Meta** override, otherwise from **Settings → Blog → Author**, otherwise from the global **Meta** author
 - **Tags**: up to 8 tags of up to 32 characters each
 
+The labels ("Published", "Updated", "By") and the date format follow **Settings → General → Site language**.
+
 > The dates are taken from the published version of the post. When you publish a new post for the first time, the author block cannot show a date yet. Click **Recompile** on the post once after the first publication to add it.
 
 ### Bloglist
@@ -88,7 +90,7 @@ Lists your posts, newest first, with title and date. Only content with the page 
 
 Pages with a bloglist are rebuilt automatically whenever you publish, delete or restore a post.
 
-> Note: the date format in bloglists and the text "Noch keine Posts." (shown when there are no posts yet) are currently always German.
+The date format and the text shown when there are no posts yet ("No posts yet." / "Noch keine Posts.") follow **Settings → General → Site language**.
 
 ## Section
 

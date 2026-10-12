@@ -79,6 +79,7 @@ function createElements() {
     classManglingEnabled: make('input'),
     classManglingMode: make('select'),
     updateCheckEnabled: make('input'),
+    siteLanguage: make('select'),
     tabBtns: [tabBtn, cssTabBtn],
     tabContents: [tabContent, cssTabContent],
   };

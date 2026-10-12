@@ -1,3 +1,5 @@
+import { getSiteLanguageForSettings } from '../settings-utils.js';
+
 export function createEditorRuntime({
   doc = document,
   App,
@@ -53,6 +55,7 @@ export function createEditorRuntime({
     classManglingEnabled,
     classManglingMode,
     updateCheckEnabled,
+    siteLanguage,
     saveBtn,
     discardBtn,
     overheadPieChart,
@@ -75,6 +78,7 @@ export function createEditorRuntime({
   function buildSettings() {
     return {
       version: 1,
+      siteLanguage: siteLanguage.value === 'de' ? 'de' : 'en',
       homepageSlug: homepageSelect.value || null,
       favicon: faviconData.value || null,
       siteTitleEnabled: siteTitleEnabled.checked,
@@ -204,19 +208,22 @@ export function createEditorRuntime({
       ]);
 
       if (!settings.homepageSlug) {
-        const existingHomepage = allPosts.find(p => p.slug === 'startseite' && p.status === 'published');
-        if (!existingHomepage) {
+        // Default homepages are 'startseite' (German) or 'home' (English), depending on the site language.
+        const isDefaultHomepage = p => (p.slug === 'startseite' || p.slug === 'home') && p.status === 'published';
+        let homepage = allPosts.find(isDefaultHomepage);
+        if (!homepage) {
           try {
-            await App.createDefaultHomepage();
+            const created = await App.createDefaultHomepage();
             allPosts = await App.getPosts();
+            homepage = allPosts.find(p => p.slug === created?.slug && p.status === 'published')
+              || allPosts.find(isDefaultHomepage);
           } catch (err) {
             console.error('Failed to create default homepage:', err);
           }
         }
 
-        const homepage = allPosts.find(p => p.slug === 'startseite' && p.status === 'published');
         if (homepage) {
-          settings.homepageSlug = 'startseite';
+          settings.homepageSlug = homepage.slug;
           await App.saveSettings(settings);
         }
       }
@@ -303,6 +310,7 @@ export function createEditorRuntime({
       classManglingMode.disabled = !classManglingEnabled.checked;
 
       updateCheckEnabled.checked = settings.updateCheck?.enabled === true;
+      siteLanguage.value = getSiteLanguageForSettings(settings);
 
       state.initialSettings = JSON.stringify(buildSettings());
       state.hasUnsavedChanges = false;

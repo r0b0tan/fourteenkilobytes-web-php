@@ -8,11 +8,11 @@ fourteenkilobytes hat kein festes Theme mit eingebauter Startseite. Deine Websit
 
 Die Adresse `/` zeigt die Seite, die unter **Einstellungen → Allgemein → Startseite** ausgewählt ist. Zur Auswahl stehen nur veröffentlichte Inhalte vom Typ **Seite**.
 
-Öffnest du die Einstellungen zum ersten Mal und es gibt noch keine Startseite, legt fourteenkilobytes die Seite *Startseite* (`/startseite`) mit Überschrift, Begrüßungstext und Blogliste an und wählt sie aus.
+Öffnest du die Einstellungen zum ersten Mal und es gibt noch keine Startseite, legt fourteenkilobytes eine Seite mit Überschrift, Begrüßungstext und Blogliste an und wählt sie aus. Ihr Name hängt von der Website-Sprache ab: *Startseite* (`/startseite`) auf Deutsch, *Home* (`/home`) auf Englisch.
 
 So gestaltest du eine eigene Startseite:
 
-1. Lege eine neue Seite mit dem Seitentyp **Seite** an, etwa mit dem Slug `home`.
+1. Lege eine neue Seite mit dem Seitentyp **Seite** an, etwa mit dem Slug `willkommen`.
 2. Füge einen Begrüßungstext hinzu und, falls die Startseite deine Posts auflisten soll, einen Block **Blogliste**.
 3. Veröffentliche sie.
 4. Wähle sie unter **Einstellungen → Allgemein → Startseite** aus und klicke auf **Speichern**.
@@ -27,6 +27,7 @@ Ein Block **Blogliste** listet deine Posts mit Titel und Datum auf, neueste zuer
 
 - Er zeigt nur Inhalte vom Typ **Post**, nie Seiten.
 - Die Höchstzahl der Einträge legst du unter **Einstellungen → Blog → Post-Limit** fest.
+- Datum und der Text „Noch keine Posts.“ richten sich nach **Einstellungen → Allgemein → Website-Sprache**.
 - Ist die automatische Archivseite eingeschaltet, endet die Liste mit einem Link dorthin (Standardtext „View all posts →“, änderbar unter Archiv-Link-Text).
 - Seiten mit Blogliste werden automatisch neu gebaut, wenn ein Post veröffentlicht, gelöscht oder wiederhergestellt wird.
 

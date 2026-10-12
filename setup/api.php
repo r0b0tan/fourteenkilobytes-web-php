@@ -297,6 +297,7 @@ if ($method === 'POST' && $path === '/install') {
         'siteTitle' => $siteTitle,
         'siteTitleEnabled' => true,
         'language' => $language,
+        'siteLanguage' => $language === 'de' ? 'de' : 'en',
         'cssMode' => 'default',
         'cssEnabled' => true,
         'optimizations' => [

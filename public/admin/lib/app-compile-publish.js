@@ -2,6 +2,8 @@
  * Preview and publish workflows for compile service.
  */
 
+import { getGeneratedPageTexts, getSiteLanguageForSettings } from './settings-utils.js';
+
 export function createCompilePublishService(deps) {
   const {
     Compiler,
@@ -233,19 +235,20 @@ export function createCompilePublishService(deps) {
   }
 
   async function createDefaultHomepage() {
+    const texts = getGeneratedPageTexts(getSiteLanguageForSettings(await getSettings()));
     const homepageInput = {
-      slug: 'startseite',
-      title: 'Startseite',
+      slug: texts.homepageSlug,
+      title: texts.homepageTitle,
       pageType: 'page',
       content: [
         {
           type: 'heading',
           level: 1,
-          children: [{ type: 'text', text: 'Willkommen' }]
+          children: [{ type: 'text', text: texts.homepageHeading }]
         },
         {
           type: 'paragraph',
-          children: [{ type: 'text', text: 'Dies ist die Startseite deines Blogs. Du kannst diese Seite im Editor bearbeiten.' }]
+          children: [{ type: 'text', text: texts.homepageText }]
         },
         {
           type: 'bloglist',
@@ -266,8 +269,8 @@ export function createCompilePublishService(deps) {
       return null;
     }
 
-    const archiveSlug = settings.bloglist.archiveSlug || 'archiv';
-    const archiveTitle = 'Archiv';
+    const archiveSlug = settings.bloglist.archiveSlug || 'archive';
+    const archiveTitle = getGeneratedPageTexts(getSiteLanguageForSettings(settings)).archiveTitle;
 
     const archiveInput = {
       slug: archiveSlug,

@@ -19,6 +19,7 @@ Der Kasten **Overhead** auf der Einstellungsseite zeigt, wie viele Bytes deine g
 | Einstellung | Beschreibung |
 |---|---|
 | **Sprache** | Sprache der Admin-Oberfläche (Englisch oder Deutsch). Wird im Browser gespeichert, jeder Browser kann also seine eigene Sprache haben. Wirkt nach dem Neuladen der Seite. |
+| **Website-Sprache** | Sprache deiner öffentlichen Seiten (Englisch oder Deutsch). Browser, Screenreader und Suchmaschinen nutzen sie, und sie bestimmt das Datumsformat und die Texte, die das System selbst in Seiten schreibt: „Noch keine Posts.“ in Beitragslisten und „Veröffentlicht“, „Aktualisiert“, „Von“ im Autor-Block. Nach einer Änderung **Daten → Alle Seiten neu bauen** ausführen. |
 | **Startseite** | Die Seite unter `/`. Zur Auswahl stehen nur veröffentlichte Inhalte vom Typ **Seite**. **Aktualisieren** baut die ausgewählte Seite mit den aktuellen Posts neu. Siehe [Startseite, Archiv und Navigation](06-site-structure.md#die-startseite). |
 | **Update-Check** | **Beim Start auf Updates prüfen** fragt höchstens einmal am Tag bei GitHub nach einer neuen Version. Standardmäßig ausgeschaltet; dabei werden keine weiteren Daten übertragen. |
 | **Passwort** | Das Admin-Passwort ändern. Siehe [Konto und Sicherheit](09-account-and-security.md#passwort-ändern). Dieses Formular funktioniert unabhängig von **Speichern**. |

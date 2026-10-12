@@ -19,6 +19,7 @@ The **Overhead** box on the settings page shows how many bytes your global setti
 | Setting | Description |
 |---|---|
 | **Language** | Language of the admin interface (English or German). Stored in your browser, so each browser can use its own language. Takes effect after reloading the page. |
+| **Site language** | Language of your public pages (English or German). Browsers, screen readers and search engines use it, and it sets the date format and the texts the system writes into pages: "No posts yet." in post lists and "Published", "Updated", "By" in author blocks. Use **Data → Rebuild all pages** after changing it. |
 | **Homepage** | The page shown at `/`. Only published pages of the type **Page** are listed. **Regenerate** rebuilds the selected page with the current posts. See [Homepage, archive and navigation](06-site-structure.md#the-homepage). |
 | **Update check** | **Check for updates on startup** asks GitHub at most once a day whether a new version exists. Disabled by default; no other data is sent. |
 | **Password** | Change the admin password. See [Account and security](09-account-and-security.md#changing-the-password). This form works independently of **Save**. |

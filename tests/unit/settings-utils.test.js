@@ -4,6 +4,9 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  getSiteLanguageForSettings,
+  getGeneratedPageTexts,
+  getUiLanguage,
   isCompressionEnabledForSettings,
   isClassManglingEnabledForSettings,
   getClassManglingModeForSettings,
@@ -176,6 +179,36 @@ describe('Settings Utils Module', () => {
 
     it('should handle undefined settings', () => {
       expect(getClassManglingModeForSettings(undefined)).toBe('safe');
+    });
+  });
+
+  describe('getSiteLanguageForSettings()', () => {
+    it('uses the explicit site language first', () => {
+      expect(getSiteLanguageForSettings({ siteLanguage: 'de', language: 'en' }, 'en')).toBe('de');
+    });
+
+    it('falls back to the setup wizard language, then the admin language', () => {
+      expect(getSiteLanguageForSettings({ language: 'de' }, 'en')).toBe('de');
+      expect(getSiteLanguageForSettings({}, 'de')).toBe('de');
+    });
+
+    it('ignores unsupported values and defaults to English', () => {
+      expect(getSiteLanguageForSettings({ siteLanguage: 'fr', language: 'es' }, null)).toBe('en');
+      expect(getSiteLanguageForSettings(null, null)).toBe('en');
+    });
+
+    it('reads the admin language from localStorage by default', () => {
+      localStorage.setItem('adminLanguage', 'de');
+      expect(getUiLanguage()).toBe('de');
+      expect(getSiteLanguageForSettings({})).toBe('de');
+      localStorage.removeItem('adminLanguage');
+    });
+  });
+
+  describe('getGeneratedPageTexts()', () => {
+    it('returns German and English texts for generated pages', () => {
+      expect(getGeneratedPageTexts('de')).toMatchObject({ homepageSlug: 'startseite', archiveTitle: 'Archiv' });
+      expect(getGeneratedPageTexts('en')).toMatchObject({ homepageSlug: 'home', archiveTitle: 'Archive' });
     });
   });
 });

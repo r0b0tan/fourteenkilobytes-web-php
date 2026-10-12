@@ -114,6 +114,12 @@ function setupEnv() {
   classManglingMode.append(optSafe, optAggressive);
   const updateCheckEnabled = el('input');
   updateCheckEnabled.type = 'checkbox';
+  const siteLanguage = el('select');
+  const langEn = el('option');
+  langEn.value = 'en';
+  const langDe = el('option');
+  langDe.value = 'de';
+  siteLanguage.append(langEn, langDe);
   const saveBtn = el('button');
   saveBtn.innerHTML = 'Save';
   const discardBtn = el('button');
@@ -161,6 +167,7 @@ function setupEnv() {
     classManglingEnabled,
     classManglingMode,
     updateCheckEnabled,
+    siteLanguage,
     saveBtn,
     discardBtn,
     overheadPieChart,
@@ -224,6 +231,7 @@ function setupEnv() {
     classManglingEnabled,
     classManglingMode,
     updateCheckEnabled,
+    siteLanguage,
     saveBtn,
     discardBtn,
     overheadPieChart,

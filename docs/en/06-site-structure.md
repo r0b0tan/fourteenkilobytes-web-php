@@ -8,11 +8,11 @@ fourteenkilobytes has no fixed theme with a built-in start page. Your site consi
 
 The address `/` shows the page selected in **Settings → General → Homepage**. Only published content of the type **Page** can be selected.
 
-When you open the settings for the first time and no homepage exists, fourteenkilobytes creates the page *Startseite* (`/startseite`) with a heading, a welcome text and a bloglist, and selects it.
+When you open the settings for the first time and no homepage exists, fourteenkilobytes creates a page with a heading, a welcome text and a bloglist, and selects it. Its name depends on the site language: *Home* (`/home`) in English, *Startseite* (`/startseite`) in German.
 
 To design your own homepage:
 
-1. Create a new page with the page type **Page**, for example with the slug `home`.
+1. Create a new page with the page type **Page**, for example with the slug `welcome`.
 2. Add a welcome text and a **Bloglist** block if the homepage should list your posts.
 3. Publish it.
 4. Select it in **Settings → General → Homepage** and click **Save**.
@@ -27,6 +27,7 @@ A **Bloglist** block lists your posts with title and date, newest first. You can
 
 - It shows only content of the type **Post**, never pages.
 - The maximum number of entries is set in **Settings → Blog → Post limit**.
+- Dates and the "No posts yet." text follow **Settings → General → Site language**.
 - If the automatic archive page is enabled, the list ends with a link to it (for example "View all posts →").
 - Pages with a bloglist are rebuilt automatically after a post is published, deleted or restored.
 

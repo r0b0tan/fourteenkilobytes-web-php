@@ -37,9 +37,9 @@ When a post is published for the first time, the date is not known yet when the 
 
 Enter the full address of your site under **Settings → RSS → Website URL**, for example `https://example.com`.
 
-### Dates in post lists are always German
+### Dates or texts in post lists are in the wrong language
 
-This is a current limitation: bloglists always use the German date format and the text "Noch keine Posts." when no posts exist yet.
+Set **Settings → General → Site language** and click **Save**, then use **Settings → Data → Rebuild all pages**. Pages keep the language they were built with until they are rebuilt.
 
 ## Editing and publishing
 
