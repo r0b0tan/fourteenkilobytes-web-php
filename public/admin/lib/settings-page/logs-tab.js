@@ -41,6 +41,7 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
       'post_purge': { icon: logIcons.trash, label: 'Post endgültig gelöscht' },
       'posts_delete_all': { icon: logIcons.alert, label: 'Alle Posts gelöscht' },
       'settings_update': { icon: logIcons.settings, label: 'Einstellungen' },
+      'import': { icon: logIcons.settings, label: 'Import' },
       'csrf_failure': { icon: logIcons.alert, label: 'CSRF-Fehler' },
       'full_reset': { icon: logIcons.alert, label: 'Reset' },
       'setup_complete': { icon: logIcons.check, label: 'Setup' },

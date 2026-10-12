@@ -747,6 +747,7 @@ class PostRoutesTest extends ApiTestCase
         }
 
         $entries = array_column(loadManifest()['entries'], null, 'slug');
+        $this->assertStringContainsString('"action":"import"', file_get_contents(AUDIT_LOG_FILE));
         $this->assertSame('published', $entries['existing']['status']);
         $this->assertSame('Renamed', $entries['existing']['title']);
         $this->assertSame('pending', $entries['brand-new']['status']);

@@ -133,8 +133,10 @@ describe('editor/block-factory', () => {
     expect(deps.insertBlockDirectlyBelow).toHaveBeenCalled();
     expect(deps.onPreviewRequested).toHaveBeenCalled();
 
+    deps.onPreviewRequested.mockClear();
     buttons[3].click();
     expect(document.body.contains(block)).toBe(false);
+    expect(deps.onPreviewRequested).toHaveBeenCalled();
   });
 
   it('creates section and layout blocks with callback-driven duplicate/delete behavior', () => {

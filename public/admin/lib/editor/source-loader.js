@@ -27,6 +27,13 @@ export function createEditorSourceLoader(deps) {
   function loadFromSource(sourceData) {
     deps.titleInput.value = sourceData.title || '';
     deps.slugInput.value = sourceData.slug || '';
+    // A loaded page keeps its address: editing the title must not generate a new slug
+    // (that would publish a second page). Clones arrive with an empty slug and stay automatic.
+    if (sourceData.slug) {
+      deps.slugInput.dataset.manual = 'true';
+    } else {
+      delete deps.slugInput.dataset.manual;
+    }
     deps.pageTypeSelect.value = sourceData.pageType || 'post';
 
     blockElFromSource = function (block, depth = 0) {

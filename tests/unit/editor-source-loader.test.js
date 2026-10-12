@@ -233,6 +233,17 @@ describe('editor/source-loader', () => {
     expect(deps.cssRules.value).toBe('body{margin:0}');
   });
 
+  it('locks the slug of a loaded page so title edits do not change its address', () => {
+    const deps = createDeps();
+    const loader = createEditorSourceLoader(deps);
+
+    loader.loadFromSource({ title: 'Old', slug: 'old', content: [] });
+    expect(deps.slugInput.dataset.manual).toBe('true');
+
+    loader.loadFromSource({ title: '', slug: '', content: [] });
+    expect(deps.slugInput.dataset.manual).toBeUndefined();
+  });
+
   it('uses global fallbacks and paragraph placeholder for empty source content', () => {
     const deps = createDeps();
     const loader = createEditorSourceLoader(deps);

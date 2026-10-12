@@ -153,6 +153,8 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
             $result['articleSlugs'] = $imported;
         }
 
+        auditLog('import', ['imported' => $result['imported'], 'articleCount' => count($result['articleSlugs'] ?? [])]);
+
         sendJson(200, $result);
     }
 

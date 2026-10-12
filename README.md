@@ -2,6 +2,8 @@
 
 A lightweight, experimental CMS built with PHP that enforces a strict **14,336-byte size limit** per page. This constraint encourages minimalist design and efficient content creation.
 
+**User guide:** [English](docs/en/README.md) · [Deutsch](docs/de/README.md): installation, editor, settings, backups and troubleshooting for site owners.
+
 ## Features
 
 - **14KB Size Limit**: Every published HTML page is enforced to stay below 14,336 bytes
@@ -127,6 +129,7 @@ fourteenkilobytes/
 │   ├── sources/           # Source data for re-compilation
 │   └── seeds/             # Template seeds
 │
+├── docs/                  # User guide (docs/en, docs/de)
 ├── tests/                 # Vitest unit/integration tests
 ├── test-tools/            # QA helpers for generating large test datasets
 └── dist/                  # Build output (generated)

@@ -240,7 +240,10 @@ export function createEditorBlockFactory(deps) {
     deleteBtn.type = 'button';
     deleteBtn.textContent = '×';
     deleteBtn.title = 'Delete';
-    deleteBtn.addEventListener('click', () => block.remove());
+    deleteBtn.addEventListener('click', () => {
+      block.remove();
+      deps.onPreviewRequested();
+    });
     actions.appendChild(deleteBtn);
 
     header.appendChild(actions);
