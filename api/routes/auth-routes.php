@@ -3,53 +3,6 @@
 declare(strict_types=1);
 
 function handleAuthRoutes(string $method, string $path): bool {
-    if ($method === 'POST' && $path === '/setup') {
-        if (isSetupComplete()) {
-            sendJson(403, ['error' => 'Setup already complete']);
-        }
-
-        $body = readJsonBody();
-        $password = $body['password'] ?? '';
-
-        if (strlen($password) < 8) {
-            sendJson(400, ['error' => 'Password must be at least 8 characters']);
-        }
-
-        $setupLockFile = DATA_DIR . '/.setup-complete';
-        $lockContent = date('c') . "\n";
-
-        $lockFp = @fopen($setupLockFile, 'x');
-        if ($lockFp === false) {
-            sendJson(403, ['error' => 'Setup already complete or in progress']);
-        }
-        fwrite($lockFp, $lockContent);
-        fclose($lockFp);
-
-        $salt = base64_encode(random_bytes(32));
-        $token = deriveToken($password, $salt);
-        $state = [
-            'salt' => $salt,
-            'token' => $token,
-            'createdAt' => date('c'),
-        ];
-
-        $stateJson = json_encode($state, JSON_PRETTY_PRINT);
-        if (@file_put_contents(INSTANCE_FILE, $stateJson, LOCK_EX) === false) {
-            @unlink($setupLockFile);
-            sendJson(500, ['error' => 'Failed to create instance file']);
-        }
-
-        setAuthCookie($token);
-        $sessionId = createSession($token);
-        setSessionCookie($sessionId);
-        $csrfToken = generateCsrfToken();
-        setCsrfCookie($csrfToken);
-
-        auditLog('setup_complete', ['ip' => getClientIp()]);
-
-        sendJson(201, ['success' => true, 'csrfToken' => $csrfToken]);
-    }
-
     if ($method === 'POST' && $path === '/login') {
         if (!isSetupComplete()) {
             sendJson(400, ['error' => 'Setup not complete', 'code' => 'SETUP_REQUIRED']);
@@ -63,7 +16,7 @@ function handleAuthRoutes(string $method, string $path): bool {
         $body = readJsonBody();
         $password = $body['password'] ?? '';
 
-        if (empty($password)) {
+        if (!is_string($password) || $password === '') {
             sendJson(400, ['error' => 'Password required', 'code' => 'MISSING_FIELDS']);
         }
 
@@ -71,7 +24,7 @@ function handleAuthRoutes(string $method, string $path): bool {
         $token = deriveToken($password, $salt);
         $storedToken = getApiToken();
 
-        if (!hash_equals($storedToken, $token)) {
+        if ($storedToken === null || !hash_equals($storedToken, $token)) {
             recordFailedAttempt($clientIp);
             auditLog('login_failed', ['ip' => $clientIp, 'attempts' => loadRateLimits()[$clientIp]['attempts'] ?? 1]);
             sendJson(401, ['error' => 'Invalid password', 'code' => 'INVALID_CREDENTIALS']);
@@ -84,7 +37,7 @@ function handleAuthRoutes(string $method, string $path): bool {
             destroySession($oldSessionId);
         }
 
-        setAuthCookie($token);
+        clearAuthCookie();
         $sessionId = createSession($token);
         setSessionCookie($sessionId);
 
@@ -92,6 +45,58 @@ function handleAuthRoutes(string $method, string $path): bool {
         setCsrfCookie($csrfToken);
 
         auditLog('login_success', ['ip' => $clientIp, 'sessionId' => substr($sessionId, 0, 8) . '...']);
+
+        sendJson(200, ['success' => true, 'csrfToken' => $csrfToken]);
+    }
+
+    if ($method === 'POST' && $path === '/change-password') {
+        requireAuth();
+        requireCsrfToken();
+
+        $clientIp = getClientIp();
+        if (!checkRateLimit($clientIp)) {
+            sendJson(429, ['error' => 'Too many attempts. Please try again later.', 'code' => 'RATE_LIMITED']);
+        }
+
+        $body = readJsonBody();
+        $currentPassword = $body['currentPassword'] ?? '';
+        $newPassword = $body['newPassword'] ?? '';
+
+        if (!is_string($currentPassword) || !is_string($newPassword) || $currentPassword === '' || $newPassword === '') {
+            sendJson(400, ['error' => 'Current and new password required', 'code' => 'MISSING_FIELDS']);
+        }
+
+        if (strlen($newPassword) < 8 || strlen($newPassword) > 500) {
+            sendJson(400, ['error' => 'Password must be 8-500 characters', 'code' => 'INVALID_PASSWORD']);
+        }
+
+        $storedToken = getApiToken();
+        if ($storedToken === null || !hash_equals($storedToken, deriveToken($currentPassword, getInstanceSalt()))) {
+            recordFailedAttempt($clientIp);
+            auditLog('password_change_failed', ['ip' => $clientIp]);
+            // 403 instead of 401: the session itself is still valid.
+            sendJson(403, ['error' => 'Current password is incorrect', 'code' => 'INVALID_CREDENTIALS']);
+        }
+
+        clearRateLimit($clientIp);
+
+        $state = readInstanceState() ?? [];
+        $salt = base64_encode(random_bytes(32));
+        $newToken = deriveToken($newPassword, $salt);
+        $state['salt'] = $salt;
+        $state['apiToken'] = $newToken;
+        $state['passwordChangedAt'] = date('c');
+        saveInstanceState($state);
+
+        // Log out every other session; keep the current user logged in with a fresh session.
+        destroyAllSessions();
+        $sessionId = createSession($newToken);
+        setSessionCookie($sessionId);
+
+        $csrfToken = generateCsrfToken();
+        setCsrfCookie($csrfToken);
+
+        auditLog('password_changed', ['ip' => $clientIp]);
 
         sendJson(200, ['success' => true, 'csrfToken' => $csrfToken]);
     }

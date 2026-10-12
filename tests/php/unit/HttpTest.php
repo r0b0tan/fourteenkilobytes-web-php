@@ -152,4 +152,42 @@ class HttpTest extends TestCase
         $this->assertStringContainsString('class=container', $result);
         $this->assertStringContainsString('id=main', $result);
     }
+
+    // -------------------------------------------------------------------------
+    // Whitespace between tags and calc() handling
+    // -------------------------------------------------------------------------
+
+    public function testMinifyHtmlKeepsSpaceBetweenInlineElements(): void
+    {
+        $result = minifyHtmlDocument('<p><b>Hallo</b> <i>Welt</i> und <a href="/x">Link</a>   <code>x</code></p>');
+        $this->assertSame('<p><b>Hallo</b> <i>Welt</i> und <a href="/x">Link</a> <code>x</code></p>', $result);
+    }
+
+    public function testMinifyHtmlRemovesWhitespaceAroundBlockElements(): void
+    {
+        $result = minifyHtmlDocument("<ul>\n  <li>Eins</li>\n  <li>Zwei</li>\n</ul>\n<p>  <b>x</b> </p>");
+        $this->assertSame('<ul><li>Eins</li><li>Zwei</li></ul><p><b>x</b></p>', $result);
+    }
+
+    public function testMinifyHtmlRemovesWhitespaceAfterDoctype(): void
+    {
+        $this->assertSame('<!DOCTYPE html><html></html>', minifyHtmlDocument("<!DOCTYPE html>\n<html>\n</html>"));
+    }
+
+    public function testMinifyHtmlPreservesWhitespaceInsidePre(): void
+    {
+        $html = "<pre><code><span>a</span>\n  <span>b</span></code></pre>";
+        $this->assertSame($html, minifyHtmlDocument($html));
+    }
+
+    public function testMinifyHtmlIsIdempotent(): void
+    {
+        $once = minifyHtmlDocument("<div>\n<p><b>a</b> <i>b</i></p>\n<style>a{width:calc(100% + 2px)}</style></div>");
+        $this->assertSame($once, minifyHtmlDocument($once));
+    }
+
+    public function testMinifyCssKeepsCalcOperatorSpacing(): void
+    {
+        $this->assertSame('a{width:calc(100% - 2rem);margin:calc(1rem + 2px)}', minifyCss('a { width: calc(100% - 2rem); margin: calc(1rem + 2px); }'));
+    }
 }

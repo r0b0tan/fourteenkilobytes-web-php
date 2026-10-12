@@ -193,5 +193,30 @@ describe('CSS Utils Module', () => {
       expect(result).toContain('body{margin:0;padding:0}');
       expect(result).toContain('style="color:red;margin:0;"');
     });
+
+    it('should keep a single space between inline elements', () => {
+      const html = '<p><b>Hallo</b> <i>Welt</i> und <a href="/x">Link</a>   <code>x</code></p>';
+      expect(minifyHtmlDocument(html)).toBe('<p><b>Hallo</b> <i>Welt</i> und <a href="/x">Link</a> <code>x</code></p>');
+    });
+
+    it('should remove whitespace around block elements', () => {
+      const html = '<ul>\n  <li>Eins</li>\n  <li>Zwei</li>\n</ul>\n<p>  <b>x</b> </p>';
+      expect(minifyHtmlDocument(html)).toBe('<ul><li>Eins</li><li>Zwei</li></ul><p><b>x</b></p>');
+    });
+
+    it('should preserve whitespace inside <pre>', () => {
+      const html = '<pre><code><span>a</span>\n  <span>b</span></code></pre>';
+      expect(minifyHtmlDocument(html)).toBe(html);
+    });
+
+    it('should not strip non-breaking space characters between tags', () => {
+      const html = '<b>a</b>\u00a0<i>b</i>';
+      expect(minifyHtmlDocument(html)).toBe(html);
+    });
+
+    it('should be idempotent', () => {
+      const once = minifyHtmlDocument('<div>\n<p><b>a</b> <i>b</i></p>\n<style>a{width:calc(100% + 2px)}</style></div>');
+      expect(minifyHtmlDocument(once)).toBe(once);
+    });
   });
 });

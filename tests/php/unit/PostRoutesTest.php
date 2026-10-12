@@ -571,4 +571,56 @@ class PostRoutesTest extends ApiTestCase
         $entry = current(array_filter($manifest['entries'], fn($e) => $e['slug'] === 'paged-edit'));
         $this->assertArrayHasKey('modifiedAt', $entry);
     }
+
+    public function testPublishPaginatedRejectsTraversalInFollowUpPageSlug(): void
+    {
+        $this->setRequestBody([
+            'title' => 'Evil',
+            'pages' => [
+                ['slug' => 'evil', 'html' => '<html><body>1</body></html>'],
+                ['slug' => '../../public/admin/index', 'html' => '<html><body>2</body></html>'],
+            ],
+        ]);
+
+        $body = $this->assertApiResponse(400, fn() => handlePostRoutes('POST', '/posts'));
+        $this->assertSame('INVALID_SLUG', $body['code']);
+        $this->assertFileDoesNotExist(POSTS_DIR . '/evil.html');
+    }
+
+    public function testPublishPaginatedRejectsForeignSlugForFollowUpPage(): void
+    {
+        $this->setRequestBody([
+            'title' => 'Overwrite',
+            'pages' => [
+                ['slug' => 'mine', 'html' => '<html><body>1</body></html>'],
+                ['slug' => 'someone-elses-post', 'html' => '<html><body>2</body></html>'],
+            ],
+        ]);
+
+        $body = $this->assertApiResponse(400, fn() => handlePostRoutes('POST', '/posts'));
+        $this->assertSame('INVALID_SLUG', $body['code']);
+    }
+
+    public function testImportSkipsArticlesWithTraversalSlug(): void
+    {
+        $this->setRequestBody([
+            'version' => 1,
+            'articles' => [
+                ['slug' => '../instance', 'title' => 'Evil', 'sourceData' => ['salt' => 'x', 'apiToken' => 'y']],
+                ['slug' => 'good-post', 'title' => 'Good', 'sourceData' => ['title' => 'Good']],
+            ],
+        ]);
+
+        $body = $this->assertApiResponse(200, fn() => handleSystemBackupRoutes('POST', '/import'));
+
+        $this->assertSame(['good-post'], $body['articleSlugs']);
+        $this->assertFileDoesNotExist(DATA_DIR . '/instance.json');
+        $this->assertFileExists(SOURCES_DIR . '/good-post.json');
+    }
+
+    public function testLoadSourceDataRejectsTraversalSlug(): void
+    {
+        file_put_contents(DATA_DIR . '/secret.json', '{"secret":true}');
+        $this->assertNull(loadSourceData('../secret'));
+    }
 }

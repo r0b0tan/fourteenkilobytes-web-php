@@ -50,8 +50,8 @@ export function createAppApi() {
     return apiFetch('/api/setup-status');
   }
 
-  async function setup(password) {
-    const result = await apiFetch('/api/setup', {
+  async function login(password) {
+    const result = await apiFetch('/api/login', {
       method: 'POST',
       body: JSON.stringify({ password }),
     });
@@ -59,10 +59,10 @@ export function createAppApi() {
     return result;
   }
 
-  async function login(password) {
-    const result = await apiFetch('/api/login', {
+  async function changePassword(currentPassword, newPassword) {
+    const result = await apiFetch('/api/change-password', {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ currentPassword, newPassword }),
     });
     if (result.csrfToken) csrfTokenCache = result.csrfToken;
     return result;
@@ -198,8 +198,8 @@ export function createAppApi() {
     getCsrfToken,
     getConfig,
     getSetupStatus,
-    setup,
     login,
+    changePassword,
     logout,
     isLoggedIn,
     getPosts,

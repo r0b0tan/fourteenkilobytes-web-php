@@ -52,6 +52,7 @@ define('GLOBAL_RATE_LIMIT_FILE', DATA_DIR . '/global-rate-limits.json');
 define('AUDIT_LOG_FILE', DATA_DIR . '/audit.log');
 define('AUDIT_LOG_MAX_SIZE', 5 * 1024 * 1024);
 define('SESSION_FILE', DATA_DIR . '/sessions.json');
+define('INSTANCE_FILE', DATA_DIR . '/instance.json');
 
 define('COOKIE_NAME', 'fkb_auth_v2');
 define('COOKIE_LIFETIME', 86400);
@@ -86,9 +87,14 @@ $_COOKIE = [];
 // --- Include source files ---
 
 require_once __DIR__ . '/../../api/core/http.php';
+require_once __DIR__ . '/../../api/core/instance.php';
 require_once __DIR__ . '/../../api/core/security.php';
 require_once __DIR__ . '/../../api/core/csrf.php';
+require_once __DIR__ . '/../../api/core/cookies.php';
+require_once __DIR__ . '/../../api/core/sessions.php';
+require_once __DIR__ . '/../../api/core/auth.php';
 require_once __DIR__ . '/../../api/core/manifest-storage.php';
 require_once __DIR__ . '/../../api/core/content-storage.php';
 require_once __DIR__ . '/../../api/core/settings-storage.php';
 require_once __DIR__ . '/../../api/routes/post-routes.php';
+require_once __DIR__ . '/../../api/routes/system/backup-routes.php';

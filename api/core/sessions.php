@@ -61,7 +61,7 @@ function createSession(string $authToken): string {
     $now = time();
 
     $sessions[$sessionId] = [
-        'authToken' => $authToken,
+        'tokenFingerprint' => tokenFingerprint($authToken),
         'createdAt' => $now,
         'lastRotation' => $now,
         'ip' => getClientIp(),

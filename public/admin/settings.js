@@ -3,6 +3,7 @@ import { formatBytes } from './lib/byte-utils.js';
 import { createToast, createModal } from './lib/settings-page/ui-feedback.js';
 import { initDataTab } from './lib/settings-page/data-tab.js';
 import { initLogsTab } from './lib/settings-page/logs-tab.js';
+import { initPasswordSection } from './lib/settings-page/password-section.js';
 import { initEditorCore } from './lib/settings-page/editor-core.js';
 
 (async function () {
@@ -31,6 +32,13 @@ import { initEditorCore } from './lib/settings-page/editor-core.js';
     Toast,
     Modal,
     loadSettings,
+  });
+
+  initPasswordSection({
+    doc: document,
+    App,
+    t,
+    Toast,
   });
 
   initLogsTab({

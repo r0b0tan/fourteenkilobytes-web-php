@@ -107,8 +107,9 @@ function handlePostRoutes(string $method, string $path): bool {
                 sendJson(400, ['error' => 'Pages array cannot be empty', 'code' => 'EMPTY_PAGES']);
             }
 
+            $pages = array_values($pages);
             $baseSlug = $pages[0]['slug'] ?? '';
-            if (!preg_match('/^[a-z0-9-]+$/', $baseSlug)) {
+            if (!isValidSlug($baseSlug)) {
                 sendJson(400, ['error' => 'Invalid slug format', 'code' => 'INVALID_SLUG']);
             }
 
@@ -116,8 +117,14 @@ function handlePostRoutes(string $method, string $path): bool {
             $hashes = [];
             $minifiedPages = [];
             foreach ($pages as $index => $page) {
-                if (empty($page['slug']) || empty($page['html'])) {
+                if (!is_array($page) || empty($page['slug']) || empty($page['html']) || !is_string($page['html'])) {
                     sendJson(400, ['error' => "Page {$index} missing slug or html", 'code' => 'MISSING_FIELDS']);
+                }
+
+                // Follow pagination naming (base, base-2, base-3, ...) so a request can only write its own files.
+                $expectedSlug = $index === 0 ? $baseSlug : "{$baseSlug}-" . ($index + 1);
+                if ($page['slug'] !== $expectedSlug) {
+                    sendJson(400, ['error' => "Page {$index} has invalid slug (expected '{$expectedSlug}')", 'code' => 'INVALID_SLUG']);
                 }
 
                 $minifiedHtml = $compressionEnabled ? minifyHtmlDocument($page['html']) : $page['html'];
@@ -201,7 +208,7 @@ function handlePostRoutes(string $method, string $path): bool {
             ]);
         }
 
-        if (empty($body['slug']) || empty($body['html']) || !isset($body['bytes'])) {
+        if (empty($body['slug']) || empty($body['html']) || !is_string($body['html']) || !isset($body['bytes'])) {
             sendJson(400, ['error' => 'Missing required fields: slug, html, bytes', 'code' => 'MISSING_FIELDS']);
         }
 
@@ -223,7 +230,7 @@ function handlePostRoutes(string $method, string $path): bool {
         $pageType = $body['pageType'] ?? 'post';
         $sourceData = $body['sourceData'] ?? null;
 
-        if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+        if (!isValidSlug($slug)) {
             sendJson(400, ['error' => 'Invalid slug format', 'code' => 'INVALID_SLUG']);
         }
 

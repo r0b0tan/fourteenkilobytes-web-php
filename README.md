@@ -377,7 +377,6 @@ Most write endpoints require authentication and a valid CSRF token.
 |----------|--------|-------------|
 | `/api/health` | GET | Health check |
 | `/api/setup-status` | GET | Check whether setup is complete |
-| `/api/setup` | POST | Initial admin/password setup |
 | `/api/security-status` | GET | Security checks and file-permission warnings |
 | `/api/check-updates` | GET | Check latest release version from GitHub |
 
@@ -387,6 +386,7 @@ Most write endpoints require authentication and a valid CSRF token.
 |----------|--------|-------------|
 | `/api/login` | POST | Login with password |
 | `/api/logout` | POST | Clear session |
+| `/api/change-password` | POST | Change the admin password (logs out all other sessions) |
 | `/api/auth-check` | GET | Verify authentication |
 | `/api/config` | GET | Return runtime auth configuration |
 

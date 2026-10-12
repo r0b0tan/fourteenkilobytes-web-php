@@ -34,6 +34,8 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
       'login_success': { icon: logIcons.check, label: 'Login' },
       'login_failed': { icon: logIcons.x, label: 'Login fehlgeschlagen' },
       'logout': { icon: logIcons.logout, label: 'Logout' },
+      'password_changed': { icon: logIcons.check, label: 'Passwort geändert' },
+      'password_change_failed': { icon: logIcons.x, label: 'Passwortänderung fehlgeschlagen' },
       'post_create': { icon: logIcons.plus, label: 'Post erstellt' },
       'post_delete': { icon: logIcons.minus, label: 'Post gelöscht' },
       'posts_delete_all': { icon: logIcons.alert, label: 'Alle Posts gelöscht' },

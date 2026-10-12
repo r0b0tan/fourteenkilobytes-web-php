@@ -86,8 +86,11 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
             $imported = [];
 
             foreach ($body['articles'] as $article) {
+                if (!is_array($article)) {
+                    continue;
+                }
                 $slug = $article['slug'] ?? '';
-                if (empty($slug) || empty($article['sourceData'])) {
+                if (!isValidSlug($slug) || empty($article['sourceData']) || !is_array($article['sourceData'])) {
                     continue;
                 }
 

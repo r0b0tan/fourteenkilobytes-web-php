@@ -34,7 +34,7 @@ if (empty($slug)) {
     $homepageSlug = $settings['homepageSlug'] ?? null;
 
     // Serve custom homepage if configured
-    if ($homepageSlug) {
+    if (is_string($homepageSlug) && preg_match('/^[a-z0-9-]+$/', $homepageSlug)) {
         $homepageFile = POSTS_DIR . "/{$homepageSlug}.html";
         if (file_exists($homepageFile)) {
             header('Content-Type: text/html; charset=utf-8');

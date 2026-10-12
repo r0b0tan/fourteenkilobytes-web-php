@@ -2,36 +2,34 @@
 
 declare(strict_types=1);
 
+/**
+ * The server-side session is the only credential. The password-derived token never
+ * leaves the server, so logout, session expiry and password changes take effect.
+ */
 function checkAuth(): bool {
     $token = getApiToken();
     if ($token === null) {
-        return true;
-    }
-
-    $cookieToken = $_COOKIE[COOKIE_NAME] ?? '';
-    if (empty($cookieToken)) {
-        return false;
-    }
-
-    if (!hash_equals($token, $cookieToken)) {
+        // Fail closed: without a configured password nobody is authenticated.
         return false;
     }
 
     $sessionId = $_COOKIE['fkb_session'] ?? '';
-    if (!empty($sessionId)) {
-        $validation = validateSession($sessionId);
-        if ($validation === null) {
-            return false;
-        }
+    if (!is_string($sessionId) || $sessionId === '') {
+        return false;
+    }
 
-        if ($validation['newSessionId'] !== null) {
-            setSessionCookie($validation['newSessionId']);
-        }
+    $validation = validateSession($sessionId);
+    if ($validation === null) {
+        return false;
+    }
 
-        $sessionToken = $validation['session']['authToken'] ?? '';
-        if (!hash_equals($token, $sessionToken)) {
-            return false;
-        }
+    $fingerprint = $validation['session']['tokenFingerprint'] ?? '';
+    if (!is_string($fingerprint) || !hash_equals(tokenFingerprint($token), $fingerprint)) {
+        return false;
+    }
+
+    if ($validation['newSessionId'] !== null) {
+        setSessionCookie($validation['newSessionId']);
     }
 
     return true;

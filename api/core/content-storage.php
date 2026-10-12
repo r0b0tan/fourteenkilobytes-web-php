@@ -14,12 +14,22 @@ function savePageTypes(array $index): void {
     file_put_contents(PAGE_TYPES_FILE, json_encode($index, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+function isValidSlug(mixed $slug): bool {
+    return is_string($slug) && preg_match('/^[a-z0-9-]+$/', $slug) === 1;
+}
+
 function saveSourceData(string $slug, array $sourceData): void {
+    if (!isValidSlug($slug)) {
+        sendJson(400, ['error' => 'Invalid slug format', 'code' => 'INVALID_SLUG']);
+    }
     $path = SOURCES_DIR . "/{$slug}.json";
     file_put_contents($path, json_encode($sourceData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
 function loadSourceData(string $slug): ?array {
+    if (!isValidSlug($slug)) {
+        return null;
+    }
     $path = SOURCES_DIR . "/{$slug}.json";
     if (file_exists($path)) {
         $content = file_get_contents($path);
