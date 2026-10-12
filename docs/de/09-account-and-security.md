@@ -21,9 +21,9 @@ Du bleibst angemeldet. Alle anderen Anmeldungen, etwa auf einem anderen Rechner,
 
 ## Verlorenes Passwort zurücksetzen
 
-Eine Wiederherstellung per E-Mail gibt es nicht. Wenn du Zugriff auf den Server hast, kannst du ein neues Passwort setzen, ohne Inhalte zu verlieren.
+Eine Wiederherstellung per E-Mail gibt es nicht. Wenn du Zugriff auf den Server hast, kannst du ein neues Passwort setzen, ohne Inhalte zu verlieren. Beide Wege behalten deine Posts, Seiten und Einstellungen.
 
-> Lösche **nicht** die Datei `data/instance.json`, um den Setup-Assistenten erneut zu starten. Der Assistent würde deine Einstellungen und das Inhaltsverzeichnis ersetzen, und deine Posts verschwänden von der Website.
+### Weg A: auf der Kommandozeile (empfohlen)
 
 Führe auf dem Server im Verzeichnis deiner Installation aus:
 
@@ -42,6 +42,15 @@ sudo chown www-data:www-data data/instance.json
 ```
 
 Melde dich dann mit dem neuen Passwort an. Durch das Entfernen von `data/sessions.json` werden alle bestehenden Anmeldungen beendet.
+
+### Weg B: den Setup-Assistenten erneut durchlaufen
+
+1. Lösche auf dem Server die Datei `data/instance.json`.
+2. Öffne sofort `/setup/` und gehe den Assistenten durch.
+
+Der Assistent erkennt die vorhandenen Daten und zeigt „Existing settings and content were found.“ Er setzt nur das neue Passwort; Seitentitel, Sprache, Einstellungen und Inhalte bleiben, wie sie sind.
+
+> Bis du den Assistenten abgeschlossen hast, könnte jeder, der `/setup/` öffnet, das Passwort festlegen. Schließe ihn also direkt nach dem Löschen ab, oder nimm Weg A, der diese Lücke nicht hat.
 
 ## Das Audit-Log
 

@@ -104,4 +104,4 @@ A login lasts at most 24 hours. You are also logged out when the password was ch
 
 ### I forgot my password
 
-See [Resetting a lost password](09-account-and-security.md#resetting-a-lost-password). Do not delete `data/instance.json`.
+See [Resetting a lost password](09-account-and-security.md#resetting-a-lost-password). Both ways described there keep your content.

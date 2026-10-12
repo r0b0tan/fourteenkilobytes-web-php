@@ -21,9 +21,9 @@ You stay logged in. All other logins, for example on another computer, are logge
 
 ## Resetting a lost password
 
-There is no recovery by e-mail. If you have access to the server, you can set a new password without losing content.
+There is no recovery by e-mail. If you have access to the server, you can set a new password without losing content. Both ways keep your posts, pages and settings.
 
-> Do **not** delete `data/instance.json` to start the setup wizard again. The wizard would replace your settings and the content index, and your posts would disappear from the site.
+### Option A: on the command line (recommended)
 
 On the server, in the directory of your installation, run:
 
@@ -42,6 +42,15 @@ sudo chown www-data:www-data data/instance.json
 ```
 
 Then log in with the new password. Removing `data/sessions.json` logs out all existing logins.
+
+### Option B: run the setup wizard again
+
+1. Delete `data/instance.json` on the server.
+2. Open `/setup/` right away and go through the wizard.
+
+The wizard notices the existing data and shows "Existing settings and content were found." It only sets the new password; site title, language, settings and content stay as they are.
+
+> Until you have finished the wizard, anyone who opens `/setup/` could set the password. Complete it immediately after deleting the file, or use Option A, which has no such gap.
 
 ## The audit log
 

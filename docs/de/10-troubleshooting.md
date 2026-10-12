@@ -106,4 +106,4 @@ Eine Anmeldung dauert höchstens 24 Stunden. Abgemeldet wirst du auch, wenn das 
 
 ### Ich habe mein Passwort vergessen
 
-Siehe [Verlorenes Passwort zurücksetzen](09-account-and-security.md#verlorenes-passwort-zurücksetzen). Lösche nicht `data/instance.json`.
+Siehe [Verlorenes Passwort zurücksetzen](09-account-and-security.md#verlorenes-passwort-zurücksetzen). Beide dort beschriebenen Wege behalten deine Inhalte.

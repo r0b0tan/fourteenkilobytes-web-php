@@ -329,28 +329,31 @@ if ($method === 'POST' && $path === '/install') {
             'link' => '',
         ],
     ];
-    file_put_contents(SETTINGS_FILE, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
-    
-    // Create empty manifest.json
-    $manifest = [
-        'entries' => [],
-    ];
-    file_put_contents(MANIFEST_FILE, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
-    
-    // Create page-types.json
+    // Running the wizard again (e.g. after instance.json was deleted to reset a lost password)
+    // only replaces the password. Existing settings, content index and page types are kept.
+    $preserved = [];
     $pageTypesFile = DATA_DIR . '/page-types.json';
-    $pageTypes = ['types' => []];
-    file_put_contents($pageTypesFile, json_encode($pageTypes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    $initialFiles = [
+        'settings' => [SETTINGS_FILE, $settings],
+        'manifest' => [MANIFEST_FILE, ['version' => 1, 'entries' => []]],
+        'pageTypes' => [$pageTypesFile, ['version' => 1, 'types' => []]],
+    ];
+    foreach ($initialFiles as $name => [$file, $initialData]) {
+        if (file_exists($file)) {
+            $preserved[] = $name;
+            continue;
+        }
+        file_put_contents($file, json_encode($initialData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
     
-    // Create sessions.json
+    // Reset sessions (logs out any old login) and rate limits; both are owner-only.
     $sessionsFile = DATA_DIR . '/sessions.json';
-    $sessions = ['sessions' => []];
-    file_put_contents($sessionsFile, json_encode($sessions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    file_put_contents($sessionsFile, json_encode([]), LOCK_EX);
+    @chmod($sessionsFile, 0600);
     
-    // Create rate-limits.json
     $rateLimitsFile = DATA_DIR . '/rate-limits.json';
-    $rateLimits = ['attempts' => []];
-    file_put_contents($rateLimitsFile, json_encode($rateLimits, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    file_put_contents($rateLimitsFile, json_encode([]), LOCK_EX);
+    @chmod($rateLimitsFile, 0600);
     
     // Copy seed templates if they don't exist
     $seedsDir = DATA_DIR . '/seeds';
@@ -400,7 +403,8 @@ if ($method === 'POST' && $path === '/install') {
     sendJson(200, [
         'success' => true,
         'message' => 'Installation successful',
-        'adminUrl' => '/admin/'
+        'adminUrl' => '/admin/',
+        'preservedData' => $preserved,
     ]);
 }
 

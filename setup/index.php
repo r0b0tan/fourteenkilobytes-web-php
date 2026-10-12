@@ -19,6 +19,15 @@ if (!isset($_SESSION['setup_token'])) {
     $_SESSION['setup_token'] = bin2hex(random_bytes(32));
 }
 $setupToken = $_SESSION['setup_token'];
+
+// Existing data means the wizard runs again, e.g. to reset a lost password.
+// Settings and content are kept; only the password is set anew.
+$dataDir = dirname(__DIR__) . '/data';
+$hasExistingData = file_exists($dataDir . '/settings.json') || file_exists($dataDir . '/manifest.json');
+$existingSettings = $hasExistingData ? json_decode((string) @file_get_contents($dataDir . '/settings.json'), true) : null;
+$siteTitleValue = is_array($existingSettings) && is_string($existingSettings['siteTitle'] ?? null) && $existingSettings['siteTitle'] !== ''
+    ? $existingSettings['siteTitle']
+    : 'My 14KB Site';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -531,14 +540,20 @@ $setupToken = $_SESSION['setup_token'];
         <p class="step-description">
           Configure your site's basic settings. You can change these later in the admin panel.
         </p>
+        <?php if ($hasExistingData): ?>
+        <div class="alert alert-info">
+          Existing settings and content were found. They are kept: this setup only sets a new admin password.
+          Change the site title and language later in the admin panel.
+        </div>
+        <?php endif; ?>
         <form id="siteForm" onsubmit="return false;">
           <div class="form-group">
             <label for="siteTitle">Site Title</label>
-            <input type="text" id="siteTitle" value="My 14KB Site" required>
+            <input type="text" id="siteTitle" value="<?php echo htmlspecialchars($siteTitleValue, ENT_QUOTES, 'UTF-8'); ?>" required<?php echo $hasExistingData ? ' disabled' : ''; ?>>
           </div>
           <div class="form-group">
             <label for="language">Admin Interface Language</label>
-            <select id="language">
+            <select id="language"<?php echo $hasExistingData ? ' disabled' : ''; ?>>
               <option value="en">English</option>
               <option value="de">Deutsch</option>
             </select>
