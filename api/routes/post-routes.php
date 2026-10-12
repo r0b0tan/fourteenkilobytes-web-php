@@ -24,10 +24,25 @@ function resolvePostAuthor($sourceData, array $settings): ?string {
     return null;
 }
 
+/**
+ * Returns the manifest entry a publish would replace. Tombstoned slugs are only accepted
+ * when the request explicitly restores the post; the original publishedAt is kept.
+ */
+function findExistingEntryForPublish(array $manifest, string $slug, bool $restore): ?array {
+    foreach ($manifest['entries'] as $entry) {
+        if ($entry['slug'] !== $slug) {
+            continue;
+        }
+        if ($entry['status'] === 'tombstone' && !$restore) {
+            sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned", 'code' => 'SLUG_TOMBSTONED']);
+        }
+        return $entry;
+    }
+    return null;
+}
+
 function handlePostRoutes(string $method, string $path): bool {
     if ($method === 'GET' && $path === '/posts') {
-        checkGlobalRateLimit('/posts', false);
-
         $manifest = loadManifest();
         $pageTypes = loadPageTypes();
         $settings = loadSettings();
@@ -149,15 +164,7 @@ function handlePostRoutes(string $method, string $path): bool {
 
             $lock = new ManifestLock();
             $manifest = loadManifest();
-            $existingEntry = null;
-            foreach ($manifest['entries'] ?? [] as $entry) {
-                if ($entry['slug'] === $baseSlug && $entry['status'] === 'tombstone') {
-                    sendJson(409, ['error' => "Slug '{$baseSlug}' was previously used and tombstoned", 'code' => 'SLUG_TOMBSTONED']);
-                }
-                if ($entry['slug'] === $baseSlug && $entry['status'] !== 'tombstone') {
-                    $existingEntry = $entry;
-                }
-            }
+            $existingEntry = findExistingEntryForPublish($manifest, $baseSlug, !empty($body['restore']));
 
             $publishedAt = $existingEntry['publishedAt'] ?? $timestamp;
             $modifiedAt = $existingEntry !== null ? $timestamp : null;
@@ -239,15 +246,7 @@ function handlePostRoutes(string $method, string $path): bool {
 
         $lock = new ManifestLock();
         $manifest = loadManifest();
-        $existingEntry = null;
-        foreach ($manifest['entries'] ?? [] as $entry) {
-            if ($entry['slug'] === $slug && $entry['status'] === 'tombstone') {
-                sendJson(409, ['error' => "Slug '{$slug}' was previously used and tombstoned", 'code' => 'SLUG_TOMBSTONED']);
-            }
-            if ($entry['slug'] === $slug && $entry['status'] !== 'tombstone') {
-                $existingEntry = $entry;
-            }
-        }
+        $existingEntry = findExistingEntryForPublish($manifest, $slug, !empty($body['restore']));
 
         $publishedAt = $existingEntry['publishedAt'] ?? $timestamp;
         $modifiedAt = $existingEntry !== null ? $timestamp : null;
@@ -359,6 +358,48 @@ function handlePostRoutes(string $method, string $path): bool {
         auditLog('post_delete', ['slug' => $slug]);
 
         sendJson(200, ['tombstoned' => true, 'slug' => $slug]);
+    }
+
+    if ($method === 'POST' && preg_match('#^/posts/([a-z0-9-]+)/purge$#', $path, $matches)) {
+        requireAuth();
+        requireCsrfToken();
+        checkGlobalRateLimit('/posts:delete', true);
+
+        // Permanently removes a deleted post: its URL returns 404 instead of 410 and the slug becomes reusable.
+        $slug = $matches[1];
+        $lock = new ManifestLock();
+        $manifest = loadManifest();
+
+        $purged = null;
+        foreach ($manifest['entries'] as $index => $entry) {
+            if ($entry['slug'] === $slug) {
+                if ($entry['status'] !== 'tombstone') {
+                    sendJson(400, ['error' => "Post '{$slug}' must be deleted before it can be purged", 'code' => 'NOT_TOMBSTONED']);
+                }
+                $purged = $entry;
+                unset($manifest['entries'][$index]);
+                break;
+            }
+        }
+
+        if ($purged === null) {
+            sendJson(404, ['error' => "Post '{$slug}' not found"]);
+        }
+
+        $manifest['entries'] = array_values($manifest['entries']);
+        saveManifest($manifest);
+
+        @unlink(POSTS_DIR . "/{$slug}.html");
+        removeStalePaginationFiles($slug, max(1, (int) ($purged['pageCount'] ?? 1)), 1);
+        @unlink(SOURCES_DIR . "/{$slug}.json");
+
+        $pageTypes = loadPageTypes();
+        unset($pageTypes['types'][$slug]);
+        savePageTypes($pageTypes);
+
+        auditLog('post_purge', ['slug' => $slug]);
+
+        sendJson(200, ['purged' => true, 'slug' => $slug]);
     }
 
     if ($method === 'DELETE' && $path === '/posts') {

@@ -20,95 +20,119 @@ function auditLog(string $action, array $details = []): void {
     file_put_contents(AUDIT_LOG_FILE, $line, FILE_APPEND | LOCK_EX);
 }
 
+/**
+ * Client address for rate limiting and audit logs. Behind a reverse proxy, set
+ * FKB_TRUSTED_PROXIES (comma-separated IPs or CIDR ranges, via SetEnv, fastcgi_param or
+ * the environment); X-Forwarded-For is only honoured for requests coming from those proxies.
+ */
 function getClientIp(): string {
-    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $remote = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $trusted = getTrustedProxies();
+    if ($trusted === [] || !ipMatchesAny($remote, $trusted)) {
+        return $remote;
+    }
+
+    // Walk from the right: the first hop not added by a trusted proxy is the client.
+    $hops = array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
+    foreach ($hops as $hop) {
+        if (filter_var($hop, FILTER_VALIDATE_IP) === false) {
+            break;
+        }
+        if (!ipMatchesAny($hop, $trusted)) {
+            return $hop;
+        }
+    }
+    return $remote;
+}
+
+function getTrustedProxies(): array {
+    $value = $_SERVER['FKB_TRUSTED_PROXIES'] ?? getenv('FKB_TRUSTED_PROXIES');
+    if (!is_string($value) || trim($value) === '') {
+        return [];
+    }
+    return array_values(array_filter(array_map('trim', explode(',', $value))));
+}
+
+function ipMatchesAny(string $ip, array $rules): bool {
+    $ipBin = @inet_pton($ip);
+    if ($ipBin === false) {
+        return false;
+    }
+    foreach ($rules as $rule) {
+        [$network, $prefix] = array_pad(explode('/', $rule, 2), 2, null);
+        $networkBin = @inet_pton($network);
+        if ($networkBin === false || strlen($networkBin) !== strlen($ipBin)) {
+            continue;
+        }
+        $bits = $prefix === null ? strlen($ipBin) * 8 : (int) $prefix;
+        $bytes = intdiv($bits, 8);
+        if (substr($ipBin, 0, $bytes) !== substr($networkBin, 0, $bytes)) {
+            continue;
+        }
+        $remainder = $bits % 8;
+        if ($remainder === 0) {
+            return true;
+        }
+        $mask = (0xFF << (8 - $remainder)) & 0xFF;
+        if ((ord($ipBin[$bytes]) & $mask) === (ord($networkBin[$bytes]) & $mask)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function checkRateLimit(string $ip): bool {
-    $limits = loadRateLimits();
-    $now = time();
-
-    if (!isset($limits[$ip])) {
-        return true;
-    }
-
-    $entry = $limits[$ip];
-    $firstAttempt = isset($entry['firstAttempt']) && is_numeric($entry['firstAttempt'])
-        ? (int)$entry['firstAttempt']
-        : 0;
-    $attempts = isset($entry['attempts']) && is_numeric($entry['attempts'])
-        ? (int)$entry['attempts']
-        : 0;
-
-    if ($firstAttempt <= 0) {
-        return true;
-    }
-
-    if ($now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
-        return true;
-    }
-
-    return $attempts < RATE_LIMIT_MAX_ATTEMPTS;
+    $entry = loadRateLimits()[$ip] ?? null;
+    return $entry === null || $entry['attempts'] < RATE_LIMIT_MAX_ATTEMPTS;
 }
 
 function recordFailedAttempt(string $ip): void {
-    $limits = loadRateLimits();
-    $now = time();
-
-    $existing = $limits[$ip] ?? null;
-    $firstAttempt = is_array($existing) && isset($existing['firstAttempt']) && is_numeric($existing['firstAttempt'])
-        ? (int)$existing['firstAttempt']
-        : 0;
-
-    if (!is_array($existing) || $firstAttempt <= 0 || $now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
-        $limits[$ip] = ['attempts' => 1, 'firstAttempt' => $now];
-    } else {
-        $limits[$ip]['attempts'] = max(0, (int)($existing['attempts'] ?? 0)) + 1;
-    }
-
-    saveRateLimits($limits);
+    updateJsonFileLocked(RATE_LIMIT_FILE, function (array &$data) use ($ip): void {
+        $limits = normalizeRateLimits($data);
+        $existing = $limits[$ip] ?? null;
+        if ($existing === null) {
+            $limits[$ip] = ['attempts' => 1, 'firstAttempt' => time()];
+        } else {
+            $limits[$ip]['attempts'] = $existing['attempts'] + 1;
+        }
+        $data = $limits;
+    });
 }
 
 function clearRateLimit(string $ip): void {
-    $limits = loadRateLimits();
-    unset($limits[$ip]);
-    saveRateLimits($limits);
+    updateJsonFileLocked(RATE_LIMIT_FILE, function (array &$data) use ($ip): void {
+        $data = normalizeRateLimits($data);
+        unset($data[$ip]);
+    });
 }
 
 function loadRateLimits(): array {
-    if (!file_exists(RATE_LIMIT_FILE)) {
-        return [];
-    }
-    $content = @file_get_contents(RATE_LIMIT_FILE);
-    $limits = $content ? json_decode($content, true) : [];
+    return normalizeRateLimits(readJsonFileLocked(RATE_LIMIT_FILE));
+}
 
-    if (!is_array($limits)) {
-        return [];
-    }
-
+/**
+ * Drops malformed and expired entries; accepts the legacy {"attempts": {...}} wrapper.
+ */
+function normalizeRateLimits(array $limits): array {
     if (isset($limits['attempts']) && is_array($limits['attempts'])) {
         $limits = $limits['attempts'];
     }
 
     $now = time();
-
     $normalized = [];
     foreach ($limits as $ip => $entry) {
         if (!is_string($ip) || !is_array($entry)) {
             continue;
         }
-
         if (!isset($entry['firstAttempt']) || !is_numeric($entry['firstAttempt'])) {
             continue;
         }
-
-        $firstAttempt = (int)$entry['firstAttempt'];
-        if ($now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
+        $firstAttempt = (int) $entry['firstAttempt'];
+        if ($firstAttempt <= 0 || $now - $firstAttempt > RATE_LIMIT_WINDOW_SECONDS) {
             continue;
         }
-
         $normalized[$ip] = [
-            'attempts' => max(0, (int)($entry['attempts'] ?? 0)),
+            'attempts' => max(0, (int) ($entry['attempts'] ?? 0)),
             'firstAttempt' => $firstAttempt,
         ];
     }
@@ -116,80 +140,56 @@ function loadRateLimits(): array {
     return $normalized;
 }
 
-function saveRateLimits(array $limits): void {
-    file_put_contents(RATE_LIMIT_FILE, json_encode($limits), LOCK_EX);
+function loadGlobalRateLimits(): array {
+    return pruneGlobalRateLimits(readJsonFileLocked(GLOBAL_RATE_LIMIT_FILE));
 }
 
-function loadGlobalRateLimits(): array {
-    if (!file_exists(GLOBAL_RATE_LIMIT_FILE)) {
-        return [];
-    }
-    $content = @file_get_contents(GLOBAL_RATE_LIMIT_FILE);
-    $limits = $content ? json_decode($content, true) : [];
-
+function pruneGlobalRateLimits(array $limits): array {
     $now = time();
     foreach ($limits as $key => $entry) {
-        $window = $entry['window'] ?? GLOBAL_RATE_LIMIT_WINDOW;
-        if ($now - $entry['firstRequest'] > $window) {
+        if (!is_array($entry) || !is_numeric($entry['firstRequest'] ?? null)
+            || $now - (int) $entry['firstRequest'] > (int) ($entry['window'] ?? GLOBAL_RATE_LIMIT_WINDOW)) {
             unset($limits[$key]);
         }
     }
-
     return $limits;
-}
-
-function saveGlobalRateLimits(array $limits): void {
-    file_put_contents(GLOBAL_RATE_LIMIT_FILE, json_encode($limits), LOCK_EX);
 }
 
 function checkGlobalRateLimit(string $endpoint, bool $strict = false): void {
     $ip = getClientIp();
     $key = "ip:{$ip}:endpoint:{$endpoint}";
-
-    $limits = loadGlobalRateLimits();
-    $now = time();
-
     $maxRequests = $strict ? GLOBAL_RATE_LIMIT_STRICT_MAX : GLOBAL_RATE_LIMIT_MAX_REQUESTS;
     $window = $strict ? GLOBAL_RATE_LIMIT_STRICT_WINDOW : GLOBAL_RATE_LIMIT_WINDOW;
 
-    if (!isset($limits[$key])) {
-        $limits[$key] = [
-            'requests' => 1,
-            'firstRequest' => $now,
-            'window' => $window,
-        ];
-        saveGlobalRateLimits($limits);
-        return;
-    }
+    // Decide under the lock, respond after it is released.
+    $exceeded = updateJsonFileLocked(GLOBAL_RATE_LIMIT_FILE, function (array &$data) use ($key, $maxRequests, $window): ?array {
+        $data = pruneGlobalRateLimits($data);
+        $now = time();
+        $entry = $data[$key] ?? null;
 
-    $entry = $limits[$key];
+        if ($entry === null || $now - (int) $entry['firstRequest'] > $window) {
+            $data[$key] = ['requests' => 1, 'firstRequest' => $now, 'window' => $window];
+            return null;
+        }
+        if ((int) $entry['requests'] >= $maxRequests) {
+            return ['requests' => (int) $entry['requests'], 'retryAfter' => $window - ($now - (int) $entry['firstRequest'])];
+        }
+        $data[$key]['requests'] = (int) $entry['requests'] + 1;
+        return null;
+    });
 
-    if ($now - $entry['firstRequest'] > $window) {
-        $limits[$key] = [
-            'requests' => 1,
-            'firstRequest' => $now,
-            'window' => $window,
-        ];
-        saveGlobalRateLimits($limits);
-        return;
-    }
-
-    if ($entry['requests'] >= $maxRequests) {
-        $retryAfter = $window - ($now - $entry['firstRequest']);
-        header("Retry-After: {$retryAfter}");
+    if ($exceeded !== null) {
+        header("Retry-After: {$exceeded['retryAfter']}");
         auditLog('rate_limit_exceeded', [
             'ip' => $ip,
             'endpoint' => $endpoint,
-            'requests' => $entry['requests'],
+            'requests' => $exceeded['requests'],
             'limit' => $maxRequests,
         ]);
         sendJson(429, [
             'error' => 'Rate limit exceeded',
-            'retryAfter' => $retryAfter,
+            'retryAfter' => $exceeded['retryAfter'],
             'limit' => $maxRequests,
         ]);
     }
-
-    $limits[$key]['requests']++;
-    saveGlobalRateLimits($limits);
 }

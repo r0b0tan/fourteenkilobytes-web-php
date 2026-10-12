@@ -10,6 +10,10 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
+# Behind a reverse proxy (load balancer, CDN, Docker), list its addresses so rate limiting
+# and audit logs see the real client IP from X-Forwarded-For:
+# SetEnv FKB_TRUSTED_PROXIES "172.16.0.0/12"
+
 RewriteEngine On
 
 # Allow access to new public language files
@@ -36,12 +40,19 @@ RewriteRule ^api/(.*)$ api/index.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^public/admin/.*$ - [L]
 
-# Admin routes - prevent indexing
+# Admin routes - prevent indexing, restrict what the admin pages may load
 <IfModule mod_headers.c>
     SetEnvIf Request_URI "^/admin" ADMIN_REQ
     Header set X-Robots-Tag "noindex, nofollow" env=ADMIN_REQ
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" env=ADMIN_REQ
     # After the internal rewrite to public/admin/ the variable carries a REDIRECT_ prefix
     Header set X-Robots-Tag "noindex, nofollow" env=REDIRECT_ADMIN_REQ
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" env=REDIRECT_ADMIN_REQ
+    Header set X-Frame-Options "DENY" env=REDIRECT_ADMIN_REQ
+    Header set X-Content-Type-Options "nosniff" env=REDIRECT_ADMIN_REQ
+
+    # HSTS: enable only once HTTPS works for this host (and all subdomains if you add includeSubDomains)
+    # Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
 # Redirect /admin to /admin/index.html to fix relative path issues

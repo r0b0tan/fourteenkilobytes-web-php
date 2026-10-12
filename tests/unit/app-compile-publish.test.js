@@ -255,4 +255,27 @@ describe('createCompilePublishService', () => {
     expect(progress).toHaveBeenLastCalledWith(2, 2, 'startseite');
     expect(result).toEqual({ rebuilt: 1, failed: ['post-a'] });
   });
+
+  test('restorePost republishes the stored source with the restore flag', async () => {
+    mockRepublishable();
+    deps.apiFetch.mockResolvedValue({ slug: 'old-post' });
+
+    const service = createCompilePublishService(deps);
+    await service.restorePost('old-post');
+
+    expect(deps.getSourceData).toHaveBeenCalledWith('old-post');
+    const [, options] = deps.apiFetch.mock.calls[0];
+    expect(JSON.parse(options.body)).toMatchObject({ slug: 'old-post', restore: true });
+  });
+
+  test('regular publish does not send the restore flag', async () => {
+    mockRepublishable();
+    deps.apiFetch.mockResolvedValue({ slug: 'x' });
+
+    const service = createCompilePublishService(deps);
+    await service.republishPost('x');
+
+    const [, options] = deps.apiFetch.mock.calls[0];
+    expect(JSON.parse(options.body)).not.toHaveProperty('restore');
+  });
 });

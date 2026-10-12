@@ -15,13 +15,10 @@ ini_set('log_errors', '1');
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header('Content-Security-Policy: default-src \'none\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\'; frame-ancestors \'none\'; base-uri \'self\'; form-action \'self\'');
-
-if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-    header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
-}
+// API responses are data, never documents. The admin pages get their CSP from the webserver
+// config; HSTS is a deliberate, site-wide decision and is configured there as well.
+header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
 
 require_once __DIR__ . '/core/paths.php';
 

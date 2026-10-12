@@ -17,6 +17,10 @@ RUN { \
     echo 'opcache.fast_shutdown=1'; \
 } > /usr/local/etc/php/conf.d/opcache.ini
 
+# PHP reads environment variables in ini files, so PHP_MEMORY_LIMIT (docker-compose) takes effect
+ENV PHP_MEMORY_LIMIT=128M
+RUN echo 'memory_limit = ${PHP_MEMORY_LIMIT}' > /usr/local/etc/php/conf.d/memory.ini
+
 # Copy application files
 COPY dist/ /var/www/html/
 

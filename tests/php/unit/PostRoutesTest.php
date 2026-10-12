@@ -685,4 +685,70 @@ class PostRoutesTest extends ApiTestCase
         $this->assertSame('INVALID_SETTINGS', $body['code']);
         $this->assertFileDoesNotExist(SOURCES_DIR . '/imported.json');
     }
+
+    public function testRestorePublishesTombstonedSlugAndKeepsPublishedAt(): void
+    {
+        $this->publishPaged('comeback', 1);
+        $originalPublishedAt = current(array_filter(loadManifest()['entries'], fn($e) => $e['slug'] === 'comeback'))['publishedAt'];
+        $this->assertApiResponse(200, fn() => handlePostRoutes('DELETE', '/posts/comeback'));
+
+        $this->setRequestBody(['slug' => 'comeback', 'title' => 'Back', 'bytes' => 1, 'html' => '<p>back</p>', 'restore' => true]);
+        $this->assertApiResponse(201, fn() => handlePostRoutes('POST', '/posts'));
+
+        $entry = current(array_filter(loadManifest()['entries'], fn($e) => $e['slug'] === 'comeback'));
+        $this->assertSame('published', $entry['status']);
+        $this->assertSame($originalPublishedAt, $entry['publishedAt']);
+        $this->assertCount(1, array_filter(loadManifest()['entries'], fn($e) => $e['slug'] === 'comeback'));
+        $this->assertStringContainsString('back', file_get_contents(POSTS_DIR . '/comeback.html'));
+    }
+
+    public function testPurgeRequiresTombstone(): void
+    {
+        $this->publishPaged('alive', 1);
+
+        $body = $this->assertApiResponse(400, fn() => handlePostRoutes('POST', '/posts/alive/purge'));
+
+        $this->assertSame('NOT_TOMBSTONED', $body['code']);
+    }
+
+    public function testPurgeRemovesEverythingAndFreesSlug(): void
+    {
+        $this->publishPaged('gone-for-good', 2, ['content' => []]);
+        $this->assertApiResponse(200, fn() => handlePostRoutes('DELETE', '/posts/gone-for-good'));
+
+        $this->assertApiResponse(200, fn() => handlePostRoutes('POST', '/posts/gone-for-good/purge'));
+
+        $this->assertSame([], array_values(array_filter(loadManifest()['entries'], fn($e) => $e['slug'] === 'gone-for-good')));
+        $this->assertFileDoesNotExist(POSTS_DIR . '/gone-for-good.html');
+        $this->assertFileDoesNotExist(POSTS_DIR . '/gone-for-good-2.html');
+        $this->assertFileDoesNotExist(SOURCES_DIR . '/gone-for-good.json');
+        $this->assertArrayNotHasKey('gone-for-good', loadPageTypes()['types']);
+
+        // Slug can be used again without restore
+        $this->publishPaged('gone-for-good', 1);
+    }
+
+    public function testImportCreatesNewEntriesAsPendingAndKeepsExistingStatus(): void
+    {
+        $this->publishPaged('existing', 1);
+        $this->setRequestBody([
+            'version' => 1,
+            'articles' => [
+                ['slug' => 'existing', 'title' => 'Renamed', 'sourceData' => ['title' => 'Renamed']],
+                ['slug' => 'brand-new', 'title' => 'New', 'sourceData' => ['title' => 'New']],
+            ],
+        ]);
+
+        $_GET['settings'] = 'false';
+        try {
+            $this->assertApiResponse(200, fn() => handleSystemBackupRoutes('POST', '/import'));
+        } finally {
+            unset($_GET['settings']);
+        }
+
+        $entries = array_column(loadManifest()['entries'], null, 'slug');
+        $this->assertSame('published', $entries['existing']['status']);
+        $this->assertSame('Renamed', $entries['existing']['title']);
+        $this->assertSame('pending', $entries['brand-new']['status']);
+    }
 }

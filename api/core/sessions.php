@@ -3,16 +3,13 @@
 declare(strict_types=1);
 
 function loadSessions(): array {
-    if (!file_exists(SESSION_FILE)) {
-        return [];
-    }
-    $content = @file_get_contents(SESSION_FILE);
-    $sessions = $content ? json_decode($content, true) : [];
+    return normalizeSessions(readJsonFileLocked(SESSION_FILE));
+}
 
-    if (!is_array($sessions)) {
-        return [];
-    }
-
+/**
+ * Drops malformed entries; accepts the legacy {"sessions": {...}} wrapper.
+ */
+function normalizeSessions(array $sessions): array {
     if (isset($sessions['sessions']) && is_array($sessions['sessions'])) {
         $sessions = $sessions['sessions'];
     }
@@ -51,104 +48,87 @@ function loadSessions(): array {
     return $normalized;
 }
 
-function saveSessions(array $sessions): void {
-    file_put_contents(SESSION_FILE, json_encode($sessions), LOCK_EX);
-}
 
 function createSession(string $authToken): string {
-    $sessions = loadSessions();
     $sessionId = bin2hex(random_bytes(32));
-    $now = time();
 
-    $sessions[$sessionId] = [
-        'tokenFingerprint' => tokenFingerprint($authToken),
-        'createdAt' => $now,
-        'lastRotation' => $now,
-        'ip' => getClientIp(),
-        'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-    ];
+    updateJsonFileLocked(SESSION_FILE, function (array &$data) use ($sessionId, $authToken): void {
+        $now = time();
+        $sessions = normalizeSessions($data);
+        $sessions[$sessionId] = [
+            'tokenFingerprint' => tokenFingerprint($authToken),
+            'createdAt' => $now,
+            'lastRotation' => $now,
+            'ip' => getClientIp(),
+            'userAgent' => substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 200),
+        ];
 
-    $sessions = array_filter($sessions, function ($session) use ($now) {
-        if (!is_array($session)) {
-            return false;
-        }
-
-        if (isset($session['rotatedTo'])) {
-            return ($now - ($session['rotatedAt'] ?? 0) < 60);
-        }
-
-        if (!isset($session['createdAt']) || !is_numeric($session['createdAt'])) {
-            return false;
-        }
-
-        return ($now - (int)$session['createdAt'] < SESSION_MAX_LIFETIME);
+        // Drop expired sessions and rotation leftovers older than the 60s grace period.
+        $data = array_filter($sessions, function (array $session) use ($now): bool {
+            if (isset($session['rotatedTo'])) {
+                return $now - ($session['rotatedAt'] ?? 0) < 60;
+            }
+            return $now - $session['createdAt'] < SESSION_MAX_LIFETIME;
+        });
     });
 
-    saveSessions($sessions);
     return $sessionId;
 }
 
+/**
+ * Returns ['session' => array, 'newSessionId' => ?string] or null if the session is invalid.
+ * Sessions are rotated every SESSION_ROTATION_INTERVAL seconds; the old ID stays valid for
+ * 60 seconds so parallel requests from the same browser do not get logged out.
+ */
 function validateSession(string $sessionId): ?array {
-    $sessions = loadSessions();
+    return updateJsonFileLocked(SESSION_FILE, function (array &$data) use ($sessionId): ?array {
+        $sessions = normalizeSessions($data);
+        $data = $sessions;
 
-    if (!isset($sessions[$sessionId])) {
-        return null;
-    }
-
-    $session = $sessions[$sessionId];
-    $now = time();
-
-    if (isset($session['rotatedTo'])) {
-        if ($now - ($session['rotatedAt'] ?? 0) < 60) {
-            return [
-                'session' => $sessions[$session['rotatedTo']] ?? $session,
-                'newSessionId' => $session['rotatedTo']
-            ];
+        if (!isset($sessions[$sessionId])) {
+            return null;
         }
 
-        unset($sessions[$sessionId]);
-        saveSessions($sessions);
-        return null;
-    }
+        $session = $sessions[$sessionId];
+        $now = time();
 
-    if (!isset($session['createdAt']) || !is_numeric($session['createdAt'])) {
-        unset($sessions[$sessionId]);
-        saveSessions($sessions);
-        return null;
-    }
+        if (isset($session['rotatedTo'])) {
+            if ($now - ($session['rotatedAt'] ?? 0) < 60 && isset($sessions[$session['rotatedTo']])) {
+                return ['session' => $sessions[$session['rotatedTo']], 'newSessionId' => $session['rotatedTo']];
+            }
+            unset($data[$sessionId]);
+            return null;
+        }
 
-    if ($now - (int)$session['createdAt'] > SESSION_MAX_LIFETIME) {
-        unset($sessions[$sessionId]);
-        saveSessions($sessions);
-        return null;
-    }
+        if ($now - $session['createdAt'] > SESSION_MAX_LIFETIME) {
+            unset($data[$sessionId]);
+            return null;
+        }
 
-    if (!isset($session['lastRotation']) || !is_numeric($session['lastRotation'])) {
-        $session['lastRotation'] = (int)$session['createdAt'];
-    }
+        if ($now - $session['lastRotation'] > SESSION_ROTATION_INTERVAL) {
+            $newSessionId = bin2hex(random_bytes(32));
+            $session['lastRotation'] = $now;
 
-    if ($now - (int)$session['lastRotation'] > SESSION_ROTATION_INTERVAL) {
-        $newSessionId = bin2hex(random_bytes(32));
-        $session['lastRotation'] = $now;
+            $data[$newSessionId] = $session;
+            $data[$sessionId]['rotatedTo'] = $newSessionId;
+            $data[$sessionId]['rotatedAt'] = $now;
 
-        $sessions[$newSessionId] = $session;
-        $sessions[$sessionId]['rotatedTo'] = $newSessionId;
-        $sessions[$sessionId]['rotatedAt'] = $now;
+            return ['session' => $session, 'newSessionId' => $newSessionId];
+        }
 
-        saveSessions($sessions);
-
-        return ['session' => $session, 'newSessionId' => $newSessionId];
-    }
-
-    return ['session' => $session, 'newSessionId' => null];
+        return ['session' => $session, 'newSessionId' => null];
+    });
 }
 
 function destroySession(string $sessionId): void {
-    $sessions = loadSessions();
-    unset($sessions[$sessionId]);
-    saveSessions($sessions);
+    updateJsonFileLocked(SESSION_FILE, function (array &$data) use ($sessionId): void {
+        $data = normalizeSessions($data);
+        unset($data[$sessionId]);
+    });
 }
 
 function destroyAllSessions(): void {
-    saveSessions([]);
+    updateJsonFileLocked(SESSION_FILE, function (array &$data): void {
+        $data = [];
+    });
 }

@@ -38,6 +38,7 @@ export function initLogsTab({ doc = document, App, t, Toast, Modal, debounce, ta
       'password_change_failed': { icon: logIcons.x, label: 'Passwortänderung fehlgeschlagen' },
       'post_create': { icon: logIcons.plus, label: 'Post erstellt' },
       'post_delete': { icon: logIcons.minus, label: 'Post gelöscht' },
+      'post_purge': { icon: logIcons.trash, label: 'Post endgültig gelöscht' },
       'posts_delete_all': { icon: logIcons.alert, label: 'Alle Posts gelöscht' },
       'settings_update': { icon: logIcons.settings, label: 'Einstellungen' },
       'csrf_failure': { icon: logIcons.alert, label: 'CSRF-Fehler' },

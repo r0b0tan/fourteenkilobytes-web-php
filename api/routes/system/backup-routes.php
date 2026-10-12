@@ -125,21 +125,20 @@ function handleSystemBackupRoutes(string $method, string $path): bool {
 
                 saveSourceData($slug, $article['sourceData']);
 
-                $manifestEntry = [
-                    'slug' => $slug,
-                    'status' => 'published',
-                    'title' => $article['title'] ?? $slug,
-                    'publishedAt' => $article['publishedAt'] ?? date('c'),
-                ];
-                if (!empty($article['pageCount']) && (int) $article['pageCount'] > 1) {
-                    $manifestEntry['pageCount'] = (int) $article['pageCount'];
-                }
-
                 if ($existingEntryKey !== null) {
-                    // Preserve original publishedAt when updating existing entry
-                    $manifestEntry['publishedAt'] = $manifest['entries'][$existingEntryKey]['publishedAt'];
-                    $manifest['entries'][$existingEntryKey] = $manifestEntry;
+                    // Existing pages keep their status, HTML and publishedAt until they are rebuilt.
+                    $manifest['entries'][$existingEntryKey]['title'] = (string) ($article['title'] ?? $slug);
                 } else {
+                    // New entries have no HTML yet; the admin rebuilds them right after the import.
+                    $manifestEntry = [
+                        'slug' => $slug,
+                        'status' => 'pending',
+                        'title' => (string) ($article['title'] ?? $slug),
+                        'publishedAt' => is_string($article['publishedAt'] ?? null) ? $article['publishedAt'] : date('c'),
+                    ];
+                    if (!empty($article['pageCount']) && (int) $article['pageCount'] > 1) {
+                        $manifestEntry['pageCount'] = (int) $article['pageCount'];
+                    }
                     $manifest['entries'][] = $manifestEntry;
                 }
 

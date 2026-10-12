@@ -16,6 +16,13 @@ class SecurityTest extends TestCase
             }
         }
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        unset($_SERVER['FKB_TRUSTED_PROXIES'], $_SERVER['HTTP_X_FORWARDED_FOR']);
+    }
+
+    protected function tearDown(): void
+    {
+        unset($_SERVER['FKB_TRUSTED_PROXIES'], $_SERVER['HTTP_X_FORWARDED_FOR']);
+        parent::tearDown();
     }
 
     // -------------------------------------------------------------------------
@@ -33,6 +40,71 @@ class SecurityTest extends TestCase
         unset($_SERVER['REMOTE_ADDR']);
         $this->assertSame('unknown', getClientIp());
         $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+    }
+
+    public function testGetClientIpIgnoresForwardedForWithoutTrustedProxy(): void
+    {
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.5';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.9';
+
+        $this->assertSame('10.0.0.5', getClientIp());
+    }
+
+    public function testGetClientIpUsesForwardedForFromTrustedProxy(): void
+    {
+        $_SERVER['FKB_TRUSTED_PROXIES'] = '10.0.0.0/8';
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.5';
+        // Client-supplied spoofed entry on the left, real client added by the proxy on the right
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '1.1.1.1, 203.0.113.9';
+
+        $this->assertSame('203.0.113.9', getClientIp());
+    }
+
+    public function testGetClientIpSkipsChainedTrustedProxies(): void
+    {
+        $_SERVER['FKB_TRUSTED_PROXIES'] = '10.0.0.5, 192.168.1.0/24';
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.5';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.9, 192.168.1.20';
+
+        $this->assertSame('203.0.113.9', getClientIp());
+    }
+
+    public function testGetClientIpFallsBackOnGarbageForwardedFor(): void
+    {
+        $_SERVER['FKB_TRUSTED_PROXIES'] = '10.0.0.5';
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.5';
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = 'not-an-ip';
+
+        $this->assertSame('10.0.0.5', getClientIp());
+    }
+
+    public function testIpMatchesAnySupportsIpv6Cidr(): void
+    {
+        $this->assertTrue(ipMatchesAny('2001:db8::1', ['2001:db8::/32']));
+        $this->assertFalse(ipMatchesAny('2001:db9::1', ['2001:db8::/32']));
+        $this->assertFalse(ipMatchesAny('10.0.0.1', ['2001:db8::/32']));
+        $this->assertTrue(ipMatchesAny('172.20.3.4', ['172.16.0.0/12']));
+    }
+
+    public function testUpdateJsonFileLockedSkipsWriteWhenUnchanged(): void
+    {
+        recordFailedAttempt('9.9.9.9');
+        touch(RATE_LIMIT_FILE, time() - 100);
+        clearstatcache();
+        $mtime = filemtime(RATE_LIMIT_FILE);
+
+        updateJsonFileLocked(RATE_LIMIT_FILE, function (array &$data): void {
+        });
+        clearstatcache();
+
+        $this->assertSame($mtime, filemtime(RATE_LIMIT_FILE));
+    }
+
+    public function testRateLimitFileIsOwnerOnly(): void
+    {
+        recordFailedAttempt('9.9.9.9');
+
+        $this->assertSame(0600, fileperms(RATE_LIMIT_FILE) & 0777);
     }
 
     // -------------------------------------------------------------------------

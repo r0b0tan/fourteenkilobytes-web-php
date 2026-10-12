@@ -241,6 +241,7 @@ The Docker setup includes:
 - Pre-configured .htaccess
 - Persistent data/ volume
 - Health checks
+- `PHP_MEMORY_LIMIT` environment variable (default 128M)
 
 ### Manual Deployment
 
@@ -396,10 +397,12 @@ Most write endpoints require authentication and a valid CSRF token.
 |----------|--------|-------------|
 | `/api/posts` | GET | List all posts |
 | `/api/posts/:slug` | GET | Get specific post |
-| `/api/posts` | POST | Create new post |
-| `/api/posts/:slug/republish` | POST | Regenerate from source |
+| `/api/posts` | POST | Create or update a post (`"restore": true` republishes a tombstoned slug) |
+| `/api/posts/:slug/republish` | POST | Load stored source data for rebuilding |
 | `/api/posts/:slug` | DELETE | Delete (tombstone) post |
+| `/api/posts/:slug/purge` | POST | Permanently remove a tombstoned post (URL returns 404, slug becomes reusable) |
 | `/api/posts` | DELETE | Tombstone all posts |
+| `/api/dependent-pages` | GET | Pages with a post list that must be rebuilt after a post changes |
 
 ### Audit & Maintenance
 
@@ -415,7 +418,7 @@ Most write endpoints require authentication and a valid CSRF token.
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/settings` | GET | Load settings |
-| `/api/settings` | PUT | Update settings |
+| `/api/settings` | PUT | Update settings (validated; invalid values return 400 with details) |
 | `/api/export` | GET | Export data |
 | `/api/import` | POST | Import backup |
 | `/api/reset` | POST | Delete all content and settings (admin password is kept) |
@@ -463,11 +466,24 @@ The editor provides a real-time breakdown showing how bytes are allocated, helpi
 
 ## Security
 
-- **Password Hashing**: PBKDF2 with 600,000 iterations
-- **Session Cookies**: HttpOnly, Secure, SameSite=Strict
-- **Security Headers**: CSP, X-Frame-Options, X-Content-Type-Options
-- **Input Validation**: Strict slug format validation
+- **Password Hashing**: PBKDF2 with 600,000 iterations; the password-derived token never leaves the server
+- **Sessions**: Server-side sessions are the only credential (HttpOnly cookie, rotated every 15 minutes, max. 24 hours); logout and password changes invalidate them
+- **Password Change**: Settings → General; logs out all other sessions
+- **CSRF Protection**: Token required for all write requests
+- **Rate Limiting**: Login attempts and destructive endpoints, stored with file locks
+- **Security Headers**: Strict CSP for the admin pages (webserver config), `nosniff`, `X-Frame-Options`
+- **Input Validation**: Slugs, settings and imported backups are validated before anything is written
 - **Timing-Safe Comparison**: Prevents timing attacks on authentication
+
+HSTS is not sent by default, because it affects the whole host for a long time. Enable it in the webserver config once HTTPS works (commented examples in `.htaccess` and `nginx.conf.example`).
+
+### Reverse Proxy
+
+Behind a reverse proxy (load balancer, CDN, Docker network), every request seems to come from the proxy, so a login lockout would hit all users at once. Set `FKB_TRUSTED_PROXIES` to the proxy addresses (comma-separated IPs or CIDR ranges); `X-Forwarded-For` is only honoured for requests from these addresses.
+
+- Apache: `SetEnv FKB_TRUSTED_PROXIES "172.16.0.0/12"` in `.htaccess` or the vhost
+- nginx + PHP-FPM: `env[FKB_TRUSTED_PROXIES] = 10.0.0.0/8` in the FPM pool config
+- Docker: `FKB_TRUSTED_PROXIES=172.16.0.0/12` in the container environment
 
 ## Data Management
 
@@ -495,16 +511,23 @@ curl -X POST -b cookies.txt \
 The system automatically creates `.bak` files before modifying:
 - `manifest.json.bak`
 - `settings.json.bak`
+- `page-types.json.bak`
+
+If one of these files is corrupted, the last `.bak` is used instead and the broken file is kept as `<file>.corrupt-<hash>` for inspection, so a save never overwrites real data with defaults.
+
+Imported articles that do not exist yet are created with status `pending` and become `published` once they are rebuilt (the import dialog does this automatically).
 
 ## Tombstoning
 
 When a post is deleted, it is "tombstoned" rather than permanently removed:
 
-- The URL returns HTTP 410 (Gone)
-- The slug cannot be reused
+- The URL (including pagination pages) returns HTTP 410 (Gone)
+- The slug cannot be reused by a different post
 - Deletion history is preserved in the manifest
 
-This approach maintains content integrity and proper HTTP semantics.
+Deleted posts are listed in the dashboard archive, where they can be **restored** (republished from their stored source, original publish date kept) or **deleted permanently** (the URL then returns 404 and the slug can be reused).
+
+Pages with a post list (homepage, archive) are rebuilt automatically after a post is published, deleted or restored. After changing header, footer or CSS, use Settings → Data → **Rebuild all pages**.
 
 ## Contributing
 

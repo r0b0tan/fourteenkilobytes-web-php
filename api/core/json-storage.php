@@ -66,3 +66,62 @@ function writeJsonFileAtomic(string $file, array $data, int $mode = 0640, bool $
         sendJson(500, ['error' => 'Failed to finalize ' . basename($file)]);
     }
 }
+
+/**
+ * Reads a small JSON state file under a shared lock (rate limits, sessions).
+ * Missing or invalid files yield [].
+ */
+function readJsonFileLocked(string $file): array {
+    $fp = @fopen($file, 'r');
+    if ($fp === false) {
+        return [];
+    }
+    try {
+        flock($fp, LOCK_SH);
+        $data = json_decode((string) stream_get_contents($fp), true);
+        return is_array($data) ? $data : [];
+    } finally {
+        flock($fp, LOCK_UN);
+        fclose($fp);
+    }
+}
+
+/**
+ * Read-modify-write of a small JSON state file under an exclusive lock, so concurrent
+ * requests cannot overwrite each other's updates. $update receives the decoded data by
+ * reference (or [] for a missing/invalid file); its return value is passed through.
+ */
+function updateJsonFileLocked(string $file, callable $update, int $mode = 0600): mixed {
+    $isNew = !file_exists($file);
+    $fp = @fopen($file, 'c+');
+    if ($fp === false) {
+        sendJson(500, ['error' => 'Failed to open ' . basename($file)]);
+    }
+    try {
+        flock($fp, LOCK_EX);
+        if ($isNew) {
+            @chmod($file, $mode);
+        }
+
+        $original = (string) stream_get_contents($fp);
+        $data = json_decode($original, true);
+        if (!is_array($data)) {
+            $data = [];
+        }
+
+        $result = $update($data);
+
+        $encoded = json_encode($data);
+        if ($encoded !== $original) {
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, $encoded);
+            fflush($fp);
+        }
+
+        return $result;
+    } finally {
+        flock($fp, LOCK_UN);
+        fclose($fp);
+    }
+}

@@ -117,6 +117,12 @@ export function createAppApi() {
     });
   }
 
+  async function purgePost(slug) {
+    return apiFetch(`/api/posts/${slug}/purge`, {
+      method: 'POST',
+    });
+  }
+
   async function deleteAllPosts() {
     return apiFetch('/api/posts', {
       method: 'DELETE',
@@ -206,6 +212,7 @@ export function createAppApi() {
     getSettings,
     saveSettings,
     deletePost,
+    purgePost,
     deleteAllPosts,
     exportData,
     importData,

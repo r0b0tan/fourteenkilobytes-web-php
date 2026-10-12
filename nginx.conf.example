@@ -23,6 +23,14 @@ server {
     ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
 
+    # HSTS: enable once HTTPS works for this host (and all subdomains if you add includeSubDomains)
+    # add_header Strict-Transport-Security "max-age=31536000" always;
+
+    # Behind another reverse proxy (load balancer, CDN), list its addresses so rate limiting
+    # and audit logs see the real client IP from X-Forwarded-For. Set it in the PHP-FPM pool
+    # (e.g. /etc/php/8.3/fpm/pool.d/www.conf):
+    #   env[FKB_TRUSTED_PROXIES] = 10.0.0.0/8
+
     # Sensitive files - block direct access
     location ~* \.(bak|backup|json|md|log|sh|lock|dist|example)$ {
         deny all;
@@ -85,6 +93,9 @@ server {
     location ^~ /admin {
         add_header X-Robots-Tag "noindex, nofollow" always;
         add_header Cache-Control "no-store" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
 
         # /admin or /admin/ -> index.html
         rewrite ^/admin/?$ /public/admin/index.html break;

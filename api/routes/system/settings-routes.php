@@ -5,7 +5,6 @@ declare(strict_types=1);
 function handleSystemSettingsRoutes(string $method, string $path): bool {
     if ($method === 'GET' && $path === '/settings') {
         requireAuth();
-        checkGlobalRateLimit('/settings', false);
         sendJson(200, loadSettings());
     }
 

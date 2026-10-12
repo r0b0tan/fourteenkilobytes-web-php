@@ -361,6 +361,46 @@ describe('dashboard.js update helpers', () => {
       expect(App.rebuildDependentPages).toHaveBeenCalled();
     });
 
+    it('restores and permanently deletes tombstoned entries from the archive', async () => {
+      const { init } = await loadDashboardModule();
+      createDashboardInitDom();
+
+      global.fetch = vi.fn(() => Promise.resolve({ ok: false }));
+      globalThis.App = {
+        ...globalThis.App,
+        formatDate: vi.fn(() => 'Jan 1, 2026'),
+        getSetupStatus: vi.fn(() => Promise.resolve({ setupComplete: true })),
+        getConfig: vi.fn(() => Promise.resolve({ authEnabled: false })),
+        getPosts: vi.fn(() => Promise.resolve([
+          { slug: 'old-post', title: 'Old', pageType: 'post', status: 'tombstone', publishedAt: '2026-01-10T12:00:00Z' },
+          { slug: 'imported', title: 'Imported', pageType: 'post', status: 'pending', publishedAt: '2026-01-11T12:00:00Z' },
+        ])),
+        restorePost: vi.fn(() => Promise.resolve({ slug: 'old-post' })),
+        purgePost: vi.fn(() => Promise.resolve({ purged: true })),
+        rebuildDependentPages: vi.fn(() => Promise.resolve({ rebuilt: 1, failed: [] })),
+      };
+
+      await init();
+
+      expect(document.querySelector('[data-action="recompile"][data-slug="imported"]')).not.toBeNull();
+      expect(document.querySelector('[data-action="recompile"][data-slug="old-post"]')).toBeNull();
+
+      document.querySelector('[data-action="restore"]').dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(App.restorePost).toHaveBeenCalledWith('old-post');
+      expect(App.rebuildDependentPages).toHaveBeenCalledWith({ exclude: 'old-post' });
+
+      document.querySelector('[data-action="purge"]').dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+      Array.from(document.querySelectorAll('#modal-actions button'))
+        .find(btn => btn.textContent === 'modal.yes')
+        ?.dispatchEvent(new Event('click', { bubbles: true }));
+      await flushPromises();
+
+      expect(App.purgePost).toHaveBeenCalledWith('old-post');
+    });
+
     it('applies date range filters and clear button resets them', async () => {
       const { init } = await loadDashboardModule();
       createDashboardInitDom();

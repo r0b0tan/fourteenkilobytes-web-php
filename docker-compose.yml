@@ -12,6 +12,8 @@ services:
       # - ./dist:/var/www/html:ro
     environment:
       - PHP_MEMORY_LIMIT=256M
+      # Behind the optional nginx proxy below: let rate limiting see the real client IP
+      # - FKB_TRUSTED_PROXIES=172.16.0.0/12
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/api/health"]

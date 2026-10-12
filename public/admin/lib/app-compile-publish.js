@@ -137,6 +137,7 @@ export function createCompilePublishService(deps) {
           title: input.title,
           pageType: input.pageType || 'post',
           sourceData: buildSourceData(input),
+          restore: input.restore === true ? true : undefined,
         }),
       });
     }
@@ -155,6 +156,7 @@ export function createCompilePublishService(deps) {
         hash: page.hash,
         pageType: input.pageType || 'post',
         sourceData: buildSourceData(input),
+        restore: input.restore === true ? true : undefined,
       }),
     });
   }
@@ -170,6 +172,21 @@ export function createCompilePublishService(deps) {
     };
 
     return publish(input);
+  }
+
+  /**
+   * Brings a deleted (tombstoned) post back by publishing its stored source again.
+   */
+  async function restorePost(slug) {
+    const sourceData = await getSourceData(slug);
+    const posts = await getPosts();
+
+    return publish({
+      ...sourceData,
+      posts,
+      buildId: makeBuildId(),
+      restore: true,
+    });
   }
 
   /**
@@ -279,6 +296,7 @@ export function createCompilePublishService(deps) {
     preview,
     publish,
     republishPost,
+    restorePost,
     rebuildDependentPages,
     rebuildAllPages,
     createDefaultHomepage,

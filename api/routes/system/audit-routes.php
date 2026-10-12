@@ -5,7 +5,6 @@ declare(strict_types=1);
 function handleSystemAuditRoutes(string $method, string $path): bool {
     if ($method === 'GET' && $path === '/audit-log') {
         requireAuth();
-        checkGlobalRateLimit('/audit-log', false);
 
         $limit = min((int)($_GET['limit'] ?? 100), 500);
         $action = $_GET['action'] ?? null;
